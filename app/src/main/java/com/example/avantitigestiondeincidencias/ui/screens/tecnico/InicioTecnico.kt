@@ -1,43 +1,24 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
-import android.R
-import android.widget.Toolbar
-import androidx.annotation.Dimension
-import androidx.compose.foundation.BorderStroke
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.avantitigestiondeincidencias.espacioSpacer
@@ -51,7 +32,7 @@ import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncide
 fun inicioTecnico()
 {
     val datasetPruebas = remember {
-         mutableStateListOf<Map<String, String>>(
+         mutableStateListOf(
              mapOf(
                  "nombreCliente" to "nombre del cliente",
                  "pisoDepartamento" to "Piso y departamento",
@@ -60,24 +41,24 @@ fun inicioTecnico()
                  "fechaHora" to "Fecha y hora"
              ),
              mapOf(
-                 "nombreCliente" to "nombre del cliente",
+                 "nombreCliente" to "nombre del cliente 2",
                  "pisoDepartamento" to "Piso y departamento",
                  "descripcionTicket" to "Descripcion del ticket",
-                 "pioridadTicket" to "BAJA",
+                 "prioridadTicket" to "MEDIA",
                  "fechaHora" to "Fecha y hora"
              ),
              mapOf(
-                 "nombreCliente" to "nombre del cliente",
+                 "nombreCliente" to "nombre del cliente 3",
                  "pisoDepartamento" to "Piso y departamento",
                  "descripcionTicket" to "Descripcion del ticket",
-                 "pioridadTicket" to "BAJA",
+                 "prioridadTicket" to "ALTA",
                  "fechaHora" to "Fecha y hora"
              ),
              mapOf(
-                 "nombreCliente" to "nombre del cliente",
+                 "nombreCliente" to "nombre del cliente 4",
                  "pisoDepartamento" to "Piso y departamento",
                  "descripcionTicket" to "Descripcion del ticket",
-                 "pioridadTicket" to "BAJA",
+                 "prioridadTicket" to "URGENTE",
                  "fechaHora" to "Fecha y hora"
              )
 
@@ -88,10 +69,10 @@ fun inicioTecnico()
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Blue
+
                 ),
                 title = {
-                    Text("Inicio")
+                    Text("Inicio", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 }
             )
         }
@@ -101,25 +82,15 @@ fun inicioTecnico()
         Column(modifier = paddingPantallas)
         {
             Spacer(modifier = Modifier.padding(35.dp))
-            Column(modifier = Modifier.fillMaxWidth().height(270.dp).background(Color.Red))
-            {
-                Text("Bienvenido")
 
-            }
-            Spacer(modifier = espacioSpacer)
-            Row(modifier = Modifier.fillMaxWidth().height(100.dp),
-                horizontalArrangement = Arrangement.SpaceBetween)
-            {
+            pieChartTecnico(40, 120, 10)
 
-                cuadroNumeroTicketsTecnico(100, "Tickets del dia", Color.Yellow)
-                cuadroNumeroTicketsTecnico(100, "Tickets abiertos", Color.Green)
-                cuadroNumeroTicketsTecnico(100, "Ticket Urgentes", Color.Red)
 
-            }
+
             Spacer(modifier = espacioSpacer)
             Column(modifier = Modifier.fillMaxWidth().wrapContentHeight())
             {
-                Text(text = "Ultimos tickets:",
+                Text(text = "\n Últimos tickets: \n",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -128,10 +99,10 @@ fun inicioTecnico()
                 LazyColumn(modifier = Modifier.fillMaxWidth(),
                     content = {
 
-                        items(datasetPruebas.count())
+                        items(datasetPruebas.size)
                         { index ->
 
-                            ultimosTicketsLazyColumnContent()
+                            ultimosTicketsLazyColumnContent(datasetPruebas[index])
 
                         }
 
@@ -144,20 +115,78 @@ fun inicioTecnico()
 }
 
 @Composable
-fun graficaTprtaTecnico(numero1: Int, numero2: Int, numero3: Int)
+fun pieChartCajas(numero1: Int, numero2: Int, numero3: Int)
 {
-    val suma = numero1+numero2+numero3
-    val grados1=numero1.toFloat()/suma.toFloat()*360
-    val grados2=numero2.toFloat()/suma.toFloat()*360
-    val grados3=numero3.toFloat()/suma.toFloat()*360
-    /*
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val diametro=if(size.width>size.height) size.height else size.width
-        drawArc(startAngle = 0f,sweepAngle = grados1,useCenter = true,color= Color.Red,size = Size(diametro,diametro))
-        drawArc(startAngle = grados1,sweepAngle = grados2,useCenter = true,color= Color.Green,size = Size(diametro,diametro))
-        drawArc(startAngle = grados1+grados2,sweepAngle = grados3,useCenter = true,color= Color.Blue,size = Size(diametro,diametro))
+    Row(modifier = Modifier.fillMaxWidth().height(140.dp),
+        horizontalArrangement = Arrangement.SpaceBetween)
+    {
+
+        cuadroNumeroTicketsTecnico(numero1, "Tickets del dia", Color.Yellow)
+        cuadroNumeroTicketsTecnico(numero2, "Tickets abiertos", Color.Green)
+        cuadroNumeroTicketsTecnico(numero3, "Ticket Urgentes", Color.Red)
+
     }
-    */
+}
+
+@Composable
+fun pieChartTecnico(diaTicketContador: Int, abiertosTicketContador: Int, urgentesTicketContador: Int)
+{
+    val suma = diaTicketContador+abiertosTicketContador+urgentesTicketContador
+    val grados1: Float = diaTicketContador.toFloat()/suma.toFloat()*360
+    val grados2: Float =abiertosTicketContador.toFloat()/suma.toFloat()*360
+    val grados3: Float =urgentesTicketContador.toFloat()/suma.toFloat()*360
+    val grosorLinea = 50F
+
+    MaterialTheme{
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center)
+        {
+            androidx.compose.foundation.Canvas(modifier = Modifier.size(200.dp))
+            {
+                drawArc(
+                    color = Color.Yellow,
+                    startAngle = 0F,
+                    sweepAngle = grados1,
+                    useCenter = false,
+                    style = Stroke(
+                        width = grosorLinea,
+                        cap = StrokeCap.Square,      // Le oculta el fondo de la franja
+                        join = StrokeJoin.Round    // Oculta los laterales de la franja
+                    )
+                )
+
+                drawArc(
+                    color = Color.Green,
+                    startAngle = grados1,
+                    sweepAngle = grados2,
+                    useCenter = false,
+                    style = Stroke(
+                        width = grosorLinea,
+                        cap = StrokeCap.Square,
+                        join = StrokeJoin.Round
+                    )
+                )
+
+                drawArc(
+                    color = Color.Red,
+                    startAngle = grados2+grados1,
+                    sweepAngle = grados3,
+                    useCenter = false,
+                    style = Stroke(
+                        width = grosorLinea,
+                        cap = StrokeCap.Square,
+                        join = StrokeJoin.Round
+                    )
+                )
+
+            }
+        }
+    }
+
+    Spacer(modifier = espacioSpacer)
+
+    pieChartCajas(diaTicketContador, abiertosTicketContador, urgentesTicketContador)
+
 }
 
 @Composable
@@ -174,25 +203,39 @@ fun cuadroNumeroTicketsTecnico(numero: Int, titulo: String, color: Color)
 }
 
 @Composable
-fun ultimosTicketsLazyColumnContent()
+fun ultimosTicketsLazyColumnContent(ticket: Map<String, String>)
 {
 
+    val prioridadColorFondo = remember {
+        mutableStateOf(when(ticket["prioridadTicket"]){
+            "BAJA" -> Color.Green
+            "MEDIA" -> Color.Yellow
+            "ALTA" -> Color.Red
+            "URGENTE" -> Color(141, 20, 20, 255)
+            else -> Color.Green
+        })
+    }
+
     Column(modifier = Modifier.fillMaxWidth()
-                        .padding(0.dp, 5.dp, 0.dp, 5.dp)
-                        .border(width = 1.dp, color = Color.Black))
+                        .padding(1.dp, 5.dp, 1.dp, 5.dp)
+                        //.shadow(elevation = 2.dp)
+                        )
     {
 
         Row(modifier = Modifier.padding(10.dp, 0.dp, 0.dp, 0.dp))
         {
             Column()
             {
-                Text(text = "nombre del cliente", fontWeight = FontWeight.Bold, modifier = Modifier.width(270.dp))
+                Text(text = ticket["nombreCliente"].toString(), fontWeight = FontWeight.Bold, modifier = Modifier.width(270.dp))
                 Text(text = "piso y departamento", fontSize = 12.sp)
             }
-            Box(modifier = Modifier.padding(1.dp, 1.dp, 1.dp, 1.dp). background(Color.Blue))
+
+
+
+            Box(modifier = Modifier.padding(0.1.dp, 1.dp, 0.1.dp, 1.dp).background(prioridadColorFondo.value))
             {
                 Text(
-                    text = "PRIORIDAD",
+                    text = ticket["prioridadTicket"].toString(),
                     fontSize = 10.sp,
                     modifier = Modifier.padding(5.dp).fillMaxWidth(),
                     fontWeight = FontWeight.Bold,
@@ -216,6 +259,8 @@ fun ultimosTicketsLazyColumnContent()
 @Composable
 fun GreetingPreview() {
     AVANTITIGestionDeIncidenciasTheme {
+
         inicioTecnico()
+
     }
 }
