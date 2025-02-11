@@ -1,6 +1,7 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -37,7 +38,7 @@ fun inicioTecnico()
                  "nombreCliente" to "nombre del cliente",
                  "pisoDepartamento" to "Piso y departamento",
                  "descripcionTicket" to "Descripcion del ticket",
-                 "pioridadTicket" to "BAJA",
+                 "prioridadTicket" to "BAJA",
                  "fechaHora" to "Fecha y hora"
              ),
              mapOf(
@@ -69,19 +70,19 @@ fun inicioTecnico()
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-
+                    Color.Transparent
                 ),
                 title = {
-                    Text("Inicio", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                    Text("Inicio", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                 }
             )
         }
     )
     {
 
-        Column(modifier = paddingPantallas)
+        Column(modifier = Modifier.padding(25.dp))
         {
-            Spacer(modifier = Modifier.padding(35.dp))
+            Spacer(modifier = Modifier.padding(45.dp))
 
             pieChartTecnico(40, 120, 10)
 
@@ -135,13 +136,13 @@ fun pieChartTecnico(diaTicketContador: Int, abiertosTicketContador: Int, urgente
     val grados1: Float = diaTicketContador.toFloat()/suma.toFloat()*360
     val grados2: Float =abiertosTicketContador.toFloat()/suma.toFloat()*360
     val grados3: Float =urgentesTicketContador.toFloat()/suma.toFloat()*360
-    val grosorLinea = 50F
+    val grosorLinea = 40F
 
     MaterialTheme{
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center)
         {
-            androidx.compose.foundation.Canvas(modifier = Modifier.size(200.dp))
+            androidx.compose.foundation.Canvas(modifier = Modifier.size(140.dp))
             {
                 drawArc(
                     color = Color.Yellow,
@@ -183,7 +184,7 @@ fun pieChartTecnico(diaTicketContador: Int, abiertosTicketContador: Int, urgente
         }
     }
 
-    Spacer(modifier = espacioSpacer)
+    Spacer(modifier = Modifier.padding(25.dp))
 
     pieChartCajas(diaTicketContador, abiertosTicketContador, urgentesTicketContador)
 
@@ -226,7 +227,7 @@ fun ultimosTicketsLazyColumnContent(ticket: Map<String, String>)
         {
             Column()
             {
-                Text(text = ticket["nombreCliente"].toString(), fontWeight = FontWeight.Bold, modifier = Modifier.width(270.dp))
+                Text(text = ticket["nombreCliente"].toString(), fontWeight = FontWeight.Bold, modifier = Modifier.width(240.dp))
                 Text(text = "piso y departamento", fontSize = 12.sp)
             }
 
@@ -237,7 +238,7 @@ fun ultimosTicketsLazyColumnContent(ticket: Map<String, String>)
                 Text(
                     text = ticket["prioridadTicket"].toString(),
                     fontSize = 10.sp,
-                    modifier = Modifier.padding(5.dp).fillMaxWidth(),
+                    modifier = Modifier.padding(5.dp, 5.dp).fillMaxWidth(),
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                     textAlign = TextAlign.Center
@@ -253,6 +254,17 @@ fun ultimosTicketsLazyColumnContent(ticket: Map<String, String>)
 
     }
 
+}
+
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES,
+        showBackground = true,
+        )
+@Composable
+fun darkModeScreen()
+{
+    AVANTITIGestionDeIncidenciasTheme {
+        inicioTecnico()
+    }
 }
 
 @Preview(showBackground = true)
