@@ -86,12 +86,10 @@ fun inicioTecnico()
 
             pieChartTecnico(40, 120, 10)
 
-
-
             Spacer(modifier = espacioSpacer)
-            Column(modifier = Modifier.fillMaxWidth().wrapContentHeight())
+            Column(modifier = Modifier.fillMaxWidth().height(300.dp))
             {
-                Text(text = "\n Últimos tickets: \n",
+                Text(text = " Últimos tickets: \n",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -118,7 +116,7 @@ fun inicioTecnico()
 @Composable
 fun pieChartCajas(numero1: Int, numero2: Int, numero3: Int)
 {
-    Row(modifier = Modifier.fillMaxWidth().height(140.dp),
+    Row(modifier = Modifier.fillMaxWidth().height(120.dp),
         horizontalArrangement = Arrangement.SpaceBetween)
     {
 
@@ -272,7 +270,7 @@ fun darkModeScreen()
 fun GreetingPreview() {
     AVANTITIGestionDeIncidenciasTheme {
 
-        inicioTecnico()
+        HorizontalPagerBottomBarTecnico()
 
     }
 }

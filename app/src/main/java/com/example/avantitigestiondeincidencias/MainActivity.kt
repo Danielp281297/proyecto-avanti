@@ -1,6 +1,7 @@
 package com.example.avantitigestiondeincidencias
 
 import android.R
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,8 +18,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.avantitigestiondeincidencias.ui.screens.tecnico.HorizontalPagerBottomBarTecnico
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.inicioTecnico
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 
@@ -32,7 +35,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             AVANTITIGestionDeIncidenciasTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    inicioTecnico()
+                    HorizontalPagerBottomBarTecnico()
                 }
             }
         }
