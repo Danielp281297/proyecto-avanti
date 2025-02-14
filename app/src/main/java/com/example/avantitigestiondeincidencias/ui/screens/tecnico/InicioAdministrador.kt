@@ -2,8 +2,11 @@ package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
 
 import android.content.res.Configuration
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,54 +20,68 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.avantitigestiondeincidencias.AVANTI.Ticket
+import com.example.avantitigestiondeincidencias.Request.OkHttpRequest
+import com.example.avantitigestiondeincidencias.Request.Retrofit
 import com.example.avantitigestiondeincidencias.espacioSpacer
-import com.example.avantitigestiondeincidencias.paddingPantallas
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun inicioTecnico()
 {
-    val datasetPruebas = remember {
-         mutableStateListOf(
-             mapOf(
-                 "nombreCliente" to "nombre del cliente",
-                 "pisoDepartamento" to "Piso y departamento",
-                 "descripcionTicket" to "Descripcion del ticket",
-                 "prioridadTicket" to "BAJA",
-                 "fechaHora" to "Fecha y hora"
-             ),
-             mapOf(
-                 "nombreCliente" to "nombre del cliente 2",
-                 "pisoDepartamento" to "Piso y departamento",
-                 "descripcionTicket" to "Descripcion del ticket",
-                 "prioridadTicket" to "MEDIA",
-                 "fechaHora" to "Fecha y hora"
-             ),
-             mapOf(
-                 "nombreCliente" to "nombre del cliente 3",
-                 "pisoDepartamento" to "Piso y departamento",
-                 "descripcionTicket" to "Descripcion del ticket",
-                 "prioridadTicket" to "ALTA",
-                 "fechaHora" to "Fecha y hora"
-             ),
-             mapOf(
-                 "nombreCliente" to "nombre del cliente 4",
-                 "pisoDepartamento" to "Piso y departamento",
-                 "descripcionTicket" to "Descripcion del ticket",
-                 "prioridadTicket" to "URGENTE",
-                 "fechaHora" to "Fecha y hora"
-             )
-
-         )
+    
+    var dataset= remember {
+         mutableStateListOf<Ticket?>()
     }
+
+    var urgentesTicketsContador = remember {
+        mutableStateOf(0)
+    }
+
+    var cerradosTicketsContador = remember {
+        mutableStateOf(0)
+    }
+
+    var abiertosTicketsContador = remember {
+        mutableStateOf(0)
+    }
+
+    // Se guardan los datos de la peticion en la lista dataset
+        Retrofit.seleccionarTickets("http://192.168.0.104/Daniel/IncidenciasAvanti/View/seleccionar_tickets.php/",
+            { tickets ->
+
+                tickets?.forEachIndexed {index, ticket ->
+
+                    // Se comprueba el estado y la prioridad de los tickets
+                    if (ticket.prioridad == "URGENTE")
+                    {
+                        urgentesTicketsContador.value++
+                    }
+                    else
+                        if (ticket.estado == "Abierto")
+                        {
+                            abiertosTicketsContador.value++
+                        }
+                        else
+                            if (ticket.estado == "Cerrado")
+                            {
+                                cerradosTicketsContador.value++
+                            }
+                    dataset.add(ticket)
+
+                }
+
+            })
+
+    // Se obtiene los datos de la peticion, y se guarda en la dataset
 
     Scaffold(
         topBar = {
@@ -84,10 +101,10 @@ fun inicioTecnico()
         {
             Spacer(modifier = Modifier.padding(45.dp))
 
-            pieChartTecnico(40, 120, 10)
+            pieChartTecnico(abiertosTicketsContador.value, cerradosTicketsContador.value, urgentesTicketsContador.value)
 
             Spacer(modifier = espacioSpacer)
-            Column(modifier = Modifier.fillMaxWidth().height(300.dp))
+            Column(modifier = Modifier.fillMaxWidth().fillMaxHeight())
             {
                 Text(text = " Últimos tickets: \n",
                     fontSize = 18.sp,
@@ -98,10 +115,9 @@ fun inicioTecnico()
                 LazyColumn(modifier = Modifier.fillMaxWidth(),
                     content = {
 
-                        items(datasetPruebas.size)
-                        { index ->
+                        items(dataset.count()) { index ->
 
-                            ultimosTicketsLazyColumnContent(datasetPruebas[index])
+                            ultimosTicketsLazyColumnContent(dataset[index]!!)
 
                         }
 
@@ -128,12 +144,12 @@ fun pieChartCajas(numero1: Int, numero2: Int, numero3: Int)
 }
 
 @Composable
-fun pieChartTecnico(diaTicketContador: Int, abiertosTicketContador: Int, urgentesTicketContador: Int)
+fun pieChartTecnico(abiertosTicketContador: Int, cerradosTicketContador: Int, urgentesTicketContador: Int)
 {
-    val suma = diaTicketContador+abiertosTicketContador+urgentesTicketContador
-    val grados1: Float = diaTicketContador.toFloat()/suma.toFloat()*360
-    val grados2: Float =abiertosTicketContador.toFloat()/suma.toFloat()*360
-    val grados3: Float =urgentesTicketContador.toFloat()/suma.toFloat()*360
+    val suma = abiertosTicketContador+cerradosTicketContador+urgentesTicketContador
+    val grados1: Float = abiertosTicketContador.toFloat()/suma.toFloat()*360
+    val grados2: Float = cerradosTicketContador.toFloat()/suma.toFloat()*360
+    val grados3: Float = urgentesTicketContador.toFloat()/suma.toFloat()*360
     val grosorLinea = 40F
 
     MaterialTheme{
@@ -184,7 +200,7 @@ fun pieChartTecnico(diaTicketContador: Int, abiertosTicketContador: Int, urgente
 
     Spacer(modifier = Modifier.padding(25.dp))
 
-    pieChartCajas(diaTicketContador, abiertosTicketContador, urgentesTicketContador)
+    pieChartCajas(abiertosTicketContador, cerradosTicketContador, urgentesTicketContador)
 
 }
 
@@ -202,11 +218,13 @@ fun cuadroNumeroTicketsTecnico(numero: Int, titulo: String, color: Color)
 }
 
 @Composable
-fun ultimosTicketsLazyColumnContent(ticket: Map<String, String>)
+fun ultimosTicketsLazyColumnContent(ticket: Ticket)
 {
 
+    val context = LocalContentColor.current
+
     val prioridadColorFondo = remember {
-        mutableStateOf(when(ticket["prioridadTicket"]){
+        mutableStateOf(when(ticket.prioridad){
             "BAJA" -> Color.Green
             "MEDIA" -> Color.Yellow
             "ALTA" -> Color.Red
@@ -217,16 +235,19 @@ fun ultimosTicketsLazyColumnContent(ticket: Map<String, String>)
 
     Column(modifier = Modifier.fillMaxWidth()
                         .padding(1.dp, 5.dp, 1.dp, 5.dp)
-                        //.shadow(elevation = 2.dp)
-                        )
+                        .clickable {
+
+                            Log.d("ticket: ", "ticket ${ticket.id} pulsado")
+
+        })
     {
 
         Row(modifier = Modifier.padding(10.dp, 0.dp, 0.dp, 0.dp))
         {
             Column()
             {
-                Text(text = ticket["nombreCliente"].toString(), fontWeight = FontWeight.Bold, modifier = Modifier.width(240.dp))
-                Text(text = "piso y departamento", fontSize = 12.sp)
+                Text(text = ticket.tipo, fontWeight = FontWeight.Bold, modifier = Modifier.width(240.dp))
+                Text(text = "${ticket.piso} ${ticket.departamento} ", fontSize = 12.sp)
             }
 
 
@@ -234,7 +255,7 @@ fun ultimosTicketsLazyColumnContent(ticket: Map<String, String>)
             Box(modifier = Modifier.padding(0.1.dp, 1.dp, 0.1.dp, 1.dp).background(prioridadColorFondo.value))
             {
                 Text(
-                    text = ticket["prioridadTicket"].toString(),
+                    text = ticket.prioridad.toString(),
                     fontSize = 10.sp,
                     modifier = Modifier.padding(5.dp, 5.dp).fillMaxWidth(),
                     fontWeight = FontWeight.Bold,
@@ -247,11 +268,42 @@ fun ultimosTicketsLazyColumnContent(ticket: Map<String, String>)
         Column(modifier = Modifier.padding(10.dp, 0.dp, 10.dp, 0.dp))
         {
             Text(text = "Descripcion del ticket para notificar una situacion desfavorable", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            Text(text = "fecha y hora", fontSize = 12.sp)
+            Text(text = "${ticket.fecha} - ${ticket.hora}", fontSize = 12.sp)
         }
 
     }
 
+}
+
+@Composable
+fun toasty(id: Int) {
+
+    val context = LocalContext.current
+    Toast.makeText(context, id.toString(), Toast.LENGTH_SHORT).show()
+
+}
+
+@Composable
+fun pantallaPrueba()
+{
+
+    val okHttpRequest = OkHttpRequest()
+
+    Box(modifier = Modifier.fillMaxSize())
+    {
+        Button(onClick = {
+
+            //okHttpRequest.peticionGET("http://10.0.2.2/Daniel/IncidenciasAvanti/View/seleccionar_tickets.php")
+
+            Retrofit.seleccionarTickets("http://10.0.2.2/Daniel/IncidenciasAvanti/View/seleccionar_tickets.php/",
+                                        { tickets ->
+
+                                            Log.d("Tickets", tickets.toString())
+
+                                        })
+
+        }, content = { Text("PETICION") }, modifier = Modifier.padding(100.dp))
+    }
 }
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES,
