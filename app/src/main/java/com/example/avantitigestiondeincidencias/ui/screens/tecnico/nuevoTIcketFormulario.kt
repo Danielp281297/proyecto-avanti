@@ -1,5 +1,6 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -169,21 +170,9 @@ fun nuevoTicketFormulario()
                     shape = RectangleShape,
                     onClick = {
 
-
-                        if(tipoEventoState.value.isBlank() || prioridadState.value.isBlank())
-                        {
-
-                            Toast.makeText(context, "Los campos no pueden quedar vacios.", Toast.LENGTH_SHORT).show()
-
-                        }else
-                        if(descripcionState.value.isBlank()) // Se comprueba que la descripcion no este vacia, ni conformada por espacios
-                        {
-
-                            Toast.makeText(context, "Descripcion invalida. Intente de nuevo.", Toast.LENGTH_SHORT).show()
-
-                        }else
                         // Se envia la peticion
-                        crearTicket(peticionTicket(idUsuario, tipoEventoState.value, prioridadState.value, descripcionState.value))
+                        if(validarPeticionTicket(context, tipoEventoState.value, prioridadState.value, descripcionState.value))
+                            crearTicket(peticionTicket(idUsuario, tipoEventoState.value, prioridadState.value, descripcionState.value))
 
                     }
                 )
@@ -197,6 +186,29 @@ fun nuevoTicketFormulario()
         }
 
     }
+}
+
+fun validarPeticionTicket(context: Context, tipoEventoState: String, prioridadState: String, descripcionState: String): Boolean
+{
+
+    var bandera = false
+
+    if(tipoEventoState.isBlank() || prioridadState.isBlank())
+    {
+
+        Toast.makeText(context, "Los campos no pueden quedar vacios.", Toast.LENGTH_SHORT).show()
+
+    }else
+    if(descripcionState.isBlank()) // Se comprueba que la descripcion no este vacia, ni conformada por espacios
+    {
+
+        Toast.makeText(context, "Descripcion invalida. Intente de nuevo.", Toast.LENGTH_SHORT).show()
+
+    }
+    else bandera = true
+
+    return bandera
+
 }
 
 fun crearTicket(peticion: peticionTicket)
