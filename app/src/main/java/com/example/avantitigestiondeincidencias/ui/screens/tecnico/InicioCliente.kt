@@ -15,10 +15,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.rememberModalBottomSheetState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -28,10 +33,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,11 +53,12 @@ import com.example.avantitigestiondeincidencias.espacioSpacer
 import com.example.avantitigestiondeincidencias.modeloButton
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.Spinner
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun InicioCliente()
 {
@@ -60,54 +69,22 @@ fun InicioCliente()
     // Se crea la variable de estado con la lista
     // Se comprueba si la lista esta vacia, de ser asi, se crea un aviso en el centro
     var ticketsCliente = remember{
-        mutableStateListOf<Ticket?>()
+        mutableStateListOf<Ticket>()
     }
 
     var mostrarFormularioNuevoTicket = remember{
         mutableStateOf(false)
     }
 
+    var state = rememberModalBottomSheetState(
+        initialValue = ModalBottomSheetValue.Expanded,
+        //skipHalfExpanded = true
+        skipHalfExpanded = true
+    )
 
-    Retrofit.seleccionarTickets("http://192.168.0.104/Daniel/IncidenciasAvanti/PHP/seleccionar_tickets.php/" ,
-        { retrofit ->
+    val scope = rememberCoroutineScope()
 
-            val service = retrofit!!.create(ApiServices::class.java).getTickets()
-
-            service.enqueue(object : Callback<List<Ticket>> {
-                override fun onResponse(
-                    p0: Call<List<Ticket>?>,
-                    response: Response<List<Ticket>?>
-                ) {
-                    if (response.isSuccessful) {
-
-                        val apiResponse = response.body()
-
-                        apiResponse?.forEachIndexed { index, ticket ->
-
-                            // Se comprueba el estado y la prioridad de los tickets
-                            ticketsCliente.add(ticket)
-
-
-                        }
-
-
-                    }
-                }
-
-                override fun onFailure(
-                    p0: Call<List<Ticket>?>,
-                    p1: Throwable
-                ) {
-                    Log.e("Error: ", p1.message.toString())
-                }
-
-            })
-
-
-
-    })
-
-
+    ticketsContent(idUsuario = 1, { ticket -> ticketsCliente.add(ticket) })
 
     Scaffold(
         containerColor = Color.White,
@@ -149,10 +126,7 @@ fun InicioCliente()
 
             FloatingActionButton(onClick = {
 
-                if (mostrarFormularioNuevoTicket.value == false)
-                {
-                    mostrarFormularioNuevoTicket.value = true
-                }
+                mostrarFormularioNuevoTicket.value = true
 
             },
                                 shape = RectangleShape,
@@ -163,16 +137,80 @@ fun InicioCliente()
 
             }
 
-            if (mostrarFormularioNuevoTicket.value == true)
-            {
+        }
 
-                nuevoTicketFormulario()
+        // Bottom Sheet
+        if(mostrarFormularioNuevoTicket.value)
+        {
 
-            }
+            AlertDialog(
+                modifier = Modifier.wrapContentHeight(),
+                onDismissRequest = { mostrarFormularioNuevoTicket.value = false },
+                content = {
+                    nuevoTicketFormulario({
+
+                        mostrarFormularioNuevoTicket.value = false
+
+                        ticketsCliente.clear()
+
+                        ticketsContent(idUsuario = 1) { ticket ->
+                            ticketsCliente.add(ticket)
+                        }
+
+                    })
+                }
+
+            )
 
         }
 
     }
+
+}
+
+fun ticketsContent(idUsuario: Int, function: (Ticket) -> Unit): MutableList<Ticket?> {
+
+    var tickets = mutableListOf<Ticket?>()
+
+
+    Retrofit.seleccionarTickets("http://192.168.0.104/Daniel/IncidenciasAvanti/PHP/seleccionar_tickets.php/" ,
+        { retrofit ->
+
+            val service = retrofit!!.create(ApiServices::class.java).getTickets()
+
+            service.enqueue(object : Callback<List<Ticket>> {
+                override fun onResponse(
+                    p0: Call<List<Ticket>?>,
+                    response: Response<List<Ticket>?>
+                ) {
+                    if (response.isSuccessful) {
+
+                        val apiResponse = response.body()
+
+                        apiResponse?.forEachIndexed { index, ticket ->
+
+                            // Se comprueba el estado y la prioridad de los tickets
+                            function(ticket)
+
+
+                        }
+
+
+                    }
+                }
+
+                override fun onFailure(
+                    p0: Call<List<Ticket>?>,
+                    p1: Throwable
+                ) {
+                    Log.e("Error: ", p1.message.toString())
+                }
+
+            })
+
+        })
+
+    return tickets
 
 }
 

@@ -11,24 +11,32 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,7 +61,7 @@ data class peticionTicket(val idUsusario: Int, val tipo: String, val prioridad: 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun nuevoTicketFormulario()
+fun nuevoTicketFormulario(function: () -> Unit)
 {
 
     val context = LocalContext.current
@@ -74,32 +82,24 @@ fun nuevoTicketFormulario()
         mutableStateOf("")
     }
 
-    Box(modifier = Modifier.fillMaxSize().padding(0.dp).background(Color.White), contentAlignment = Alignment.Center)
-    {
+    val focusRequester = remember{
+        FocusRequester()
+    }
 
-        Box(modifier = Modifier.background(Color.Black))
-        Scaffold(
-            modifier = Modifier.wrapContentHeight(),
-            containerColor = Color.White,
-            topBar = {
-                TopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(Color.White),
-                    title = {
-                        Text("Nuevo Ticket", modifier = Modifier.fillMaxWidth().padding(0.dp), textAlign = TextAlign.Center)
-                    }
-                )
-            }
-        )
-        {
-            Column(modifier = Modifier.fillMaxWidth().wrapContentHeight().padding(25.dp))
+    Box(modifier = Modifier.wrapContentHeight().padding(0.dp).background(Color.White), contentAlignment = Alignment.Center)
+    {
+            Column(modifier = Modifier.fillMaxWidth().wrapContentHeight().padding(15.dp))
             {
 
-                Spacer(modifier = Modifier.padding(50.dp))
+                Text(text = "Nuevo Ticket", modifier = Modifier.padding(0.dp, 10.dp).fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp)
 
                 Text("Ingrese los campos correspondientes:",
                     modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                Spacer(modifier = Modifier.padding(15.dp))
 
+                Spacer(modifier = espacioSpacer)
 
                 Row(modifier = Modifier)
                 {
@@ -107,7 +107,6 @@ fun nuevoTicketFormulario()
                     Column(modifier = Modifier.weight(1f))
                     {
                         Text("Tipo de evento")
-                        Spacer(modifier = espacioSpacer)
                         Spinner(modifier = Modifier,
                             itemList = tipoEvento,
                             onItemSelected = { option ->
@@ -117,10 +116,9 @@ fun nuevoTicketFormulario()
 
                     Spacer(modifier = espacioSpacer)
 
-                    Column(modifier = Modifier.weight(1f))
+                    Column(modifier = Modifier.weight(0.9f))
                     {
                         Text("Prioridad")
-                        Spacer(modifier = espacioSpacer)
                         Spinner(modifier = Modifier,
                             itemList = prioridadTicket,
                             onItemSelected = { option ->
@@ -130,14 +128,11 @@ fun nuevoTicketFormulario()
 
                 }
 
-                Spacer(modifier = Modifier.padding(15.dp))
-
+                Spacer(modifier = espacioSpacer)
                 Text(text = " Descripción:")
 
-                Spacer(modifier = espacioSpacer)
-
                 OutlinedTextField(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
                     value = descripcionState.value,
                     onValueChange = { newText ->
                         // Si el texto es menor a 50 caracteres, se almacena en newText
@@ -146,6 +141,9 @@ fun nuevoTicketFormulario()
                                     },
                     label = { Text("Indique aqui", fontSize = 13.sp) },
                     placeholder = {  },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedLabelColor = Color.Black,
+                        focusedBorderColor = Color.Black),
                     supportingText = {
 
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -160,7 +158,7 @@ fun nuevoTicketFormulario()
                     }
                 )
 
-                Spacer(modifier = Modifier.padding(15.dp))
+                Spacer(modifier = espacioSpacer)
 
                 Button(modifier = modeloButton,
 
@@ -171,21 +169,36 @@ fun nuevoTicketFormulario()
                     onClick = {
 
                         // Se envia la peticion
-                        if(validarPeticionTicket(context, tipoEventoState.value, prioridadState.value, descripcionState.value))
-                            crearTicket(peticionTicket(idUsuario, tipoEventoState.value, prioridadState.value, descripcionState.value))
-
+                        if(validarPeticionTicket(context, tipoEventoState.value, prioridadState.value, descripcionState.value)) {
+                            crearTicket(
+                                peticionTicket(
+                                    idUsuario,
+                                    tipoEventoState.value,
+                                    prioridadState.value,
+                                    descripcionState.value
+                                )
+                            )
+                            function()
+                        }
                     }
                 )
                 {
                     Text(text = "ABRIR TICKET", color = Color.White)
                 }
 
-
-            }
-
         }
 
+        Spacer(modifier = espacioSpacer)
+
     }
+
+    val view = LocalView.current
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+        view.bringToFront()
+    }
+
 }
 
 fun validarPeticionTicket(context: Context, tipoEventoState: String, prioridadState: String, descripcionState: String): Boolean
@@ -230,7 +243,7 @@ fun crearTicket(peticion: peticionTicket)
 fun nuevoTicketFormularioPreview() {
     AVANTITIGestionDeIncidenciasTheme {
 
-        nuevoTicketFormulario()
+        nuevoTicketFormulario({})
 
     }
 }

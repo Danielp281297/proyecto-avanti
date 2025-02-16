@@ -36,8 +36,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             AVANTITIGestionDeIncidenciasTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    //InicioCliente()
-                    nuevoTicketFormulario()
+                    InicioCliente()
                 }
             }
         }
