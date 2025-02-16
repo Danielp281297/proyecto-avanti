@@ -21,7 +21,7 @@ class Retrofit {
 
         @OptIn(DelicateCoroutinesApi::class)
         fun seleccionarTickets(url: String,
-                               functionLambda: (List<Ticket>?) -> Unit)
+                               functionLambda: (retrofit: Retrofit?) -> Unit)
         {
 
             val retrofit = Retrofit.Builder()
@@ -31,29 +31,25 @@ class Retrofit {
 
             GlobalScope.launch {
 
-                    val service = retrofit.create(ApiServices::class.java).getTickets()
+                    functionLambda(retrofit)
 
-                    service.enqueue(object : Callback<List<Ticket>> {
-                        override fun onResponse(
-                            p0: Call<List<Ticket>?>,
-                            response: Response<List<Ticket>?>
-                        ) {
-                            if (response.isSuccessful) {
+            }
 
-                                val apiResponse = response.body()
-                                functionLambda(apiResponse)
-                                //Log.d("ApiService: ", apiResponse.toString())
-                            }
-                        }
+        }
 
-                        override fun onFailure(
-                            p0: Call<List<Ticket>?>,
-                            p1: Throwable
-                        ) {
-                            Log.e("Error: ", p1.message.toString())
-                        }
+        @OptIn(DelicateCoroutinesApi::class)
+        fun crearTicket(url: String,
+                               functionLambda: (retrofit: Retrofit?) -> Unit)
+        {
 
-                    })
+            val retrofit = Retrofit.Builder()
+                .baseUrl(url)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+
+            GlobalScope.launch {
+
+                functionLambda(retrofit)
 
             }
 

@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -27,61 +28,54 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
+import com.example.avantitigestiondeincidencias.Request.ApiServices
 import com.example.avantitigestiondeincidencias.Request.OkHttpRequest
 import com.example.avantitigestiondeincidencias.Request.Retrofit
 import com.example.avantitigestiondeincidencias.espacioSpacer
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import kotlin.inc
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, DelicateCoroutinesApi::class)
 @Composable
-fun inicioTecnico()
+fun InicioAdministrador()
 {
     
-    var dataset= remember {
-         mutableStateListOf<Ticket?>()
+    var dataset = remember {  //mutableListOf<Ticket>()
+        mutableStateListOf<Ticket>()
     }
 
     var urgentesTicketsContador = remember {
-        mutableStateOf(0)
+        mutableStateOf<Int>(0)
     }
 
     var cerradosTicketsContador = remember {
-        mutableStateOf(0)
+        mutableStateOf<Int>(0)
     }
 
     var abiertosTicketsContador = remember {
-        mutableStateOf(0)
+        mutableStateOf<Int>(0)
     }
 
     // Se guardan los datos de la peticion en la lista dataset
-        Retrofit.seleccionarTickets("http://192.168.0.104/Daniel/IncidenciasAvanti/View/seleccionar_tickets.php/",
-            { tickets ->
+    apiServiceTicketsAbiertos(dataset, { abiertos, cerrados, urgentes ->
 
-                tickets?.forEachIndexed {index, ticket ->
+        urgentesTicketsContador.value = urgentes
+        cerradosTicketsContador.value = cerrados
+        abiertosTicketsContador.value = abiertos
 
-                    // Se comprueba el estado y la prioridad de los tickets
-                    if (ticket.prioridad == "URGENTE")
-                    {
-                        urgentesTicketsContador.value++
-                    }
-                    else
-                        if (ticket.estado == "Abierto")
-                        {
-                            abiertosTicketsContador.value++
-                        }
-                        else
-                            if (ticket.estado == "Cerrado")
-                            {
-                                cerradosTicketsContador.value++
-                            }
-                    dataset.add(ticket)
+    })
 
-                }
-
-            })
 
     // Se obtiene los datos de la peticion, y se guarda en la dataset
+
 
     Scaffold(
         topBar = {
@@ -117,7 +111,7 @@ fun inicioTecnico()
 
                         items(dataset.count()) { index ->
 
-                            ultimosTicketsLazyColumnContent(dataset[index]!!)
+                            ultimosTicketsLazyColumnContent(dataset[index])
 
                         }
 
@@ -127,6 +121,81 @@ fun inicioTecnico()
 
     }
 
+}
+
+fun apiServiceTicketsAbiertos(dataset: SnapshotStateList<Ticket>, cifras: (Int, Int, Int) -> Unit)
+{
+
+    GlobalScope.launch {
+
+        do {
+
+            var urgentes = 0
+            var abiertos = 0
+            var cerrados = 0
+
+
+            Retrofit.seleccionarTickets("http://192.168.0.104/Daniel/IncidenciasAvanti/PHP/seleccionar_tickets.php/",
+                { retrofit ->
+
+                    val service = retrofit!!.create(ApiServices::class.java).getTickets()
+
+                    dataset.clear()
+
+                    service.enqueue(object : Callback<List<Ticket>> {
+                        override fun onResponse(
+                            p0: Call<List<Ticket>?>,
+                            response: Response<List<Ticket>?>
+                        ) {
+                            if (response.isSuccessful) {
+
+                                val apiResponse = response.body()
+
+                                apiResponse?.forEachIndexed {index, ticket ->
+
+                                    // Se comprueba el estado y la prioridad de los tickets
+                                    if (ticket.prioridad == "URGENTE")
+                                    {
+                                        urgentes++
+                                    }
+                                    else
+                                        if (ticket.estado == "Abierto")
+                                        {
+                                            abiertos++
+                                        }
+                                        else
+                                            if (ticket.estado == "Cerrado")
+                                            {
+                                                cerrados++
+                                            }
+
+                                    cifras(abiertos, cerrados, urgentes)
+
+                                    dataset.add(ticket)
+
+                                }
+
+                            }
+
+                        }
+
+                        override fun onFailure(
+                            p0: Call<List<Ticket>?>,
+                            p1: Throwable
+                        ) {
+                            Log.e("Error: ", p1.message.toString())
+                        }
+
+                    })
+
+                })
+
+            delay(10000)
+
+        }while (true)
+
+
+    }
 }
 
 @Composable
@@ -267,7 +336,7 @@ fun ultimosTicketsLazyColumnContent(ticket: Ticket)
             }
         Column(modifier = Modifier.padding(10.dp, 0.dp, 10.dp, 0.dp))
         {
-            Text(text = "Descripcion del ticket para notificar una situacion desfavorable", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text(text = ticket.descripcion, fontWeight = FontWeight.Bold, fontSize = 18.sp)
             Text(text = "${ticket.fecha} - ${ticket.hora}", fontSize = 12.sp)
         }
 
@@ -313,7 +382,7 @@ fun pantallaPrueba()
 fun darkModeScreen()
 {
     AVANTITIGestionDeIncidenciasTheme {
-        inicioTecnico()
+        InicioAdministrador()
     }
 }
 

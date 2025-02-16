@@ -75,7 +75,7 @@ fun HorizontalPagerBottomBarTecnico()
 
             when(page)
             {
-                0 -> inicioTecnico()
+                0 -> InicioAdministrador()
                 else -> Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center)
                         {
                             //Text(text = horizontalPagerScreen[page])

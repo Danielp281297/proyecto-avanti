@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -57,8 +58,7 @@ fun CrearUsuarioFormulario()
                 Text("Crear Usuario", modifier = Modifier.fillMaxWidth().padding(0.dp), textAlign = TextAlign.Center)
             }
         )
-    },
-        modifier = Modifier)
+    })
     {
 
         Column(modifier = Modifier.fillMaxSize().padding(25.dp)
@@ -78,7 +78,6 @@ fun CrearUsuarioFormulario()
                 Spinner(
                     modifier = Modifier.weight(1f),
                     itemList = tipoUsuarioLista,
-                    selectedItem = "Seleccione",
                     onItemSelected = { item ->
 
 
@@ -160,7 +159,6 @@ fun CrearUsuarioFormulario()
             Spinner(
                 modifier = Modifier.fillMaxWidth(),
                 itemList = tipoUsuarioLista,
-                selectedItem = "Seleccione",
                 onItemSelected = { item ->
 
 
@@ -176,7 +174,6 @@ fun CrearUsuarioFormulario()
                     Spinner(
                         modifier = Modifier.fillMaxWidth(),
                         itemList = tipoUsuarioLista,
-                        selectedItem = "Seleccione",
                         onItemSelected = { item ->
 
 
@@ -236,10 +233,12 @@ fun CrearUsuarioFormulario()
             Spacer(modifier = Modifier.padding(15.dp))
 
             Button(modifier = modeloButton,
-                onClick = { },
+
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Black
-                )
+                ),
+                shape = RectangleShape,
+                onClick = { }
             )
             {
                 Text(text = "CREAR USUARIO", color = Color.White)

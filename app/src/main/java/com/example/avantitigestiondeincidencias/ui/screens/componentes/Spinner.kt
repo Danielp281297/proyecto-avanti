@@ -1,5 +1,6 @@
 package com.example.avantitigestiondeincidencias.ui.screens.componentes
 
+import android.util.Log
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
@@ -13,10 +14,13 @@ import androidx.compose.ui.text.style.TextOverflow
 fun Spinner(
     modifier: Modifier,
     itemList: List<String>,
-    selectedItem: String,
     onItemSelected: (selectedItem: String) -> Unit
 )
 {
+
+    var selectedItem = remember{
+        mutableStateOf("Seleccione")
+    }
 
     var expandido = remember{
         mutableStateOf(false)
@@ -26,7 +30,7 @@ fun Spinner(
         onClick = { expandido.value = true })
     {
         androidx.compose.material3.Text(
-            text = selectedItem,
+            text = selectedItem.value,
             overflow = TextOverflow.Ellipsis,
             maxLines = 1,
             modifier = Modifier.weight(1f)
@@ -37,14 +41,16 @@ fun Spinner(
         onDismissRequest = { expandido.value = false }
     ) {
 
-        itemList.forEach {
+        itemList.forEach { option ->
             DropdownMenuItem(onClick = {
+                selectedItem.value = option
                 expandido.value = false
             })
             {
-                Text(text = it)
 
-                onItemSelected(it)
+                Text(text = option)
+
+                onItemSelected(selectedItem.value)
             }
 
         }

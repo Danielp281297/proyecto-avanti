@@ -38,7 +38,7 @@ class OkHttpRequest() {
                         // Por ende, se quitan estos, para poder crear el objeto json sin inconvenientes
                         //.replaceFirst("[", "", false).replaceAfterLast("}", "")
 
-                    Log.d("PRUEBA", resultado.toString())
+                    Log.d("resultado", resultado.toString())
 
                 }
 
@@ -51,14 +51,15 @@ class OkHttpRequest() {
 
     }
 
-    fun userPostRequest(url: String, json:String) {
+    fun enviarPost(url: String, requestBody: FormBody)
+    {
 
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
-        val body = RequestBody.create(mediaType, json)
+        //val body = RequestBody.create(MediaType)
         val request = Request.Builder().
-                                post(body).
-                                url(url).
-                                build()
+        post(requestBody).
+        url(url).
+        build()
 
         // Se envia la peticion por medio del Callback de okHttp3
         client.newCall(request = request).enqueue(sendRequest)
