@@ -3,6 +3,7 @@ package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -84,7 +85,9 @@ fun InicioCliente()
 
     val scope = rememberCoroutineScope()
 
-    ticketsContent(idUsuario = 1, { ticket -> ticketsCliente.add(ticket) })
+    ticketsContent(idUsuario = idUsuario.value, { ticket -> ticketsCliente.add(ticket) })
+
+    Log.d("Respuesta", ticketsCliente.toString())
 
     Scaffold(
         containerColor = Color.White,
@@ -176,7 +179,7 @@ fun ticketsContent(idUsuario: Int, function: (Ticket) -> Unit): MutableList<Tick
     Retrofit.seleccionarTickets("http://192.168.0.104/Daniel/IncidenciasAvanti/PHP/seleccionar_tickets.php/" ,
         { retrofit ->
 
-            val service = retrofit!!.create(ApiServices::class.java).getTickets()
+            val service = retrofit!!.create(ApiServices::class.java).getTicketsById(idUsuario)
 
             service.enqueue(object : Callback<List<Ticket>> {
                 override fun onResponse(
@@ -194,7 +197,7 @@ fun ticketsContent(idUsuario: Int, function: (Ticket) -> Unit): MutableList<Tick
 
 
                         }
-
+                        
 
                     }
                 }
@@ -214,11 +217,20 @@ fun ticketsContent(idUsuario: Int, function: (Ticket) -> Unit): MutableList<Tick
 
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TicketsCliente(ticket: Ticket)
 {
 
-    Box(modifier = Modifier.fillMaxWidth())
+    var mostrarAlertDialogTicket = remember{
+        mutableStateOf(false)
+    }
+
+    Box(modifier = Modifier.fillMaxWidth().clickable {
+
+        mostrarAlertDialogTicket.value = true
+
+    })
     {
         Column(modifier = Modifier.fillMaxWidth().padding(1.dp, 5.dp, 1.dp, 5.dp).border(1.dp, Color.Black))
         {
@@ -234,7 +246,24 @@ fun TicketsCliente(ticket: Ticket)
         }
     }
 
+    if (mostrarAlertDialogTicket.value)
+    {
+
+        AlertDialog(
+            modifier = Modifier.wrapContentHeight(),
+            onDismissRequest = { mostrarAlertDialogTicket.value = false },
+            content = {
+
+                TicketDesplegado(ticket)
+
+            }
+
+        )
+
+    }
+
 }
+
 
 @Preview(showBackground = true)
 @Composable
