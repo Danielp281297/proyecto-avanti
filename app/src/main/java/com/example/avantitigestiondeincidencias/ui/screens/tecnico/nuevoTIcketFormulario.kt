@@ -41,32 +41,29 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.avantitigestiondeincidencias.AVANTI.EstadoTicket
+import com.example.avantitigestiondeincidencias.AVANTI.PrioridadTicket
+import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
+import com.example.avantitigestiondeincidencias.AVANTI.TipoTicket
 import com.example.avantitigestiondeincidencias.MainActivity
-import com.example.avantitigestiondeincidencias.Request.ApiServices
-import com.example.avantitigestiondeincidencias.Request.OkHttpRequest
-import com.example.avantitigestiondeincidencias.Request.Retrofit
+import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
 import com.example.avantitigestiondeincidencias.espacioSpacer
 import com.example.avantitigestiondeincidencias.modeloButton
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.Spinner
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
-import okhttp3.FormBody
-import org.json.JSONObject
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-
-data class peticionTicket(val idUsusario: Int, val tipo: String, val prioridad: String, val descripcion: String)
+import kotlinx.coroutines.withContext
+import java.time.LocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun nuevoTicketFormulario(function: () -> Unit)
+fun nuevoTicketFormulario(idClienteInterno: Int, lambda: (/*List<Ticket>*/) -> Unit)
 {
 
     val context = LocalContext.current
 
-    var idUsuario = 1
     val prioridadTicket = listOf<String>("BAJA", "MEDIA", "ALTA", "URGENTE")
     val tipoEvento = listOf("Incidencia", "Solicitud", "Mantenimiento", "Control de cambio")
 
@@ -75,16 +72,22 @@ fun nuevoTicketFormulario(function: () -> Unit)
     }
 
     var prioridadState = remember {
-        mutableStateOf("")
+        mutableStateOf(1)
     }
 
-    var tipoEventoState = remember{
-        mutableStateOf("")
+    var tipoTicketState = remember{
+        mutableStateOf(1)
     }
 
     val focusRequester = remember{
         FocusRequester()
     }
+
+    var insertarTicketState = remember{
+        mutableStateOf(false)
+    }
+
+    var ticket = Ticket()
 
     Box(modifier = Modifier.wrapContentHeight().padding(0.dp).background(Color.White), contentAlignment = Alignment.Center)
     {
@@ -101,28 +104,28 @@ fun nuevoTicketFormulario(function: () -> Unit)
 
                 Spacer(modifier = espacioSpacer)
 
-                Row(modifier = Modifier)
+                Column(modifier = Modifier)
                 {
 
-                    Column(modifier = Modifier.weight(1f))
+                    Column(modifier = Modifier)
                     {
-                        Text("Tipo de evento")
+                        Text("Tipo de ticket")
                         Spinner(modifier = Modifier,
                             itemList = tipoEvento,
                             onItemSelected = { option ->
-                                tipoEventoState.value = option
+                                tipoTicketState.value = tipoEvento.indexOf(option) + 1
                             })
                     }
 
                     Spacer(modifier = espacioSpacer)
 
-                    Column(modifier = Modifier.weight(0.9f))
+                    Column(modifier = Modifier)
                     {
                         Text("Prioridad")
                         Spinner(modifier = Modifier,
                             itemList = prioridadTicket,
                             onItemSelected = { option ->
-                                prioridadState.value = option
+                                prioridadState.value = prioridadTicket.indexOf(option) + 1
                             })
                     }
 
@@ -168,18 +171,8 @@ fun nuevoTicketFormulario(function: () -> Unit)
                     shape = RectangleShape,
                     onClick = {
 
-                        // Se envia la peticion
-                        if(validarPeticionTicket(context, tipoEventoState.value, prioridadState.value, descripcionState.value)) {
-                            crearTicket(
-                                peticionTicket(
-                                    idUsuario,
-                                    tipoEventoState.value,
-                                    prioridadState.value,
-                                    descripcionState.value
-                                )
-                            )
-                            function()
-                        }
+                        insertarTicketState.value = true
+
                     }
                 )
                 {
@@ -192,6 +185,59 @@ fun nuevoTicketFormulario(function: () -> Unit)
 
     }
 
+    // Si se oprime el boton ABRIR TICKET, se guarda la informacion de la base de datos
+    if (insertarTicketState.value) {
+
+        //Se envia la consulta en una corrutina
+        LaunchedEffect(Unit)
+        {
+
+            if (validarContenidoTicket(
+                    context,
+                    tipoTicketState.value,
+                    prioridadState.value,
+                    descripcionState.value
+                )
+            ) {
+
+                withContext(Dispatchers.IO) {
+
+                    // Se envia la peticion
+
+
+                    ticket = Ticket(
+                        hora = LocalTime.now().toString(),
+                        fecha = java.time.LocalDate.now().toString(),
+                        descripcion = descripcionState.value,
+                        observaciones = "Sin observaciones",
+                        idTipoTicket = tipoTicketState.value,
+                        idPrioridadTicket = prioridadState.value,
+                        idEstadoTicket = 1, // abierto
+                        idClienteInterno = idClienteInterno,
+                        idTecnico = 1
+
+                    )
+
+                    TicketRequests().insertarTicketByClienteInternoId(ticket/*, { tickets ->
+
+                        lambda(tickets)
+
+                    }*/)
+
+                    lambda()
+
+                    insertarTicketState.value = false
+
+
+                }
+
+            }
+
+
+
+        }
+    }
+
     val view = LocalView.current
 
     LaunchedEffect(Unit) {
@@ -201,18 +247,18 @@ fun nuevoTicketFormulario(function: () -> Unit)
 
 }
 
-fun validarPeticionTicket(context: Context, tipoEventoState: String, prioridadState: String, descripcionState: String): Boolean
+fun validarContenidoTicket(context: Context, tipoEvento: Int, prioridad: Int, descripcion: String): Boolean
 {
 
     var bandera = false
 
-    if(tipoEventoState.isBlank() || prioridadState.isBlank())
+    if((tipoEvento < 1 && tipoEvento > 4) || (prioridad < 0 && prioridad > 4))
     {
 
         Toast.makeText(context, "Los campos no pueden quedar vacios.", Toast.LENGTH_SHORT).show()
 
     }else
-    if(descripcionState.isBlank()) // Se comprueba que la descripcion no este vacia, ni conformada por espacios
+    if(descripcion.isBlank()) // Se comprueba que la descripcion no este vacia, ni conformada por espacios
     {
 
         Toast.makeText(context, "Descripcion invalida. Intente de nuevo.", Toast.LENGTH_SHORT).show()
@@ -224,26 +270,12 @@ fun validarPeticionTicket(context: Context, tipoEventoState: String, prioridadSt
 
 }
 
-fun crearTicket(peticion: peticionTicket)
-{
-
-    val requestBody = FormBody.Builder()
-        .add("idUsuario", peticion.idUsusario.toString()) // Aquí defines el nombre y valor
-        .add("tipoEvento", peticion.tipo)
-        .add("prioridad", peticion.prioridad)
-        .add("descripcion", peticion.descripcion)
-        .build()
-
-    OkHttpRequest().enviarPost("http://192.168.0.104/Daniel/IncidenciasAvanti/PHP/crear_ticket.php/", requestBody)
-
-}
-
 @Preview(showBackground = true)
 @Composable
 fun nuevoTicketFormularioPreview() {
     AVANTITIGestionDeIncidenciasTheme {
 
-        nuevoTicketFormulario({})
+        nuevoTicketFormulario(0, {})
 
     }
 }

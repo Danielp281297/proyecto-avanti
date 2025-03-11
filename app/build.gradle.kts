@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "1.9.0"
 }
 
 android {
@@ -50,17 +51,27 @@ dependencies {
     implementation ("androidx.compose.foundation:foundation:1.7.6")
     implementation ("com.google.accompanist:accompanist-pager-indicators:0.30.1")
 
-    // OkHTTP
-    implementation("com.squareup.okhttp3:okhttp:4.10.0")
-    implementation ("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+    //Navigation Host
+    implementation ("androidx.navigation:navigation-compose:2.8.5")
 
     // Serialization
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
 
-    // Retrofit
-    implementation ("com.squareup.retrofit2:retrofit:2.11.0")
-    implementation ("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
-    implementation ("com.squareup.retrofit2:converter-gson:2.11.0")
+    // Permisos
+    implementation ("com.google.accompanist:accompanist-permissions:0.29.0-alpha")
+
+    //Supabase
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.1.1"))
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:auth-kt")
+    implementation("io.github.jan-tennert.supabase:realtime-kt")
+
+    // Okhttp de Ktor para realizar las peticiones a la base de datos
+    implementation("io.ktor:ktor-client-okhttp:3.1.1")
+
+    // Corrutinas de kotlinx
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1") // Para Android
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

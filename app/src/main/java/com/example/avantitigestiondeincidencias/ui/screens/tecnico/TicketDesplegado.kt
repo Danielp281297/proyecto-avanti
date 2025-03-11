@@ -25,7 +25,7 @@ import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncide
 
 @Composable
 fun TicketDesplegado(ticket: Ticket) {
-
+/*
     Column(modifier = Modifier.fillMaxWidth().padding(1.dp, 5.dp, 1.dp, 5.dp).border(1.dp, Color.Black).background(Color.White))
     {
 
@@ -40,7 +40,7 @@ fun TicketDesplegado(ticket: Ticket) {
         Text(text = " Tipo de ticket: ${ticket.tipo}")
         Text(text = " Descripción: ${ticket.descripcion}")
         Text(text = " Estado: ${ticket.estado}")
-        Text(text = " Técnico Encargado: ${if(ticket.nombreTecnico != "AVANTI BY FRIGILUX,") ticket.nombreTecnico else " "} ")
+        //Text(text = " Técnico Encargado: ${if(ticket.nombreTecnico != "AVANTI BY FRIGILUX,") ticket.nombreTecnico else " "} ")
 
         Spacer(modifier = espacioSpacer)
 
@@ -59,6 +59,7 @@ fun TicketDesplegado(ticket: Ticket) {
         }
 
     }
+    */
 }
 
 @Preview(showBackground = true)

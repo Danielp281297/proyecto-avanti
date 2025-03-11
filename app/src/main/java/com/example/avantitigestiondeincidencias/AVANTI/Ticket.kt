@@ -1,26 +1,44 @@
 package com.example.avantitigestiondeincidencias.AVANTI
 
-import java.sql.Time
-import java.sql.Date
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class Ticket(
+    @SerialName("id_ticket")
     val id: Int = 0,
-    val fecha: String = "",
-    val hora: String = "",
+    @SerialName("fecha_ticket")
+    var fecha: String = "",
+    @SerialName("hora_ticket")
+    var hora: String = "",
+    @SerialName("descripción_ticket")
     val descripcion: String = "",
-    val observaciones: String = "",
-    val tipo: String = "",
-    val prioridad: String = "",
-    val estado: String = "",
+    @SerialName("observaciones_ticket")
+    val observaciones: String = " ",
 
-    val cedulaEmpleado: Int = 0,
-    val nombreEmpleado: String = "",
-    val apellidoEmpleado: String = "",
-    val departamento: String = "",
-    val sede: String = "",
-    val piso: Int = 0,
+    @SerialName("id_tipo_ticket")
+    val idTipoTicket: Int = 0,
+    @SerialName("id_prioridad_ticket")
+    val idPrioridadTicket: Int = 0,
+    @SerialName("id_estado_ticket")
+    val idEstadoTicket: Int = 0,
+    @SerialName("id_cliente_interno")
+    var idClienteInterno: Int = 0,
+    @SerialName("id_técnico")
+    var idTecnico: Int = 0,
 
-    val cedulaTecnico: Int = 0,
-    val nombreTecnico: String = "",
-    val apellidoTecnico: String = ""
+
+
+
+    @SerialName("tipo_ticket")
+    val tipo: TipoTicket = TipoTicket(),
+    @SerialName("prioridad_ticket")
+    val prioridad: PrioridadTicket = PrioridadTicket(),
+    @SerialName("estado_ticket")
+    val estado: EstadoTicket = EstadoTicket(),
+    @SerialName("cliente_interno")
+    val clienteInterno: ClienteInterno = ClienteInterno(),
+    @SerialName("técnico")
+    val tecnico: Tecnico = Tecnico()
+
 )

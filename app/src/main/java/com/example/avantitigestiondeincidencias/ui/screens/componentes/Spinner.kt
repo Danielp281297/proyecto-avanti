@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -35,7 +36,8 @@ fun Spinner(
         expanded = expandido.value,
         onExpandedChange = {
             expandido.value = true
-        }
+        },
+        modifier = modifier
     )
     {
         TextField(
@@ -51,7 +53,7 @@ fun Spinner(
             trailingIcon = {
 
                 TrailingIcon(
-                    expanded = expandido.value,
+                    expanded = expandido.value
 
                 )
             }
@@ -70,7 +72,7 @@ fun Spinner(
                 })
                 {
 
-                    Text(text = option)
+                    Text(text = option, fontSize = 13.sp)
 
                     onItemSelected(selectedItem.value)
                 }
