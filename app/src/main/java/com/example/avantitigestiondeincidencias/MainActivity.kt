@@ -34,6 +34,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
+import com.example.avantitigestiondeincidencias.ui.screens.tecnico.DatePickerScreen
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.HorizontalPagerBottomBarAdministrador
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.HorizontalPagerBottomBarTecnico
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InicioAdministrador
@@ -121,7 +122,8 @@ fun destination()
         {
 
             //PantallaNotificacion()
-            PantallaPruebas(navController)
+            DatePickerScreen()
+            //PantallaPruebas(navController)
             //InicioCliente(navController)
             //nuevoTicketFormulario(3) { }
             //HorizontalPagerBottomBarAdministrador(navController = navController)

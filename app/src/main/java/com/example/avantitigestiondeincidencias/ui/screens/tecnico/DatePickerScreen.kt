@@ -1,89 +1,70 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
-import android.app.DatePickerDialog
-import android.widget.DatePicker
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
-import java.util.Calendar
-import java.util.Date
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DatePickerScreen()
 {
 
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun datePickerDialog(function: () -> Unit)
-{
-
-    var anyo: Int = 0
-    var mes: Int = 0
-    var dias: Int = 0
-
-    val calendar = Calendar.getInstance()
-    anyo = calendar.get(Calendar.YEAR)
-    mes = calendar.get(Calendar.MONTH)
-    dias = calendar.get(Calendar.DAY_OF_MONTH)
-    calendar.time = Date()
-
-    val context = LocalContext.current
-    var showDialog = remember{
+    var showDatePickerState = remember {
         mutableStateOf(false)
     }
 
-    val fecha = remember{
-        mutableStateOf<String>("")
+    var fechaState = remember {
+        mutableStateOf("")
     }
 
-
-
-    val datePickerDiaog = DatePickerDialog(context,
-        {_: DatePicker, anyo: Int, mes: Int, diasMes: Int ->
-
-            fecha.value = "$diasMes-${mes+1}-$anyo"
-
-        }, anyo, mes, dias
-
-    )
-
-    Button(
-        onClick = { datePickerDiaog.show()}
-    )
+    var showDatePicker = false
+    
+    Column(modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally)
     {
-        Text(text = "IMPRIMIR FECHA", modifier = Modifier.align(Alignment.CenterVertically))
+        Row {
+            com.example.avantitigestiondeincidencias.ui.screens.componentes.DatePickerDialog(modifier = Modifier.padding(15.dp).weight(1F))
+            {
+                fechaState.value = it
+            }
+            //Text("dfadsf")
+            Text("dfadsf", modifier = Modifier.padding(15.dp).weight(1F))
+        }
     }
 
-    Text(text = fecha.value)
-
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DatePicker() {
 
 
-    Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center)
+    if (showDatePickerState.value == true)
     {
 
 
 
     }
-
+    
 }
+
+
 
 @Preview(showBackground = true)
 @Composable
@@ -91,7 +72,7 @@ fun DatePickerScreenPreview() {
 
     AVANTITIGestionDeIncidenciasTheme {
 
-        datePickerDialog {  }
+        DatePickerScreen()
 
     }
 

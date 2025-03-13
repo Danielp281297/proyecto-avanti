@@ -76,11 +76,12 @@ fun InformeTecnico()
                 {
                     Column(modifier = Modifier.fillMaxWidth().weight(1F)) {
                         Text(text = "Fecha inicial")
-
-
+                        com.example.avantitigestiondeincidencias.ui.screens.componentes.DatePickerDialog(modifier = Modifier) {  }
                     }
+                    Spacer(modifier = Modifier.padding(10.dp))
                     Column(modifier = Modifier.fillMaxWidth().weight(1F)) {
                         Text(text = "Fecha final")
+                        com.example.avantitigestiondeincidencias.ui.screens.componentes.DatePickerDialog(modifier = Modifier) {  }
 
                     }
                 }
