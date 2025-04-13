@@ -11,6 +11,8 @@ data class Usuario(
     val nombre: String = " ",
     @SerialName("contraseña_usuario")
     val password: String = " ",
+    @SerialName("id_tipo_usuario")
+    val idTipoUsuario: Int = 0,
     @SerialName("tipo_usuario")
     val tipoUsuario: TipoUsuario = TipoUsuario()
 )

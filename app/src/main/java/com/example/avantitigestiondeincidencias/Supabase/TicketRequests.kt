@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import com.example.avantitigestiondeincidencias.AVANTI.Accion
+import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import io.github.jan.supabase.annotations.SupabaseExperimental
 import io.github.jan.supabase.postgrest.from
@@ -26,7 +28,7 @@ import kotlinx.coroutines.selects.select
 
 class TicketRequests(): SupabaseClient() {
 
-    val columnas = Columns.raw("""
+    val request = """
             id_ticket,
             fecha_ticket,
             hora_ticket,
@@ -48,9 +50,9 @@ class TicketRequests(): SupabaseClient() {
                 id_estado_ticket,
                 tipo_estado_ticket
             ),
-            cliente_interno(
+            cliente_interno!inner(
                 id_cliente_interno,
-                empleado(
+                empleado!inner(
                     id_empleado,
                     cédula_empleado,
                     primer_nombre_empleado,
@@ -76,13 +78,13 @@ class TicketRequests(): SupabaseClient() {
                     )
                 )
             ),
-            técnico(
+            técnico!inner(
                 id_técnico,
                 grupo_atención(
                     id_grupo_atención,
                     nombre_grupo_atención
                 ),
-                empleado(
+                empleado!inner(
                     id_empleado,
                     cédula_empleado,
                     primer_nombre_empleado,
@@ -109,7 +111,8 @@ class TicketRequests(): SupabaseClient() {
                 )
             )
             
-        """.trimIndent())
+        """.trimIndent()
+    val columnas = Columns.raw(request)
 
     // Metodo para mostrar los tickets. En el caso del inicio del administrador, se mostraran todos los tickets que no esten cerrados
     @OptIn(SupabaseExperimental::class)
@@ -189,13 +192,13 @@ class TicketRequests(): SupabaseClient() {
 
     }
 
-    suspend fun buscarTicketByClienteInternoId(id: Int, lambda: (List<Ticket>) -> Unit) {
+    suspend fun buscarTicketByClienteInternoId(idEmpleado: Int, lambda: (List<Ticket>) -> Unit) {
 
         val resultados =  getSupabaseClient().from("ticket").select(columns = this.columnas){
 
             // Se ordenan los datos de forma descendente
             order(column = "id_ticket", order = Order.DESCENDING)
-            filter { eq("id_cliente_interno", id) }
+            filter { eq("cliente_interno.empleado.id_empleado", idEmpleado) }
             limit(count = 50)
 
         }.decodeList<Ticket>()
@@ -219,15 +222,14 @@ class TicketRequests(): SupabaseClient() {
         channelFlow.onEach {
 
             // Se buscan todos las filas que pertenezcan al ID del cliente interno
+
             mostrarTablaTicket {
 
                 dataset.clear()
 
                 it.forEach { ticket ->
-                    if (ticket.idClienteInterno == id)
-                    {
+
                         dataset.add(ticket)
-                    }
                 }
 
             }
@@ -255,7 +257,7 @@ class TicketRequests(): SupabaseClient() {
         delay(1000)
         getSupabaseClient().from("ticket").update({
             set("id_estado_ticket", 3)
-            set("id_técnico", idTecnico)
+            set("técnico.id_empleado", idTecnico)
         }){
             filter{
                 eq("id_ticket", idTicket)
@@ -266,16 +268,20 @@ class TicketRequests(): SupabaseClient() {
 
     suspend fun buscarTicketByTecnicoId(id: Int, lambda: (List<Ticket>) -> Unit) {
 
+
         val resultados =  getSupabaseClient().from("ticket").select(columns = this.columnas){
+
 
             // Se ordenan los datos de forma descendente
             order(column = "id_ticket", order = Order.DESCENDING)
-            filter { eq("id_técnico", id) }
             limit(count = 50)
+
 
         }.decodeList<Ticket>()
 
-        lambda(resultados)
+        val lista = resultados.filter { it.tecnico.empleado.id == id }
+
+        lambda(lista)
 
     }
 
@@ -299,7 +305,7 @@ class TicketRequests(): SupabaseClient() {
                 dataset.clear()
 
                 it.forEach { ticket ->
-                    if (ticket.idTecnico == id)
+                    if (ticket.tecnico.id == id)
                     {
                         dataset.add(ticket)
                     }
@@ -334,6 +340,27 @@ class TicketRequests(): SupabaseClient() {
         getSupabaseClient().from("ticket").update({
             set("id_estado_ticket", 5)
         }){
+            filter {
+                eq("id_ticket", ticket.id)
+            }
+        }
+
+    }
+
+    suspend fun borrarTicket(ticket: Ticket)
+    {
+
+        Log.d("TICKET ID", ticket.id.toString())
+
+        // Primero, se verifica si el ticket tiene una accion asociada
+        getSupabaseClient().from("acción").delete(){
+            filter {
+                eq("id_ticket", ticket.id)
+            }
+        }
+
+        // Se borra el ticket
+        getSupabaseClient().from("ticket").delete{
             filter {
                 eq("id_ticket", ticket.id)
             }

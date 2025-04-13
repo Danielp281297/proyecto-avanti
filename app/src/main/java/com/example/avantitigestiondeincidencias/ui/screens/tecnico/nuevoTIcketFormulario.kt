@@ -59,7 +59,7 @@ import java.time.LocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun nuevoTicketFormulario(idClienteInterno: Int, lambda: (/*List<Ticket>*/) -> Unit)
+fun nuevoTicketFormulario(idClienteInterno: Int, lambda: () -> Unit)
 {
 
     val context = LocalContext.current

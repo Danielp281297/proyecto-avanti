@@ -9,13 +9,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -26,11 +29,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -40,6 +45,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.DescripcionAccion
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
+import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.AccionRequest
 import com.example.avantitigestiondeincidencias.Supabase.TecnicoRequest
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
@@ -55,6 +61,8 @@ import kotlinx.coroutines.withContext
 @Composable
 fun TicketDesplegadoTecnico(navController: NavController, ticket: Ticket)
 {
+
+    val image = R.drawable.ticket_solid
 
     val context = LocalContext.current
 
@@ -88,7 +96,7 @@ fun TicketDesplegadoTecnico(navController: NavController, ticket: Ticket)
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    Color.Transparent
+                    Color.White
                 ),
                 title = {
                     androidx.compose.material3.Text(
@@ -107,6 +115,25 @@ fun TicketDesplegadoTecnico(navController: NavController, ticket: Ticket)
 
         Column(modifier = Modifier.fillMaxSize().padding(25.dp).verticalScroll(state = scrollState, enabled = true), verticalArrangement = Arrangement.Center)
         {
+            Spacer(modifier = Modifier.padding(50.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center)
+            {
+                androidx.compose.material3.Icon(
+                    painter = painterResource(image),
+                    contentDescription = "",
+                    modifier = Modifier.size(50.dp).rotate(135F)
+                )
+            }
+            Spacer(modifier = Modifier.padding(5.dp))
+            Text("Ticket - " + ticket.tipo.tipoTicket,
+                modifier = Modifier.fillMaxWidth(),
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                fontSize = fuenteLetraTicketDesplegado
+            )
+            Spacer(modifier = Modifier.padding(5.dp))
+            HorizontalDivider(modifier = Modifier.height(5.dp))
+
             Spacer(modifier = Modifier.padding(30.dp))
             Text(text = "TICKET: ", fontSize = fuenteLetraTicketDesplegado)
             Text(text = "${ticket.id} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
@@ -204,7 +231,7 @@ fun TicketDesplegadoTecnico(navController: NavController, ticket: Ticket)
                 }
             )
             {
-                androidx.compose.material3.Text(text = "CERRAR TICKET", color = Color.White)
+                androidx.compose.material3.Text(text = "ACTUALIZAR TICKET", color = Color.White)
             }
 
             Spacer(modifier = Modifier.padding(30.dp))

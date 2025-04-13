@@ -11,6 +11,9 @@ data class Departamento(
     val nombre: String = " ",
     @SerialName("piso_departamento")
     val piso: Int = 0,
+    @SerialName("id_sede")
+    val idSede: Int = 0,
+
     @SerialName("sede")
-    val sede: Sede = Sede()
+    var sede: Sede = Sede()
 )

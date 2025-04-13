@@ -33,9 +33,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.example.avantitigestiondeincidencias.AVANTI.Empleado
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
 import com.example.avantitigestiondeincidencias.espacioSpacer
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldConMenuLateral
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -51,7 +54,7 @@ val rojo = Color(0xFFD50000)
 
 @OptIn(ExperimentalMaterial3Api::class, DelicateCoroutinesApi::class)
 @Composable
-fun InicioAdministrador(navController: NavController)
+fun InicioAdministrador(/*empleado: Empleado, */navController: NavController)
 {
 
     val scope = rememberCoroutineScope()
@@ -72,35 +75,34 @@ fun InicioAdministrador(navController: NavController)
         mutableStateOf<Int>(0)
     }
 
-    var ticketstate = remember{
-        mutableStateOf(false)
-    }
-
+    /*
     var pantallaCargaState = remember{
         mutableStateOf(false)
     }
+    */
 
     // Corrutina para obtener los tickets
     LaunchedEffect(Unit)
     {
 
         withContext(Dispatchers.IO) {
-            pantallaCargaState.value = true
+            //pantallaCargaState.value = true
             TicketRequests().mostrarTablaTicket { tickets ->
 
                 dataset.addAll(tickets)
 
             }
-            pantallaCargaState.value = false
+            //pantallaCargaState.value = false
 
         }
 
     }
-
+/*
     if(pantallaCargaState.value)
     {
         PantallaCarga()
     }
+    */
 
 
     // Se almacenan los valores de para los cuadros de los tickets
@@ -119,7 +121,7 @@ fun InicioAdministrador(navController: NavController)
                     Color.Transparent
                 ),
                 title = {
-                    Text("Inicio", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                    Text("Inicio", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
                 }
             )
         },
@@ -149,9 +151,7 @@ fun InicioAdministrador(navController: NavController)
                         items(dataset.count()) { index ->
 
                             //Si el ticket no es abierto, se muestra en los ultimos tickets
-
-                                ultimosTicketsLazyColumnContent(dataset[index], ticketstate, navController)
-                                Divider()
+                            ultimosTicketsLazyColumnContent(dataset[index], navController)
 
                         }
 
@@ -189,24 +189,6 @@ fun InicioAdministrador(navController: NavController)
 
     }
 
-
-}
-
-@Composable
-fun PantallaCarga()
-{
-
-    Box(modifier = Modifier.fillMaxSize().background(Color.White))
-    {
-
-        Column(modifier = Modifier.align(Alignment.Center))
-        {
-
-            Text("CARGANDO", fontWeight = FontWeight.Bold)
-
-        }
-
-    }
 
 }
 
@@ -328,11 +310,12 @@ fun pieChartTecnico(abiertosTicketContador: Int, cerradosTicketContador: Int, ur
 
 @OptIn(ExperimentalMaterial3Api::class, DelicateCoroutinesApi::class)
 @Composable
-fun ultimosTicketsLazyColumnContent(ticket: Ticket, ticketstate: MutableState<Boolean>, navController: NavController) {
+fun ultimosTicketsLazyColumnContent(ticket: Ticket, navController: NavController) {
 
 
     Column(
         modifier = Modifier.fillMaxWidth()
+            .background(Color.Transparent)
             .padding(1.dp, 5.dp, 1.dp, 5.dp)
             .clickable {
 
@@ -350,12 +333,6 @@ fun ultimosTicketsLazyColumnContent(ticket: Ticket, ticketstate: MutableState<Bo
             {
 
                 Text(text = ticket.tipo.tipoTicket, fontWeight = FontWeight.Bold, modifier = Modifier.width(210.dp))
-
-                Text(
-                    text = "${ticket.clienteInterno.empleado.departamento.sede.nombre}: ${ticket.clienteInterno.empleado.departamento.piso} - ${ticket.clienteInterno.empleado.departamento.nombre}",
-                    modifier = Modifier.padding(0.dp),
-                    fontSize = 12.sp
-                )
 
             }
 
@@ -391,7 +368,10 @@ fun ultimosTicketsLazyColumnContent(ticket: Ticket, ticketstate: MutableState<Bo
 
         }
 
+        HorizontalDivider()
+
     }
+    Spacer(modifier = Modifier.padding(5.dp))
 
 }
 
@@ -412,10 +392,11 @@ fun darkModeScreen()
 fun GreetingPreview() {
 
     val context = LocalContext.current
+    val navController = rememberNavController()
 
     AVANTITIGestionDeIncidenciasTheme {
 
-        PantallaCarga()
+        InicioAdministrador(navController)
 
     }
 }

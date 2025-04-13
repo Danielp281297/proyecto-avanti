@@ -3,6 +3,7 @@ package com.example.avantitigestiondeincidencias.Supabase
 import android.util.Log
 import com.example.avantitigestiondeincidencias.AVANTI.Accion
 import com.example.avantitigestiondeincidencias.AVANTI.DescripcionAccion
+import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
@@ -19,6 +20,118 @@ class AccionRequest: SupabaseClient() {
             descripción_acción_ejecutada
         )   
         """.trimIndent())
+
+    val accionRequest = Columns.raw("""
+        id_acción,
+        fecha_acción,
+        hora_acción,
+        descripción_acción( 
+            descripción_acción_ejecutada
+        ),
+        ticket(
+            id_ticket,
+            fecha_ticket,
+            hora_ticket,
+            descripción_ticket,
+            observaciones_ticket,
+            id_tipo_ticket,
+            id_estado_ticket,
+            id_cliente_interno,
+            id_técnico,
+            tipo_ticket(
+                id_tipo_ticket,
+                nombre_tipo_ticket
+            ),
+            prioridad_ticket(
+                id_prioridad_ticket,
+                nivel_prioridad_ticket
+            ),
+            estado_ticket(
+                id_estado_ticket,
+                tipo_estado_ticket
+            ),
+            cliente_interno(
+                id_cliente_interno,
+                empleado(
+                    id_empleado,
+                    cédula_empleado,
+                    primer_nombre_empleado,
+                    segundo_nombre_empleado,
+                    primer_apellido_empleado,
+                    segundo_apellido_empleado,
+                    correo_electrónico_empleado,
+                    teléfono_empleado(
+                        extensión_teléfono,
+                        código_operadora_teléfono(
+                            operadora_teléfono
+                        )
+                    ),
+                    departamento(
+                        nombre_departamento,
+                        piso_departamento,
+                        sede(
+                            nombre_sede
+                        )
+                    ),
+                    cargo_empleado(
+                        tipo_cargo_empleado
+                    )
+                )
+            ),
+            técnico(
+                id_técnico,
+                grupo_atención(
+                    id_grupo_atención,
+                    nombre_grupo_atención
+                ),
+                empleado(
+                    id_empleado,
+                    cédula_empleado,
+                    primer_nombre_empleado,
+                    segundo_nombre_empleado,
+                    primer_apellido_empleado,
+                    segundo_apellido_empleado,
+                    correo_electrónico_empleado,
+                    id_usuario,
+                    teléfono_empleado(
+                        extensión_teléfono,
+                        código_operadora_teléfono(
+                            operadora_teléfono
+                        )
+                    ),
+                    departamento(
+                        nombre_departamento,
+                        piso_departamento,
+                        sede(
+                            nombre_sede
+                        )
+                    ),
+                    cargo_empleado(
+                        tipo_cargo_empleado
+                    ),
+                    usuario(
+                        id_usuario
+                    )
+                )
+            )
+        )
+    """.trimIndent())
+
+    suspend fun buscarAccionesById(fechaInicio: String, fechaFin: String): List<Accion> {
+
+         val resultados = getSupabaseClient().from("acción").select(columns = accionRequest){
+
+             filter {
+                 gte("fecha_acción", fechaInicio)
+                 lte("fecha_acción", fechaFin)
+             }
+
+         }
+             .decodeList<Accion>()
+
+        return resultados
+    }
+
 
     suspend fun buscarDescripcionAccion(): List<DescripcionAccion> {
 

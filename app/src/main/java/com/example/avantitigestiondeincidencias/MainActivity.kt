@@ -33,16 +33,24 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.avantitigestiondeincidencias.AVANTI.Empleado
+import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
+import com.example.avantitigestiondeincidencias.ui.screens.tecnico.BusquedaUsuarios
+import com.example.avantitigestiondeincidencias.ui.screens.tecnico.CrearUsuario
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.DatePickerScreen
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.HorizontalPagerBottomBarAdministrador
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.HorizontalPagerBottomBarTecnico
+import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InformeTecnico
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InicioAdministrador
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InicioCliente
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InicioTecnico
+import com.example.avantitigestiondeincidencias.ui.screens.tecnico.Login
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.PantallaNotificacion
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.PantallaPruebas
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.TicketDesplegadoAdministrador
+import com.example.avantitigestiondeincidencias.ui.screens.tecnico.TicketDesplegadoBusqueda
+import com.example.avantitigestiondeincidencias.ui.screens.tecnico.TicketDesplegadoCliente
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.TicketDesplegadoTecnico
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.nuevoTicketFormulario
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.showDatePicker
@@ -121,12 +129,17 @@ fun destination()
         composable("pantallaPruebas")
         {
 
+            //HorizontalPagerBottomBarTecnico(/*Empleado(), */navController)
+            //Login(navController)
+            //CrearUsuario(navController)
+            //InformeTecnico()
             //PantallaNotificacion()
-            DatePickerScreen()
+            //DatePickerScreen()
             //PantallaPruebas(navController)
+            //BusquedaUsuarios(navController)
             //InicioCliente(navController)
             //nuevoTicketFormulario(3) { }
-            //HorizontalPagerBottomBarAdministrador(navController = navController)
+            //HorizontalPagerBottomBarAdministrador(Empleado(), navController = navController)
             //TicketDesplegadoAdministrador(navController, Ticket())
             //TicketDesplegadoTecnico(navController, Ticket())
         }
@@ -136,18 +149,26 @@ fun destination()
 
         }
 
-        composable(route = "principalCliente")
-        {
+        composable(route = "principalCliente"+ "/{empleado}",
+            arguments = listOf(navArgument(name = "empleado")
+            {type = NavType.StringType}))
+        { navBackStackEntry ->
 
-            InicioCliente(navController)
-            //nuevoTicketFormulario(3) { }
+            val empleado = Json.decodeFromString<Empleado>(navBackStackEntry.arguments!!.getString("empleado").toString())
+
+            //HorizontalPagerBottomBarAdministrador(empleado, navController = navController)
+            InicioCliente(empleado, navController)
 
         }
 
-        composable("principalAdministrador")
-        {
-            //HorizontalPagerBottomBarAdministrador(navController)
-            HorizontalPagerBottomBarAdministrador(navController = navController)
+        composable("principalAdministrador" + "/{empleado}",
+            arguments = listOf(navArgument(name = "empleado")
+            {type = NavType.StringType}))
+        { navBackStackEntry ->
+
+            val empleado = Json.decodeFromString<Empleado>(navBackStackEntry.arguments!!.getString("empleado").toString())
+
+            HorizontalPagerBottomBarAdministrador(empleado, navController = navController)
         }
 
         composable("ticketDesplegadoAdministrador/{ticket}",
@@ -160,10 +181,14 @@ fun destination()
             TicketDesplegadoAdministrador(navController = navController, ticket)
         }
 
-        composable("principalTécnico")
-        {
-            //HorizontalPagerBottomBarAdministrador(navController)
-            HorizontalPagerBottomBarTecnico(navController = navController)
+        composable("principalTécnico" + "/{tecnico}",
+            arguments = listOf(navArgument(name = "tecnico")
+            {type = NavType.StringType}))
+        { navBackStackEntry ->
+
+            val tecnico = Json.decodeFromString<Tecnico>(navBackStackEntry.arguments!!.getString("tecnico").toString())
+
+            HorizontalPagerBottomBarTecnico(tecnico, navController = navController)
         }
 
         composable("ticketDesplegadoTécnico/{ticket}",
@@ -174,6 +199,26 @@ fun destination()
             val ticket = Json.decodeFromString<Ticket>(navBackStackEntry.arguments!!.getString("ticket").toString())
 
             TicketDesplegadoTecnico(navController = navController, ticket)
+        }
+
+        composable("ticketDesplegadoCliente/{ticket}",
+            arguments = listOf(navArgument(name = "ticket")
+            {type = NavType.StringType}))
+        { navBackStackEntry ->
+
+            val ticket = Json.decodeFromString<Ticket>(navBackStackEntry.arguments!!.getString("ticket").toString())
+
+            TicketDesplegadoCliente(navController = navController, ticket)
+        }
+
+        composable("ticketDesplegadoBusqueda/{ticket}",
+            arguments = listOf(navArgument(name = "ticket")
+            {type = NavType.StringType}))
+        { navBackStackEntry ->
+
+            val ticket = Json.decodeFromString<Ticket>(navBackStackEntry.arguments!!.getString("ticket").toString())
+
+            TicketDesplegadoBusqueda(navController, ticket)
         }
 
     }

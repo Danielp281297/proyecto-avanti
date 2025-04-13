@@ -51,6 +51,10 @@ dependencies {
     implementation ("androidx.compose.foundation:foundation:1.7.6")
     implementation ("com.google.accompanist:accompanist-pager-indicators:0.30.1")
 
+    // APACHE POI para el excel
+    implementation ("org.apache.poi:poi:5.2.2")
+    implementation ("org.apache.poi:poi-ooxml:5.2.2")
+
     //Navigation Host
     implementation ("androidx.navigation:navigation-compose:2.8.5")
 

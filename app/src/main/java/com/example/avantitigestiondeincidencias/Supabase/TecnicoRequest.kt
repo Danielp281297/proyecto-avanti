@@ -5,6 +5,7 @@ import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.coroutines.delay
 
 
 class TecnicoRequest: SupabaseClient() {
@@ -37,5 +38,15 @@ class TecnicoRequest: SupabaseClient() {
         lambda(resultados)
 
     }
+
+    suspend fun seleccionarTecnicoById(id: Int): Tecnico {
+        return getSupabaseClient().from("técnico").select(columnasSpinnerTecnicos){
+            filter {
+                eq(column = "id_empleado", id)
+            }
+        }.decodeSingle<Tecnico>()
+
+    }
+
 
 }

@@ -12,12 +12,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Icon
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -27,9 +35,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
+import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.TecnicoRequest
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
 import com.example.avantitigestiondeincidencias.modeloButton
@@ -89,70 +101,20 @@ fun TicketDesplegadoAdministrador(navController: NavController, ticket: Ticket)
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    Color.Transparent
-                ),
-                title = {
-                    androidx.compose.material3.Text(
-                        "Ticket - " + ticket.tipo.tipoTicket,
-                        modifier = Modifier.fillMaxWidth(),
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            )
-        },
-        //Color de fondo
-        containerColor = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919)
-    )
-    {
+        ContenidoTicketDesplegado(navController, ticket) {
 
-        Column(modifier = Modifier.fillMaxSize().padding(25.dp), verticalArrangement = Arrangement.Center)
-        { 
-            
-            Text(text = "TICKET: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.id} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
+            //if(mostrarSpinnerState.value) {
+            Text("TÉCNICO : ", fontSize = fuenteLetraTicketDesplegado)
+            Spinner(
+                modifier = Modifier,
+                itemList = tecnicosList,
+                onItemSelected = { option ->
 
-            Text(text = "FECHA Y HORA: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.fecha} ${ticket.hora} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
+                    tecnicosListState.value = tecnicosList.indexOf(option) + 1
 
-            Text(text = "DESCRIPCIÓN: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.descripcion} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
+                })
+            //}
 
-            Text(text = "PRIORIDAD: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.prioridad.nivel} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
-
-            Text(text = "CLIENTE INTERNO: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.clienteInterno.empleado.primerNombre} ${ticket.clienteInterno.empleado.segundoNombre} ${ticket.clienteInterno.empleado.primerApellido} ${ticket.clienteInterno.empleado.segundoApellido} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
-
-            Text(text = "TELÉFONO: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.clienteInterno.empleado.telefonoPersona.codigoOperadoraTelefono.operadora}-${ticket.clienteInterno.empleado.telefonoPersona.extension} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
-
-            Text(text = "SEDE: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.clienteInterno.empleado.departamento.sede.nombre} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
-
-            Text(text = "DEPARTAMENTO: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.clienteInterno.empleado.departamento.piso} - ${ticket.clienteInterno.empleado.departamento.nombre}", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
-            Spacer(modifier = Modifier.padding(15.dp))
-            Column(modifier = Modifier)
-            {
-                Text("TÉCNICO : ", fontSize = fuenteLetraTicketDesplegado)
-
-                if(mostrarSpinnerState.value) {
-                    Spinner(
-                        modifier = Modifier,
-                        itemList = tecnicosList,
-                        onItemSelected = { option ->
-
-                            tecnicosListState.value = tecnicosList.indexOf(option) + 1
-
-                        })
-                }
-
-            }
             Spacer(modifier = Modifier.padding(15.dp))
             Button(modifier = modeloButton,
 
@@ -180,10 +142,8 @@ fun TicketDesplegadoAdministrador(navController: NavController, ticket: Ticket)
                 }
             )
             {
-                androidx.compose.material3.Text(text = "ENCARGAR TICKET", color = Color.White)
+                androidx.compose.material3.Text(text = "ASIGNAR TICKET", color = Color.White)
             }
-
-        }
 
     }
 
