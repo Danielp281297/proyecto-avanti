@@ -1,6 +1,9 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.graphics.drawable.AnimatedImageDrawable
+import android.os.Build
 import android.util.Log
+import android.widget.ImageView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,9 +50,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Empleado
+import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
+import com.example.avantitigestiondeincidencias.AVANTI.Usuario
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.EmpleadoRequest
 import com.example.avantitigestiondeincidencias.Supabase.TecnicoRequest
@@ -65,11 +72,11 @@ fun Login(navController: NavController)
 {
     
     var nombreUsuarioState = remember {
-        mutableStateOf("ralonzo@gmail.com")
+        mutableStateOf("admin")
     }
 
     var contrasenaUsuarioState = remember {
-        mutableStateOf("ralonzo1990")
+        mutableStateOf("1234")
     }
     
     var contrasenaVisibleState = remember {
@@ -188,7 +195,12 @@ fun Login(navController: NavController)
                     }
                 )
                 {
+                    if (ingresarbuttonState.value)
+                    {
+                        iconoCarga(Modifier)
+                    }else
                     Text(text = "INGRESAR", color = Color.White)
+
                 }
             }
             Spacer(modifier = Modifier.padding(5.dp))
@@ -203,25 +215,34 @@ fun Login(navController: NavController)
     val enviarPantallaState = remember{
         mutableStateOf(false)
     }
-    var data = remember{
-        mutableStateOf<Empleado?>(null)
+    var usuario = remember{
+        mutableStateOf<Usuario?>(null)
     }
+    var jsonState = remember {
+        mutableStateOf("")
+    }
+
     if (ingresarbuttonState.value)
     {
         LaunchedEffect(Unit) {
             withContext(Dispatchers.IO) {
 
-
-                data.value = EmpleadoRequest().obtenerDatosUsuario(nombreUsuarioState.value, contrasenaUsuarioState.value)
-                Log.d("DATA", data.value.toString())
-                if(data.value != null)
+                usuario.value = EmpleadoRequest().obtenerDatosUsuario(nombreUsuarioState.value, contrasenaUsuarioState.value)
+                if(usuario.value != null)
                 {
+                    
+                    Log.d("USUARIO", "Encontrado")
+                    enviarPantalla(usuario.value!!){ json ->
+                        jsonState.value = json
+                       enviarPantallaState.value = true
 
-
-                    enviarPantallaState.value = true
+                    }
 
                 }
-                else datosIncorrectosAlertDialogState.value = true
+                else {
+                    Log.d("USUARIO", "No encontrado")
+                    datosIncorrectosAlertDialogState.value = true
+                }
 
             }
             ingresarbuttonState.value = false
@@ -233,6 +254,7 @@ fun Login(navController: NavController)
     {
         AlertDialog(
             shape = RectangleShape,
+            containerColor = Color.White,
             onDismissRequest = {
                 datosIncorrectosAlertDialogState.value = false
             },
@@ -262,18 +284,73 @@ fun Login(navController: NavController)
 
     if (enviarPantallaState.value)
     {
-
-        enviarPantalla(data.value!!, navController)
         enviarPantallaState.value = false
+        navController.popBackStack()
+        pasarPantalla(usuario.value!!.idTipoUsuario, jsonState.value, navController)
+
     }
 
 }
 
 @Composable
-fun enviarPantalla(empleado: Empleado, navController: NavController)
+fun iconoCarga(modifier: Modifier)
+{
+    AndroidView(
+        modifier = modifier,
+        factory = { ctx ->
+            val imageView = ImageView(ctx)
+            val drawable = ctx.resources.getDrawable(R.drawable.cargando, null)
+            if (drawable is AnimatedImageDrawable) {
+                drawable.start()
+            }
+            imageView.setImageDrawable(drawable)
+            imageView
+        }
+    )
+}
+
+fun pasarPantalla(tipoUsuario: Int, json: String, navController: NavController)
 {
 
-    var json = Json.encodeToString(empleado)
+    when(tipoUsuario)
+    {
+        // Ingresar a la pantalla de Tecnico
+        1 -> navController.navigate("principalTécnico" + "/${json}")
+        2 -> navController.navigate("principalCliente" + "/${json}")
+        3 -> navController.navigate("principalAdministrador" + "/${json}")
+    }
+
+}
+
+suspend fun enviarPantalla(usuario: Usuario, jsonFormato: (json: String) -> Unit)
+{
+
+    var json = " "
+
+    when(usuario.idTipoUsuario)
+    {
+
+        1 -> {
+            val tecnico = EmpleadoRequest().seleccionarTecnicobyUsuarioId(usuario.id)
+            // Se crea el objeto json
+            json = Json { ignoreUnknownKeys = true }.encodeToString(tecnico)
+            }
+
+        2 -> {
+            val clienteInterno = EmpleadoRequest().seleccionarClienteInternobyUsuarioId(usuario.id)
+            json = Json { ignoreUnknownKeys = true }.encodeToString(clienteInterno)
+        }
+        
+        3 ->{
+            val administrador = EmpleadoRequest().seleccionarTecnicobyUsuarioId(usuario.id)
+            json = Json { ignoreUnknownKeys = true }.encodeToString(administrador)
+        }
+    }
+
+    jsonFormato(json)
+
+    /*
+
 
             when(empleado.usuario.idTipoUsuario)
             {
@@ -281,7 +358,7 @@ fun enviarPantalla(empleado: Empleado, navController: NavController)
                 2 -> navController.navigate("principalCliente" + "/${json}")
                 3 -> navController.navigate("principalAdministrador" + "/${json}")
             }
-
+    */
 }
 
 @Preview(showBackground = true)

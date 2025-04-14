@@ -83,15 +83,9 @@ fun HorizontalPagerBottomBarTecnico(tecnico: Tecnico, navController: NavControll
 
 
     // Se maneja cuando el usuario pulsa el boton atras cuando el menu lateral esta abierto
-    BackHandler(drawerState.isOpen) {
-        if(drawerState.isOpen)
-        {
-            scopeState.launch { drawerState.close() }
-            drawerState.isClosed
-        }
-    }
-
-    ScaffoldConMenuLateral("", {})
+    ScaffoldConMenuLateral("", {
+        MenuLateralContenido(navController, tecnico.empleado, {}, {})
+    })
     {
         Scaffold(
             topBar = {

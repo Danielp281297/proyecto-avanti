@@ -19,6 +19,12 @@ data class Empleado(
     val segundoApellido: String = " ",
     @SerialName("correo_electrónico_empleado")
     val correoElectronico: String = " ",
+    @SerialName("id_teléfono_empleado")
+    val idTeléfonoEmpleado: Int = 0,
+    @SerialName("id_departamento")
+    val idDepartamento: Int = 0,
+    @SerialName("id_cargo_empleado")
+    val idCargoEmpleado: Int = 0,
     @SerialName("id_usuario")
     val idUsuario: Int = 0,
 

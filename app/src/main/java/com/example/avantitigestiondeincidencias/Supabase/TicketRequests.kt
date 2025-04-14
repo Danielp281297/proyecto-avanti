@@ -7,6 +7,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.example.avantitigestiondeincidencias.AVANTI.Accion
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
+import com.example.avantitigestiondeincidencias.AVANTI.Usuario
 import io.github.jan.supabase.annotations.SupabaseExperimental
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
@@ -118,7 +119,6 @@ class TicketRequests(): SupabaseClient() {
     @OptIn(SupabaseExperimental::class)
     suspend fun mostrarTablaTicket(lambda: (tickets: List<Ticket>) -> Unit)
     {
-
 
         val resultados =  getSupabaseClient().from("ticket").select(columns = this.columnas){
 
@@ -366,6 +366,19 @@ class TicketRequests(): SupabaseClient() {
             }
         }
 
+    }
+
+    suspend fun seleccionarTicketByDescripcion(descripcion: String, tickets: (List<Ticket>?) -> Unit) {
+
+        val resultados = getSupabaseClient().from("usuario").select{
+            //filter {
+            //    eq("descripción_ticket", descripcion)
+            //}
+        }.decodeAsOrNull<List<Usuario>>()
+
+        Log.d("USUARIOS", resultados.toString())
+
+        //tickets(resultados)
     }
 
 }

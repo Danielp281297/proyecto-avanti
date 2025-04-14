@@ -23,7 +23,7 @@ class EmpleadoRequest(): SupabaseClient() {
             id_grupo_atención,
             nombre_grupo_atención
         ),
-        empleado (
+        empleado!inner (
             id_empleado,
             cédula_empleado,
             primer_nombre_empleado,
@@ -31,6 +31,7 @@ class EmpleadoRequest(): SupabaseClient() {
             primer_apellido_empleado,
             segundo_apellido_empleado,
             correo_electrónico_empleado,
+            id_usuario,
             teléfono_empleado(
                 extensión_teléfono,
                 código_operadora_teléfono(
@@ -47,7 +48,7 @@ class EmpleadoRequest(): SupabaseClient() {
             cargo_empleado(
                 tipo_cargo_empleado
             ),
-            usuario(
+            usuario (
                 id_usuario, 
                 nombre_usuario
             )
@@ -57,7 +58,7 @@ class EmpleadoRequest(): SupabaseClient() {
 
     val columnasClienteInterno = Columns.raw("""
         id_cliente_interno,
-        empleado (
+        empleado!inner (
             id_empleado,
             cédula_empleado,
             primer_nombre_empleado,
@@ -96,6 +97,22 @@ class EmpleadoRequest(): SupabaseClient() {
             nombre_sede
         )
     """.trimIndent())
+
+    suspend fun seleccionarTecnicobyUsuarioId(idUsuario: Int): Tecnico {
+        return getSupabaseClient().from("técnico").select(columns = columnasTecnico){
+            filter {
+                eq("empleado.id_usuario", idUsuario)
+            }
+        }.decodeSingle<Tecnico>()
+    }
+
+    suspend fun seleccionarClienteInternobyUsuarioId(idUsuario: Int): ClienteInterno {
+        return getSupabaseClient().from("cliente_interno").select(columns = columnasClienteInterno){
+            filter {
+                eq("empleado.id_usuario", idUsuario)
+            }
+        }.decodeSingle<ClienteInterno>()
+    }
 
     suspend fun seleccionarEmpleadoTecnicoById(id: Int): Tecnico {
 
@@ -136,28 +153,19 @@ class EmpleadoRequest(): SupabaseClient() {
             .decodeList<Departamento>()
     }
 
-    suspend fun obtenerDatosUsuario(usuario: String, pass: String): Empleado? {
+    suspend fun obtenerDatosUsuario(usuario: String, pass: String): Usuario? {
 
         // Se convierte la contrasena en un hash2 de 256 bits
         val contrasena = SHA512(pass)
 
-        Log.d("Usuario", usuario)
-        Log.d("Contrasena", contrasena)
-
-        var empleado: Empleado? = getSupabaseClient().from("empleado").
+        var empleado: Usuario? = getSupabaseClient().from("usuario").
             select(columns = Columns.raw("""
-                id_empleado,
-                primer_nombre_empleado,
-                primer_nombre_empleado,
-                usuario!inner (
                     id_usuario,
                     id_tipo_usuario
-                )
             """.trimIndent())){
-
                 filter {
-                    eq("usuario.nombre_usuario", usuario)
-                    eq("usuario.contraseña_usuario", contrasena)
+                    eq("nombre_usuario", usuario)
+                    eq("contraseña_usuario", contrasena)
                 }
 
             }.decodeSingleOrNull()

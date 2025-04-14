@@ -1,5 +1,6 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
@@ -58,10 +59,14 @@ fun BusquedaAdministrador(navController: NavController)
     }
 
     var entradaBusquedaState = remember {
-        mutableStateOf("")
+        mutableStateOf("Un pato")
     }
 
     var ticketstate = remember{
+        mutableStateOf(false)
+    }
+
+    var buscarTicketState = remember{
         mutableStateOf(false)
     }
 
@@ -119,7 +124,14 @@ fun BusquedaAdministrador(navController: NavController)
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.padding(5.dp))
-                IconButton(modifier = Modifier, onClick = {})
+                IconButton(modifier = Modifier, onClick = {
+
+                    Log.d("ENTRADA DE TEXTO", entradaBusquedaState.value)
+
+                    // Se busca los tickets por sus descripciones
+                    buscarTicketState.value = true
+                    
+                })
                 {
                     Icon(imageVector = Icons.Default.Search, contentDescription = "Boton Busqueda", modifier = Modifier.size(45.dp))
                 }
@@ -145,6 +157,25 @@ fun BusquedaAdministrador(navController: NavController)
             }
         }
 
+    }
+    
+    if (buscarTicketState.value)
+    {
+        LaunchedEffect(Unit) {
+            withContext(Dispatchers.IO) {
+
+                TicketRequests().seleccionarTicketByDescripcion(entradaBusquedaState.value){ tickets ->
+
+                    tickets?.forEach {
+                        Log.d("TICKET FILTRADO", it.toString())
+                    }
+
+                }
+
+            }
+        }
+
+        buscarTicketState.value = false
     }
 
 

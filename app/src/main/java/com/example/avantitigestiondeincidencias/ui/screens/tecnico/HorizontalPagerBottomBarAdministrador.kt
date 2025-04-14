@@ -23,6 +23,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -33,19 +34,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Empleado
+import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.MenuLateralContenido
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldConMenuLateral
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 data class NavItem(val label: String, val icon: ImageVector)
 
 @Composable
-fun HorizontalPagerBottomBarAdministrador(empleado: Empleado, navController: NavController)
+fun HorizontalPagerBottomBarAdministrador(administrador: Tecnico, navController: NavController)
 {
 
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
     val corroutineScope = rememberCoroutineScope()
 
     val navItemList = listOf(
@@ -61,7 +65,9 @@ fun HorizontalPagerBottomBarAdministrador(empleado: Empleado, navController: Nav
 
     val state = rememberPagerState(initialPage = 0, pageCount = { numPantalla.value })
 
-    ScaffoldConMenuLateral("", {})
+    ScaffoldConMenuLateral("", {
+        MenuLateralContenido(navController, administrador.empleado, {}, {})
+    })
     {
         Scaffold(
             bottomBar = {
@@ -105,19 +111,13 @@ fun HorizontalPagerBottomBarAdministrador(empleado: Empleado, navController: Nav
             HorizontalPager(state = state, modifier = Modifier.background(Color.Blue))
             { page ->
 
-                when (page) {
-                    0 -> InicioAdministrador(/*empleado, */navController)
-                    1 -> BusquedaAdministrador(navController)
-                    2 -> BusquedaUsuarios(navController)
-                    else -> {}
-                }
-
+                    when (page) {
+                        0 -> InicioAdministrador(navController)
+                        1 -> BusquedaAdministrador(navController)
+                        2 -> BusquedaUsuarios(navController)
+                    }
             }
 
-            LaunchedEffect(state.currentPage)
-            {
-
-            }
 
         }
     }
@@ -131,7 +131,7 @@ fun HorizontalPagerBottomBarPreview() {
 
     AVANTITIGestionDeIncidenciasTheme {
 
-        HorizontalPagerBottomBarAdministrador(Empleado(), navController)
+        HorizontalPagerBottomBarAdministrador(Tecnico(), navController)
 
     }
 }

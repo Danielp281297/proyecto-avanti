@@ -17,6 +17,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -37,6 +38,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -44,14 +47,17 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.CargoEmpleado
+import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
 import com.example.avantitigestiondeincidencias.AVANTI.Departamento
 import com.example.avantitigestiondeincidencias.AVANTI.Empleado
+import com.example.avantitigestiondeincidencias.AVANTI.GrupoAtencion
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.TelefonoEmpleado
 import com.example.avantitigestiondeincidencias.AVANTI.Usuario
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.EmpleadoRequest
 import com.example.avantitigestiondeincidencias.Supabase.TelefonoRequest
+import com.example.avantitigestiondeincidencias.Supabase.UsuarioRequest
 import com.example.avantitigestiondeincidencias.espacioSpacer
 import com.example.avantitigestiondeincidencias.modeloButton
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.Spinner
@@ -114,43 +120,47 @@ fun CrearUsuario(navController: NavController)
     }
 
     var cedulaState = remember {
-        mutableStateOf("")
+        mutableStateOf("99999999")
     }
 
     var primerNombreState = remember{
-        mutableStateOf<String>("")
+        mutableStateOf<String>("Jaime")
     }
 
     var segundoNombreState = remember{
-        mutableStateOf<String>("")
+        mutableStateOf<String>("Luis")
     }
 
     var primerApellidoState = remember{
-        mutableStateOf<String>("")
+        mutableStateOf<String>("Delano")
     }
 
     var segundoApellidoState = remember{
-        mutableStateOf<String>("")
+        mutableStateOf<String>("Caceres")
     }
 
     var correoElectronicoState = remember{
-        mutableStateOf("")
+        mutableStateOf("jdelano@gmail.com")
     }
 
     var numeroTelefonoState = remember{
-        mutableStateOf("")
+        mutableStateOf("2566270")
     }
 
     var nombreUsuarioState = remember {
-        mutableStateOf("")
+        mutableStateOf("jdelano")
+    }
+
+    var contrasenaVisibleState = remember {
+        mutableStateOf(false)
     }
 
     var contrasenaState = remember{
-        mutableStateOf("")
+        mutableStateOf("jdelano2000")
     }
 
     var confirmarContrasenaState = remember{
-        mutableStateOf("")
+        mutableStateOf("jdelano2000")
     }
 
     var nombreSede = remember{
@@ -161,11 +171,23 @@ fun CrearUsuario(navController: NavController)
         mutableStateOf(false)
     }
 
+    var crearNuevoUsuarioState = remember{
+        mutableStateOf(false)
+    }
+
     val focusRequester = remember{
         FocusRequester()
     }
 
     val verticalScrollState = rememberScrollState()
+
+    var tecnico = remember{
+        mutableStateOf(Tecnico())
+    }
+
+    var clienteInterno = remember{
+        mutableStateOf(ClienteInterno())
+    }
 
     // Se obtienen los datos para los Spinners
     LaunchedEffect(Unit) {
@@ -579,10 +601,9 @@ fun CrearUsuario(navController: NavController)
                             modifier = Modifier,
                             itemList = nombreDepartamentoList,
                             onItemSelected = {
+
                                 idDepartamento.value = nombreDepartamentoList.indexOf(it)
                                 nombreSede.value = departamentosList[idDepartamento.value].sede.nombre
-
-                                Log.d("nombreSede", departamentosList[idDepartamento.value].toString())
                             }
                         )
 
@@ -738,7 +759,29 @@ fun CrearUsuario(navController: NavController)
                                     )
                                 }
                             },
-                            keyboardOptions = KeyboardOptions().copy(imeAction = ImeAction.Next)
+                            trailingIcon = {
+                                val image = if (contrasenaVisibleState.value == true)
+                                {
+                                    R.drawable.visible_icono
+                                }else
+                                    R.drawable.no_visible_icono
+
+                                IconButton(onClick = {
+
+                                    if (contrasenaVisibleState.value)
+                                    {
+                                        contrasenaVisibleState.value = false
+                                    }else
+                                        contrasenaVisibleState.value = true
+
+                                }) {
+                                    Icon(painter = painterResource(image), contentDescription = "", modifier = Modifier.size(25.dp))
+                                }
+
+
+                            },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            visualTransformation = if(contrasenaVisibleState.value) VisualTransformation.None else PasswordVisualTransformation()
                         )
 
                     }
@@ -777,7 +820,29 @@ fun CrearUsuario(navController: NavController)
                                     )
                                 }
                             },
-                            keyboardOptions = KeyboardOptions().copy(imeAction = ImeAction.Next)
+                            trailingIcon = {
+                                val image = if (contrasenaVisibleState.value == true)
+                                {
+                                    R.drawable.visible_icono
+                                }else
+                                    R.drawable.no_visible_icono
+
+                                IconButton(onClick = {
+
+                                    if (contrasenaVisibleState.value)
+                                    {
+                                        contrasenaVisibleState.value = false
+                                    }else
+                                        contrasenaVisibleState.value = true
+
+                                }) {
+                                    Icon(painter = painterResource(image), contentDescription = "", modifier = Modifier.size(25.dp))
+                                }
+
+
+                            },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            visualTransformation = if(contrasenaVisibleState.value) VisualTransformation.None else PasswordVisualTransformation()
                         )
 
                     }
@@ -821,33 +886,36 @@ fun CrearUsuario(navController: NavController)
                             primerApellido = primerApellidoState.value,
                             segundoApellido = segundoApellidoState.value,
                             correoElectronico = correoElectronicoState.value,
-                            //idUsuario = TODO(),
                             telefonoPersona = telefonoEmpleado,
                             departamento = departamentoEmpleado,
                             cargoEmpleado = cargoEmpleado,
-                            usuario = usuarioEmpleado
+                            usuario = usuarioEmpleado,
                         )
 
                         if(idTipoUsuarioState.value == 1)       // Tecnico
                         {
 
-                            // Los datos del usuario
-                            //... los datos del telefono
-                            //... los datos del empleado
                             //... los datos del grupo de atencion
+                            val grupoAtencion = GrupoAtencion(grupoAtencion = grupoAtencionList[idGrupoAtencionState.value - 1])
+
                             //... Se crea la fila en la tabla tecnico
+                            tecnico.value = Tecnico(
+                                grupoAtencion = grupoAtencion,
+                                empleado = nuevoEmpleado
+                            )
 
                         }
                         else if(idTipoUsuarioState.value == 2)  // Cliente Interno
                         {
 
-                            //Primero, los datos del usuario
-                            //... los datos del telefono
-                            //... los datos del empleado
-                            //... los datos del cargo
                             //... Se crea un nuevo cliente interno
+                            clienteInterno.value = ClienteInterno(
+                                empleado = nuevoEmpleado
+                            )
 
                         }
+
+                        crearNuevoUsuarioState.value = true
 
                     }
                 )
@@ -857,6 +925,25 @@ fun CrearUsuario(navController: NavController)
                 Spacer(modifier = Modifier.padding(40.dp))
 
             }
+
+    }
+
+    if(crearNuevoUsuarioState.value){
+
+        LaunchedEffect(Unit) {
+            withContext(Dispatchers.IO) {
+                Log.d("Nuevo Usuario...", "Creacion del nuevo usuario...")
+                if(idTipoUsuarioState.value == 1)
+                {
+                    UsuarioRequest().insertarUsuarioTecnico(tecnico.value)
+
+                } else if(idTipoUsuarioState.value == 2)
+                {
+                    UsuarioRequest().insertarUsuarioClienteInterno(clienteInterno.value)
+                }
+            }
+        }
+        crearNuevoUsuarioState.value = false
 
     }
 

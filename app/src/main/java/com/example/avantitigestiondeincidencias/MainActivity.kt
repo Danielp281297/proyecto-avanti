@@ -19,9 +19,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,6 +35,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
 import com.example.avantitigestiondeincidencias.AVANTI.Empleado
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
@@ -41,6 +44,8 @@ import com.example.avantitigestiondeincidencias.ui.screens.tecnico.CrearUsuario
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.DatePickerScreen
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.HorizontalPagerBottomBarAdministrador
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.HorizontalPagerBottomBarTecnico
+import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InformacionClienteInterno
+import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InformacionTecnico
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InformeTecnico
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InicioAdministrador
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InicioCliente
@@ -59,6 +64,8 @@ import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncide
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
 val paddingPantallas = Modifier.fillMaxSize().padding(15.dp)
@@ -135,7 +142,7 @@ fun destination()
             //InformeTecnico()
             //PantallaNotificacion()
             //DatePickerScreen()
-            //PantallaPruebas(navController)
+            PantallaPruebas(navController)
             //BusquedaUsuarios(navController)
             //InicioCliente(navController)
             //nuevoTicketFormulario(3) { }
@@ -147,28 +154,29 @@ fun destination()
         composable("login")
         {
 
-        }
-
-        composable(route = "principalCliente"+ "/{empleado}",
-            arguments = listOf(navArgument(name = "empleado")
-            {type = NavType.StringType}))
-        { navBackStackEntry ->
-
-            val empleado = Json.decodeFromString<Empleado>(navBackStackEntry.arguments!!.getString("empleado").toString())
-
-            //HorizontalPagerBottomBarAdministrador(empleado, navController = navController)
-            InicioCliente(empleado, navController)
+            Login(navController)
 
         }
 
-        composable("principalAdministrador" + "/{empleado}",
-            arguments = listOf(navArgument(name = "empleado")
+        composable(route = "principalCliente"+ "/{clienteInterno}",
+            arguments = listOf(navArgument(name = "clienteInterno")
             {type = NavType.StringType}))
         { navBackStackEntry ->
 
-            val empleado = Json.decodeFromString<Empleado>(navBackStackEntry.arguments!!.getString("empleado").toString())
+            val clienteInterno = Json.decodeFromString<ClienteInterno>(navBackStackEntry.arguments!!.getString("clienteInterno").toString())
 
-            HorizontalPagerBottomBarAdministrador(empleado, navController = navController)
+            InicioCliente(clienteInterno, navController)
+
+        }
+
+        composable("principalAdministrador" + "/{administrador}",
+            arguments = listOf(navArgument(name = "administrador")
+            {type = NavType.StringType}))
+        { navBackStackEntry ->
+
+            val tecnico = Json.decodeFromString<Tecnico>(navBackStackEntry.arguments!!.getString("administrador").toString())
+
+            HorizontalPagerBottomBarAdministrador(tecnico, navController = navController)
         }
 
         composable("ticketDesplegadoAdministrador/{ticket}",
@@ -186,9 +194,11 @@ fun destination()
             {type = NavType.StringType}))
         { navBackStackEntry ->
 
-            val tecnico = Json.decodeFromString<Tecnico>(navBackStackEntry.arguments!!.getString("tecnico").toString())
+            var tecnicoState = remember{
+                mutableStateOf<Tecnico>(Json.decodeFromString<Tecnico>(navBackStackEntry.arguments!!.getString("tecnico").toString()))
+            }
 
-            HorizontalPagerBottomBarTecnico(tecnico, navController = navController)
+            HorizontalPagerBottomBarTecnico(tecnicoState.value, navController = navController)
         }
 
         composable("ticketDesplegadoTécnico/{ticket}",
@@ -219,6 +229,34 @@ fun destination()
             val ticket = Json.decodeFromString<Ticket>(navBackStackEntry.arguments!!.getString("ticket").toString())
 
             TicketDesplegadoBusqueda(navController, ticket)
+        }
+
+        composable("crearUsuario")
+        {
+            CrearUsuario(navController)
+        }
+
+        composable("mostrarInformacionTecnico" + "/{tecnico}",
+            arguments = listOf(navArgument(name = "tecnico")
+            {type = NavType.StringType}))
+        { navBackStackEntry ->
+            var tecnicoState = remember{
+                mutableStateOf<Tecnico>(Json.decodeFromString<Tecnico>(navBackStackEntry.arguments!!.getString("tecnico").toString()))
+            }
+
+            InformacionTecnico(navController, tecnicoState.value)
+
+        }
+
+        composable(route = "mostrarInformacionCliente"+ "/{clienteInterno}",
+            arguments = listOf(navArgument(name = "clienteInterno")
+            {type = NavType.StringType}))
+        { navBackStackEntry ->
+
+            val clienteInterno = Json.decodeFromString<ClienteInterno>(navBackStackEntry.arguments!!.getString("clienteInterno").toString())
+
+            InformacionClienteInterno(navController, clienteInterno)
+
         }
 
     }

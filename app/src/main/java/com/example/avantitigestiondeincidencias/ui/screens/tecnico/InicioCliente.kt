@@ -1,6 +1,7 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
 import android.content.Context
+import android.graphics.drawable.ShapeDrawable
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -23,8 +24,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ExtendedFloatingActionButton
+import androidx.compose.material.FloatingActionButtonDefaults
 import androidx.compose.material.Icon
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.icons.Icons
@@ -45,6 +50,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -61,6 +67,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -88,17 +95,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import org.apache.commons.math3.ml.neuralnet.SquareNeighbourhood
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
-fun InicioCliente(empleado: Empleado, navController: NavController)
+fun InicioCliente(clienteInterno: ClienteInterno, navController: NavController)
 {
 
     val context = LocalContext.current
-
-    var clienteInterno = remember{
-        mutableStateOf<ClienteInterno>(ClienteInterno())
-    }
 
     // Se crea la variable de estado con la lista
     // Se comprueba si la lista esta vacia, de ser asi, se crea un aviso en el centro
@@ -117,17 +121,8 @@ fun InicioCliente(empleado: Empleado, navController: NavController)
         mutableStateOf(false)
     }
 
-    //Se obtiene el id del cliente interno
-    LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-
-            clienteInterno.value = EmpleadoRequest().seleccionarClienteById(empleado.id)
-
-        }
-    }
-
     // Corrutina para obtener los tickets
-    fetchTicketDataCliente(empleado.id, { tickets ->
+    fetchTicketDataCliente(clienteInterno.empleado.id, { tickets ->
 
         ticketsCliente.addAll(tickets)
 
@@ -136,7 +131,7 @@ fun InicioCliente(empleado: Empleado, navController: NavController)
 
 
     ScaffoldConMenuLateral("Inicio - Cliente Interno", {
-        MenuLateralContenido(clienteInterno.value.empleado, {}, {}, {})
+        MenuLateralContenido(navController, clienteInterno.empleado, {}, {})
     },{
 
         Box(
@@ -148,7 +143,7 @@ fun InicioCliente(empleado: Empleado, navController: NavController)
             {
                 Spacer(modifier = Modifier.padding(45.dp))
 
-                Text(text = "Bienvenido, ${clienteInterno.value.empleado.usuario.nombre}")
+                Text(text = "Bienvenido, ${clienteInterno.empleado.usuario.nombre}")
                 Text(
                     text = " Últimos tickets: \n",
                     fontSize = 18.sp,
@@ -156,7 +151,7 @@ fun InicioCliente(empleado: Empleado, navController: NavController)
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                LazyColumn(modifier = Modifier.height(520.dp).fillMaxWidth(), content = {
+                LazyColumn(modifier = Modifier.fillMaxHeight().fillMaxWidth(), content = {
 
                     items(ticketsCliente.count()) { index ->
 
@@ -167,16 +162,36 @@ fun InicioCliente(empleado: Empleado, navController: NavController)
 
             }
 
+            ExtendedFloatingActionButton(onClick = {
+
+                mostrarFormularioNuevoTicket.value = true
+            },
+                text = {
+                    androidx.compose.material3.Icon(
+                        painter = painterResource(R.drawable.nuevo_ticket_icon),
+                        contentDescription = "Crear Nuevo Ticket",
+                        modifier = Modifier.size(25.dp)
+                    )
+                },
+                contentColor = Color.White,
+                backgroundColor = Color.White,
+                shape = RoundedCornerShape(0.dp),
+                modifier = Modifier.wrapContentWidth().padding(0.dp, 50.dp).align(Alignment.BottomEnd).border(1.dp, Color.LightGray, RectangleShape),
+                elevation = FloatingActionButtonDefaults.elevation(0.dp)
+            )
+            /*
             FloatingActionButton(
                 onClick = {
 
-                    mostrarFormularioNuevoTicket.value = true
+
 
                 },
                 shape = RectangleShape,
                 containerColor = Color.White,
                 modifier = Modifier.align(Alignment.BottomEnd).padding(0.dp, 50.dp)
             ) {
+
+
 
                 Icon(
                     painter = painterResource(R.drawable.nuevo_ticket_icon),
@@ -185,6 +200,7 @@ fun InicioCliente(empleado: Empleado, navController: NavController)
                 )
 
             }
+            */
 
         }
     })
@@ -198,7 +214,7 @@ fun InicioCliente(empleado: Empleado, navController: NavController)
             content = {
 
                 // Se almacena los datos en un nuevo ticket
-                nuevoTicketFormulario(clienteInterno.value.id, {
+                nuevoTicketFormulario(clienteInterno.id, {
 
                     mostrarFormularioNuevoTicket.value = false
 
@@ -215,13 +231,13 @@ fun InicioCliente(empleado: Empleado, navController: NavController)
     {
 
         withContext(Dispatchers.IO) {
-            TicketRequests().realtimeTicketRequestClienteInternoId(scope, clienteInterno.value.id) { tickets ->
+            TicketRequests().realtimeTicketRequestClienteInternoId(scope, clienteInterno.id) { tickets ->
 
                 ticketsCliente.clear()
 
                 tickets.forEach { item ->
 
-                    if (item.clienteInterno.id == clienteInterno.value.id)
+                    if (item.clienteInterno.id == clienteInterno.id)
                         ticketsCliente.add(item)
 
                 }
@@ -374,7 +390,7 @@ fun InicioClientePreview() {
     val navController = rememberNavController()
     AVANTITIGestionDeIncidenciasTheme {
 
-        MenuLateralContenido(Empleado(), {}, {}, {})
+        InicioCliente(ClienteInterno(), navController)
 
     }
 }

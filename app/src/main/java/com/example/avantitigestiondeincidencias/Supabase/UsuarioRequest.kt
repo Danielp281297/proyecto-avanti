@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
 import com.example.avantitigestiondeincidencias.AVANTI.Empleado
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
+import com.example.avantitigestiondeincidencias.AVANTI.Usuario
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.Login
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
@@ -120,6 +121,30 @@ class UsuarioRequest(): SupabaseClient() {
         }.decodeList<ClienteInterno>()
 
         function(dataset)
+
+    }
+
+    suspend fun insertarUsuarioClienteInterno(clienteInterno: ClienteInterno)
+    {
+
+        Log.d("CLIENTE INTERNO CONSULTA", clienteInterno.toString())
+
+        // Primero se crea el usuario
+        val nuevoUsuario = getSupabaseClient().from("usuario").insert(clienteInterno.empleado.usuario){
+            select()
+        }.decodeSingle<Usuario>()
+
+        Log.d("NUEVO USUARIO", nuevoUsuario.toString())
+        // ... los datos del telefono
+        // ... los datos del empleado
+        //
+
+    }
+
+    suspend fun insertarUsuarioTecnico(tecnico: Tecnico)
+    {
+
+        Log.d("CLIENTE TECNICO", tecnico.toString())
 
     }
 

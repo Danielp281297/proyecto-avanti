@@ -40,12 +40,14 @@ import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import kotlinx.coroutines.launch
 
+val fuenteLetraTicketDesplegado = 15.sp
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContenidoTicketDesplegado(navController: NavController, ticket: Ticket, function: @Composable () -> Unit)
 {
 
-    val fuenteLetraTicketDesplegado = 15.sp
+
     val iconos = listOf<Int>(R.drawable.incidencia_icon, R.drawable.clipboard_question_solid, R.drawable.screwdriver_wrench_solid, R.drawable.gears_solid)
     val scrollState = rememberScrollState()
 

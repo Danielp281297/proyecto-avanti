@@ -91,7 +91,7 @@ fun PantallaPruebas(navController: NavController)
 
                 Button(onClick = {
                     empleado.value.id = 1
-                    jsonState.value = Json { ignoreUnknownKeys = true }.encodeToString(empleado.value)
+                    jsonState.value = Json { ignoreUnknownKeys = true }.encodeToString(administrador.value)
                     //Log.d("ADMINISTRADOR", json.value)
                     navController.navigate("principalAdministrador" + "/${jsonState.value}")
                 }) {
@@ -102,7 +102,7 @@ fun PantallaPruebas(navController: NavController)
 
                 Button(onClick = {
                     empleado.value.id = 3
-                    jsonState.value = Json { ignoreUnknownKeys = true }.encodeToString(empleado.value)
+                    jsonState.value = Json { ignoreUnknownKeys = true }.encodeToString(clienteInterno.value)
                     navController.navigate("principalCliente" + "/${jsonState.value}")
                 }) {
 
