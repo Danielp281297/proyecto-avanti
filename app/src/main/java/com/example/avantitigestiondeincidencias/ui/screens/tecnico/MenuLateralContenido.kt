@@ -1,4 +1,4 @@
-package com.example.avantitigestiondeincidencias.ui.screens.componentes
+package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -52,8 +53,8 @@ fun MenuLateralContenido(navController: NavController, empleado: Empleado, perfi
 
                 Text("ACEPTAR", color = Color.Black, modifier = Modifier.clickable {
 
-                    navController.popBackStack()
-                    navController.navigate("login")
+                    // Se borra las pantalla de la pila y se dirige al login
+                    navController.navigate("Login"){ popUpTo(navController.graph.id) }
 
                 })
 
@@ -94,7 +95,7 @@ fun MenuLateralContenido(navController: NavController, empleado: Empleado, perfi
                 perfil()
             }, verticalAlignment = Alignment.CenterVertically)
             {
-                androidx.compose.material3.Icon(modifier = Modifier.size(25.dp), imageVector = Icons.Default.Person, contentDescription = "Manual de usuario")
+                Icon(modifier = Modifier.size(25.dp), imageVector = Icons.Default.Person, contentDescription = "Perfil")
                 Text("Perfil", fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 25.dp))
             }
 
@@ -102,7 +103,7 @@ fun MenuLateralContenido(navController: NavController, empleado: Empleado, perfi
                 manualUsuarioEvento()
             }, verticalAlignment = Alignment.CenterVertically)
             {
-                androidx.compose.material3.Icon(modifier = Modifier.size(25.dp), painter = painterResource(R.drawable.book_open_solid), contentDescription = "Manual de usuario")
+                Icon(modifier = Modifier.size(25.dp), painter = painterResource(R.drawable.book_open_solid), contentDescription = "Manual de usuario")
                 Text("Manual de usuario", fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 25.dp))
             }
 
@@ -113,7 +114,7 @@ fun MenuLateralContenido(navController: NavController, empleado: Empleado, perfi
 
         }, verticalAlignment = Alignment.CenterVertically)
         {
-            androidx.compose.material3.Icon(modifier = Modifier.size(25.dp), painter = painterResource(R.drawable.logout_icon), contentDescription = "Cierre de Sesión")
+            Icon(modifier = Modifier.size(25.dp), painter = painterResource(R.drawable.logout_icon), contentDescription = "Cierre de Sesión")
             Text("Cerrar Sesión", fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 25.dp))
 
         }

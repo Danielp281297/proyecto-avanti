@@ -63,7 +63,7 @@ class Notification() {
 
 
     @SuppressLint("ObsoleteSdkInt")
-    private fun createChannel(context: Context)
+    fun createChannel(context: Context)
     {
 
         if (Build.VERSION.SDK_INT >= VERSION_CODES.O)
@@ -77,8 +77,6 @@ class Notification() {
             ).apply {
                 description = "Descripcion"
             }
-
-            //notificationManager.createNotificationChannel(notificationChannel)
             notificationManager!!.createNotificationChannel(notificationChannel)
 
         }

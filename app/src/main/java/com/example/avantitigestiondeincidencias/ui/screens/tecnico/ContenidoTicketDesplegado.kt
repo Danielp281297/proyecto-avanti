@@ -1,5 +1,7 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,6 +18,9 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
@@ -23,11 +28,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -37,6 +47,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.R
+import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
+import com.example.avantitigestiondeincidencias.modeloButton
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDialogPersonalizado
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import kotlinx.coroutines.launch
 
@@ -50,6 +63,10 @@ fun ContenidoTicketDesplegado(navController: NavController, ticket: Ticket, func
 
     val iconos = listOf<Int>(R.drawable.incidencia_icon, R.drawable.clipboard_question_solid, R.drawable.screwdriver_wrench_solid, R.drawable.gears_solid)
     val scrollState = rememberScrollState()
+    var borrarTicketState = remember {
+        mutableStateOf(false)
+    }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -137,7 +154,7 @@ fun ContenidoTicketDesplegado(navController: NavController, ticket: Ticket, func
 
             Text(text = "TELÉFONO: ", fontSize = fuenteLetraTicketDesplegado)
             Text(
-                text = "${ticket.clienteInterno.empleado.telefonoPersona.codigoOperadoraTelefono.operadora}-${ticket.clienteInterno.empleado.telefonoPersona.extension} \n",
+                text = "${ticket.clienteInterno.empleado.telefonoEmpleado.codigoOperadoraTelefono.operadora}-${ticket.clienteInterno.empleado.telefonoEmpleado.extension} \n",
                 fontWeight = FontWeight.Bold,
                 fontSize = fuenteLetraTicketDesplegado
             )
@@ -160,8 +177,47 @@ fun ContenidoTicketDesplegado(navController: NavController, ticket: Ticket, func
             function()
 
             Spacer(modifier = Modifier.padding(50.dp))
+
         }
     }
+
+    if (borrarTicketState.value)
+    {
+
+        val scope = rememberCoroutineScope()
+        var borrarTicketBandera = remember { mutableStateOf(false) }
+        AlertDialogPersonalizado(
+            titulo = "Borrar Ticket",
+            contenido = "¿Deseas borrar el ticket?",
+            onDismissRequest = {
+                borrarTicketState.value = false
+            },
+            aceptarAccion = {
+                borrarTicketBandera.value = true
+            },
+            cancelarAccion = {
+                borrarTicketState.value = false
+            }
+        )
+
+        if (borrarTicketBandera.value) {
+
+            LaunchedEffect(Unit) {
+
+                scope.launch {
+                    TicketRequests().borrarTicket(ticket)
+
+                }
+            }
+            Toast.makeText(context, "Ticket borrado con éxito.", Toast.LENGTH_SHORT).show()
+            borrarTicketBandera.value = false
+            borrarTicketState.value = false
+            navController.popBackStack()
+        }
+
+    }
+
+
 }
 
 

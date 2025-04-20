@@ -47,6 +47,9 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 val amarillo = Color(0xFFFDD835)
 val verde = Color(0xFF43A047)
@@ -87,7 +90,7 @@ fun InicioAdministrador(/*empleado: Empleado, */navController: NavController)
 
         withContext(Dispatchers.IO) {
             //pantallaCargaState.value = true
-            TicketRequests().mostrarTablaTicket { tickets ->
+            TicketRequests().seleccionarTicketsAbiertos { tickets ->
 
                 dataset.addAll(tickets)
 
@@ -169,7 +172,7 @@ fun InicioAdministrador(/*empleado: Empleado, */navController: NavController)
 
         withContext(Dispatchers.IO) {
 
-            TicketRequests().realtimeTicketRequest(scope) { tickets ->
+            TicketRequests().realtimeTicketsAbiertosRequest (scope) { tickets ->
 
                 dataset.clear()
                 dataset.addAll(tickets)
@@ -312,7 +315,6 @@ fun pieChartTecnico(abiertosTicketContador: Int, cerradosTicketContador: Int, ur
 @Composable
 fun ultimosTicketsLazyColumnContent(ticket: Ticket, navController: NavController) {
 
-
     Column(
         modifier = Modifier.fillMaxWidth()
             .background(Color.Transparent)
@@ -332,7 +334,7 @@ fun ultimosTicketsLazyColumnContent(ticket: Ticket, navController: NavController
             Column()
             {
 
-                Text(text = ticket.tipo.tipoTicket, fontWeight = FontWeight.Bold, modifier = Modifier.width(210.dp))
+                Text(text = ticket.tipo.tipoTicket + if (ticket.estado.id > 1) ": ${ticket.estado.tipoEstado}" else " ", fontWeight = FontWeight.Bold, modifier = Modifier.width(210.dp))
 
             }
 
@@ -349,8 +351,6 @@ fun ultimosTicketsLazyColumnContent(ticket: Ticket, navController: NavController
             }
 
         }
-
-
 
         Column(modifier = Modifier.padding(10.dp, 0.dp, 10.dp, 0.dp))
         {

@@ -1,14 +1,9 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
 import android.content.Context
-import android.graphics.drawable.ShapeDrawable
-import android.util.Log
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,85 +12,53 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExtendedFloatingActionButton
 import androidx.compose.material.FloatingActionButtonDefaults
-import androidx.compose.material.Icon
-import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ShapeDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
-import com.example.avantitigestiondeincidencias.AVANTI.Empleado
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.Notification.Notification
 import com.example.avantitigestiondeincidencias.R
-import com.example.avantitigestiondeincidencias.Supabase.EmpleadoRequest
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
 import com.example.avantitigestiondeincidencias.modeloButton
-import com.example.avantitigestiondeincidencias.ui.screens.componentes.MenuLateralContenido
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldConMenuLateral
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import org.apache.commons.math3.ml.neuralnet.SquareNeighbourhood
+import kotlin.system.exitProcess
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
@@ -128,10 +91,19 @@ fun InicioCliente(clienteInterno: ClienteInterno, navController: NavController)
 
     })
 
-
-
     ScaffoldConMenuLateral("Inicio - Cliente Interno", {
-        MenuLateralContenido(navController, clienteInterno.empleado, {}, {})
+        MenuLateralContenido(
+            navController, clienteInterno.empleado,
+            perfil = {
+                // Se covierte el objeto en json para enviarlo a la pantalla
+                val json = Json { ignoreUnknownKeys = true }.encodeToString(clienteInterno)
+
+                navController.navigate("informacionPerfilCliente" + "/${json}")
+            },
+            manualUsuarioEvento = {
+
+            },
+        )
     },{
 
         Box(
@@ -167,7 +139,7 @@ fun InicioCliente(clienteInterno: ClienteInterno, navController: NavController)
                 mostrarFormularioNuevoTicket.value = true
             },
                 text = {
-                    androidx.compose.material3.Icon(
+                    Icon(
                         painter = painterResource(R.drawable.nuevo_ticket_icon),
                         contentDescription = "Crear Nuevo Ticket",
                         modifier = Modifier.size(25.dp)
@@ -179,28 +151,6 @@ fun InicioCliente(clienteInterno: ClienteInterno, navController: NavController)
                 modifier = Modifier.wrapContentWidth().padding(0.dp, 50.dp).align(Alignment.BottomEnd).border(1.dp, Color.LightGray, RectangleShape),
                 elevation = FloatingActionButtonDefaults.elevation(0.dp)
             )
-            /*
-            FloatingActionButton(
-                onClick = {
-
-
-
-                },
-                shape = RectangleShape,
-                containerColor = Color.White,
-                modifier = Modifier.align(Alignment.BottomEnd).padding(0.dp, 50.dp)
-            ) {
-
-
-
-                Icon(
-                    painter = painterResource(R.drawable.nuevo_ticket_icon),
-                    contentDescription = "Crear Nuevo Ticket",
-                    modifier = Modifier.size(40.dp)
-                )
-
-            }
-            */
 
         }
     })
@@ -338,14 +288,16 @@ fun TicketsCliente(navController: NavController, ticket: Ticket)
 fun TicketDesplegadoCliente(navController: NavController, ticket:Ticket)
 {
 
+    val context = LocalContext.current
+
     var borrarTicketState = remember {
         mutableStateOf(false)
     }
 
         ContenidoTicketDesplegado(navController, ticket) {
 
-            if (ticket.idEstadoTicket == 1) {
-                androidx.compose.material3.Button(
+            if (ticket.idEstadoTicket < 4) {
+                Button(
                     modifier = modeloButton,
 
                     colors = ButtonDefaults.buttonColors(
@@ -367,21 +319,60 @@ fun TicketDesplegadoCliente(navController: NavController, ticket:Ticket)
 
     if (borrarTicketState.value)
     {
-        LaunchedEffect(Unit) {
 
-            TicketRequests().borrarTicket(ticket)
+        val scope = rememberCoroutineScope()
+        var borrarTicketBandera = remember { mutableStateOf(false) }
 
+        AlertDialog(
+            shape = RectangleShape,
+            containerColor = Color.White,
+            onDismissRequest = {
+                borrarTicketState.value = false
+            },
+            confirmButton = {
+
+                Text("ACEPTAR", color = Color.Black, modifier = Modifier.clickable {
+
+                    borrarTicketBandera.value = true
+
+                })
+
+            },
+            dismissButton = {
+
+                Text("CANCELAR", color = Color.Black, modifier = Modifier.clickable {
+
+                    borrarTicketState.value = false
+
+                })
+
+            },
+            title = {
+                Text("Borrar Ticket")
+            },
+            text = {
+                Text("¿Deseas borrar el ticket?")
+            }
+        )
+
+        if (borrarTicketBandera.value) {
+
+            LaunchedEffect(Unit) {
+
+                scope.launch {
+                    TicketRequests().borrarTicket(ticket)
+
+                }
+            }
+            Toast.makeText(context, "Ticket borrado con éxito.", Toast.LENGTH_SHORT).show()
+            borrarTicketBandera.value = false
+            borrarTicketState.value = false
+            navController.popBackStack()
         }
-
-        //navController.popBackStack()
-        borrarTicketState.value = false
 
     }
 
 }
-
-
-
 
 @Preview(showBackground = true)
 @Composable

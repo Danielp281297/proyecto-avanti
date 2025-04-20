@@ -2,46 +2,42 @@ package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemColors
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.avantitigestiondeincidencias.AVANTI.Empleado
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
-import com.example.avantitigestiondeincidencias.ui.screens.componentes.MenuLateralContenido
+import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldConMenuLateral
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 
 
 data class NavItem(val label: String, val icon: ImageVector)
@@ -55,6 +51,7 @@ fun HorizontalPagerBottomBarAdministrador(administrador: Tecnico, navController:
     val navItemList = listOf(
         NavItem("Inicio", Icons.Default.List),
         NavItem("Busqueda", Icons.Default.Search),
+        NavItem("Indicadores", ImageVector.Companion.vectorResource(R.drawable.indicadores_icon)),
         NavItem("Usuarios", Icons.Default.Person)
 
     )
@@ -66,7 +63,14 @@ fun HorizontalPagerBottomBarAdministrador(administrador: Tecnico, navController:
     val state = rememberPagerState(initialPage = 0, pageCount = { numPantalla.value })
 
     ScaffoldConMenuLateral("", {
-        MenuLateralContenido(navController, administrador.empleado, {}, {})
+        MenuLateralContenido(navController, administrador.empleado, perfil =  {
+
+            // Se covierte el objeto en json para enviarlo a la pantalla
+            val json = Json { ignoreUnknownKeys = true }.encodeToString(administrador)
+
+            navController.navigate("informacionPerfilTecnico" + "/${json}")
+
+        }, manualUsuarioEvento = {})
     })
     {
         Scaffold(
@@ -94,7 +98,7 @@ fun HorizontalPagerBottomBarAdministrador(administrador: Tecnico, navController:
                                 disabledIconColor = Color.White,
                                 disabledTextColor = Color.White
                             ),
-                            icon = { Icon(imageVector = item.icon, contentDescription = item.label) },
+                            icon = { Icon(imageVector = item.icon, contentDescription = item.label, modifier = Modifier.size(20.dp)) },
                             label = { Text(text = item.label) }
                         )
 
@@ -114,7 +118,8 @@ fun HorizontalPagerBottomBarAdministrador(administrador: Tecnico, navController:
                     when (page) {
                         0 -> InicioAdministrador(navController)
                         1 -> BusquedaAdministrador(navController)
-                        2 -> BusquedaUsuarios(navController)
+                        2 -> true
+                        3 -> BusquedaUsuarios(navController)
                     }
             }
 

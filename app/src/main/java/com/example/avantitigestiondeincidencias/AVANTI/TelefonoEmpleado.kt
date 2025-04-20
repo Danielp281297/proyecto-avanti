@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TelefonoEmpleado(
     @SerialName("id_teléfono_empleado")
-    val id: Int = 0,
+    var id: Int = 0,
     @SerialName("id_código_operadora_teléfono")
     val idCodigoExtensionTelefono: Int = 0,
     @SerialName("extensión_teléfono")

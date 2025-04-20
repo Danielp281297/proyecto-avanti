@@ -51,8 +51,10 @@ import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncide
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
@@ -79,7 +81,7 @@ fun InicioTecnico(empleado: Empleado, navController: NavController)
     */
     LaunchedEffect(Unit) {
 
-        withContext(Dispatchers.IO) {
+        CoroutineScope(Dispatchers.IO).launch {
 
             ticketsTecnicoList.clear()
 
@@ -136,7 +138,7 @@ fun InicioTecnico(empleado: Empleado, navController: NavController)
     // Se muestra los datos actualizados cuando la tabla ticket sufre algun cambio
     LaunchedEffect(Unit)
     {
-        withContext(Dispatchers.IO) {
+        CoroutineScope(Dispatchers.IO).launch {
 
             TicketRequests().realtimeTicketRequestTecnicoId(scope, empleado.id) { tickets ->
 

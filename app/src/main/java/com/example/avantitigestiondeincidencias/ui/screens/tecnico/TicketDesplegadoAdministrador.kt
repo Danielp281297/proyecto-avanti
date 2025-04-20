@@ -1,7 +1,9 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
 import android.util.Log
+import android.widget.Space
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +23,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -33,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
@@ -48,15 +52,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.avantitigestiondeincidencias.AVANTI.Accion
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.R
+import com.example.avantitigestiondeincidencias.Supabase.AccionRequest
 import com.example.avantitigestiondeincidencias.Supabase.TecnicoRequest
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
 import com.example.avantitigestiondeincidencias.modeloButton
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDialogPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.Spinner
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -84,6 +93,10 @@ fun TicketDesplegadoAdministrador(navController: NavController, ticket: Ticket)
         mutableStateOf(false)
     }
 
+    var borrarTicketState = remember {
+        mutableStateOf(false)
+    }
+
     LaunchedEffect(Unit)
     {
         withContext(Dispatchers.IO)
@@ -103,55 +116,120 @@ fun TicketDesplegadoAdministrador(navController: NavController, ticket: Ticket)
 
         ContenidoTicketDesplegado(navController, ticket) {
 
-            //if(mostrarSpinnerState.value) {
-            Text("TÉCNICO : ", fontSize = fuenteLetraTicketDesplegado)
-            Spinner(
-                modifier = Modifier,
-                itemList = tecnicosList,
-                onItemSelected = { option ->
+            if (ticket.idEstadoTicket < 4) {
+                //if(mostrarSpinnerState.value) {
+                Text("TÉCNICO : ", fontSize = fuenteLetraTicketDesplegado)
+                Spinner(
+                    modifier = Modifier,
+                    itemList = tecnicosList,
+                    onItemSelected = { option ->
 
-                    tecnicosListState.value = tecnicosList.indexOf(option) + 1
+                        tecnicosListState.value = tecnicosList.indexOf(option) + 1
 
-                })
-            //}
+                    })
+                //}
 
-            Spacer(modifier = Modifier.padding(15.dp))
-            Button(modifier = modeloButton,
+                Spacer(modifier = Modifier.padding(15.dp))
+                Button(
+                    modifier = modeloButton,
 
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black
-                ),
-                shape = RectangleShape,
-                onClick = {
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Black
+                    ),
+                    shape = RectangleShape,
+                    onClick = {
 
-                    // Si tecnicoListState es mayor a 1, se crea la consulta
-                    if (tecnicosListState.value > 1)
-                    {
-                        Log.d("RESULTADO", "ADMITIDO")
+                        // Si tecnicoListState es mayor a 1, se crea la consulta
+                        if (tecnicosListState.value > 1) {
+                            Log.d("RESULTADO", "ADMITIDO")
 
-                        //Se regresa a la pantalla anterior
-                        actualizarTicetState.value = true
-                        Toast.makeText(context, "Técnico encargado con éxito.", Toast.LENGTH_SHORT).show()
+                            //Se regresa a la pantalla anterior
+                            actualizarTicetState.value = true
+                            Toast.makeText(context, "Técnico encargado con éxito.", Toast.LENGTH_SHORT).show()
+
+                        } else {
+                            Log.e("RESULTADO", "NO ADMITIDO")
+                            Toast.makeText(context, "Por favor, indique el técnico encargado.", Toast.LENGTH_SHORT)
+                                .show()
+                        }
 
                     }
-                    else {
-                        Log.e("RESULTADO", "NO ADMITIDO")
-                        Toast.makeText(context, "Por favor, indique el técnico encargado.", Toast.LENGTH_SHORT).show()
-                    }
-
+                )
+                {
+                    androidx.compose.material3.Text(text = "ASIGNAR TICKET", color = Color.White)
                 }
-            )
-            {
-                androidx.compose.material3.Text(text = "ASIGNAR TICKET", color = Color.White)
-            }
+                Spacer(modifier = Modifier.padding(5.dp))
+                Button(
+                    modifier = modeloButton,
 
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Black
+                    ),
+                    shape = RectangleShape,
+                    onClick = {
+
+                        borrarTicketState.value = true
+
+                    }
+                )
+                {
+                    androidx.compose.material3.Text(text = "BORRAR TICKET", color = Color.White)
+                }
+
+            }
+            else // En caso contrario, se muestra las acciones de la misma
+            {
+                val accion = remember {
+                    mutableStateOf<Accion>(Accion())
+                }
+                accionesTicket(ticket){
+                    accion.value = it
+                }
+
+                Text(text = "ACCIÓN EJECUTADA: ", fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado)
+                Text(
+                    text = "${accion.value.descripcionAccion.descripcion} \n",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado
+                )
+
+                Text(text = "FECHA Y HORA DE LA ACCIÓN: ", fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado)
+                Text(
+                    text = "${accion.value.fecha} - ${accion.value.hora}  \n",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado
+                )
+
+                Text(text = "TÉCNICO ENCARGADO: ", fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado)
+                Text(
+                    text = "${ticket.tecnico.empleado.primerNombre} ${ticket.tecnico.empleado.segundoNombre} ${ticket.tecnico.empleado.primerApellido} ${ticket.tecnico.empleado.segundoApellido}\n",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado
+                )
+
+                Text(text = "GRUPO DE ATENCIÓN : ", fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado)
+                Text(
+                    text = "${ticket.tecnico.grupoAtencion.grupoAtencion} \n",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado
+                )
+
+                Text(text = "OBSERVACIONES: ", fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado)
+                Text(
+                    text = "${ticket.observaciones} \n",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado
+                )
+
+            }
     }
 
     if (actualizarTicetState.value == true)
     {
 
         LaunchedEffect(Unit) {
-            withContext(Dispatchers.IO) {
+
+            CoroutineScope(Dispatchers.IO).launch{
 
                 TicketRequests().updateTicketEnProcesoTecnicoEstadoById(ticket.id, tecnicosListState.value)
 
@@ -162,6 +240,59 @@ fun TicketDesplegadoAdministrador(navController: NavController, ticket: Ticket)
             actualizarTicetState.value = false
         }
 
+    }
+
+
+    if (borrarTicketState.value)
+    {
+
+        val scope = rememberCoroutineScope()
+        var borrarTicketBandera = remember { mutableStateOf(false) }
+        AlertDialogPersonalizado(
+            titulo = "Borrar Ticket",
+            contenido = "¿Deseas borrar el ticket?",
+            onDismissRequest = {
+                borrarTicketState.value = false
+            },
+            aceptarAccion = {
+                borrarTicketBandera.value = true
+            },
+            cancelarAccion = {
+                borrarTicketState.value = false
+            }
+        )
+
+        if (borrarTicketBandera.value) {
+
+            LaunchedEffect(Unit) {
+
+                scope.launch {
+                    TicketRequests().borrarTicket(ticket)
+
+                }
+            }
+            Toast.makeText(context, "Ticket borrado con éxito.", Toast.LENGTH_SHORT).show()
+            borrarTicketBandera.value = false
+            borrarTicketState.value = false
+            navController.popBackStack()
+        }
+
+    }
+
+}
+
+@Composable
+fun accionesTicket(ticket: Ticket, accion: (Accion) -> Unit)
+{
+
+    LaunchedEffect(Unit) {
+        CoroutineScope(Dispatchers.IO).launch {
+            AccionRequest().seleccionarAccionbyTicketId(ticket.id){
+
+                accion(it)
+
+            }
+        }
     }
 
 }

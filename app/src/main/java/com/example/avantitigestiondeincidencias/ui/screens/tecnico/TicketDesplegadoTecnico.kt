@@ -78,7 +78,11 @@ fun TicketDesplegadoTecnico(navController: NavController, ticket: Ticket)
 
     var observacionesState = remember { mutableStateOf("SIN OBSERVACIONES") }
 
-    var mostrarTextfieldState = remember{
+    val mensajeAccionExistosaState = remember {
+        mutableStateOf(false)
+    }
+
+    val ingresarbuttonState = remember{
         mutableStateOf(false)
     }
 
@@ -151,7 +155,7 @@ fun TicketDesplegadoTecnico(navController: NavController, ticket: Ticket)
             Text(text = "${ticket.clienteInterno.empleado.primerNombre} ${ticket.clienteInterno.empleado.segundoNombre} ${ticket.clienteInterno.empleado.primerApellido} ${ticket.clienteInterno.empleado.segundoApellido} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
 
             Text(text = "TELÉFONO: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.clienteInterno.empleado.telefonoPersona.codigoOperadoraTelefono.operadora}-${ticket.clienteInterno.empleado.telefonoPersona.extension} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
+            Text(text = "${ticket.clienteInterno.empleado.telefonoEmpleado.codigoOperadoraTelefono.operadora}-${ticket.clienteInterno.empleado.telefonoEmpleado.extension} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
 
             Text(text = "SEDE: ", fontSize = fuenteLetraTicketDesplegado)
             Text(text = "${ticket.clienteInterno.empleado.departamento.sede.nombre} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
@@ -210,6 +214,8 @@ fun TicketDesplegadoTecnico(navController: NavController, ticket: Ticket)
                 shape = RectangleShape,
                 onClick = {
 
+                    ingresarbuttonState.value = true
+
                     // Si la accion ejecutada o la descripcion no estan vacios, se crea la accion y se actualiza el ticket en la base de datos
                     if (descripcionAccionState.value.isNotEmpty() && observacionesState.value.isNotEmpty())
                     {
@@ -217,12 +223,13 @@ fun TicketDesplegadoTecnico(navController: NavController, ticket: Ticket)
 
                         //Se regresa a la pantalla anterior
                         cerrarTicketState.value = true
-                        Toast.makeText(context, "Ticket cerrado con éxito.", Toast.LENGTH_SHORT).show()
+
 
                     }
                     else {
                         Log.e("RESULTADO", "NO ADMITIDO")
                         Toast.makeText(context, "Por favor, llene los campos correspondientes.", Toast.LENGTH_SHORT).show()
+                        ingresarbuttonState.value = false
                     }
                     //Se cambia el estado de Abierto a En proceso
                     //Se cambia el nombre del tecnico
@@ -231,14 +238,17 @@ fun TicketDesplegadoTecnico(navController: NavController, ticket: Ticket)
                 }
             )
             {
-                androidx.compose.material3.Text(text = "ACTUALIZAR TICKET", color = Color.White)
+                if (ingresarbuttonState.value)
+                {
+                    iconoCarga(Modifier)
+                }else
+                androidx.compose.material3.Text(text = "CERRAR TICKET", color = Color.White)
             }
 
             Spacer(modifier = Modifier.padding(30.dp))
         }
 
     }
-
 
     if (cerrarTicketState.value == true)
     {
@@ -251,16 +261,22 @@ fun TicketDesplegadoTecnico(navController: NavController, ticket: Ticket)
 
                 AccionRequest()
                     .cerrarTicket(ticket, descripcionAccionState.value)
-                Log.d("Indice", "${AccionRequest().seleccionarAccion(descripcionAccionState.value)}")
+                mensajeAccionExistosaState.value = true
 
             }
 
-            cerrarTicketState.value == false
+            ingresarbuttonState.value = false
+            cerrarTicketState.value = false
             navController.popBackStack()
 
         }
 
+    }
 
+    if (mensajeAccionExistosaState.value)
+    {
+        Toast.makeText(context, "Ticket cerrado con éxito.", Toast.LENGTH_SHORT).show()
+        mensajeAccionExistosaState.value = false
     }
 
 }

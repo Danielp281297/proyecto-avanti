@@ -67,7 +67,7 @@ fun informacionPersonalEmpleado(empleado: Empleado)
 
         Text(text = "TELÉFONO: ", fontSize = fuenteLetraTicketDesplegado)
         Text(
-            text = "${empleado.telefonoPersona.codigoOperadoraTelefono.operadora}-${empleado.telefonoPersona.extension}" ,
+            text = "${empleado.telefonoEmpleado.codigoOperadoraTelefono.operadora}-${empleado.telefonoEmpleado.extension}" ,
             fontWeight = FontWeight.Bold,
             fontSize = fuenteLetraTicketDesplegado
         )

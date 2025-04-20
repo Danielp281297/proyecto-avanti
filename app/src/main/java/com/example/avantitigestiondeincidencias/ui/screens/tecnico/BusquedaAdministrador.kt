@@ -3,6 +3,7 @@ package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,11 +15,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -44,7 +47,9 @@ import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
 import com.example.avantitigestiondeincidencias.espacioSpacer
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,7 +64,7 @@ fun BusquedaAdministrador(navController: NavController)
     }
 
     var entradaBusquedaState = remember {
-        mutableStateOf("Un pato")
+        mutableStateOf("")
     }
 
     var ticketstate = remember{
@@ -70,28 +75,25 @@ fun BusquedaAdministrador(navController: NavController)
         mutableStateOf(false)
     }
 
+    var BusquedaTicketState = remember {
+        mutableStateOf(false)
+    }
+
+    obtenerTickets { tickets ->
+
+        dataset.clear()
+        dataset.addAll(tickets)
+        dataset.forEach {
+            Log.d("TICKET RECIBIDOS", it.toString())
+        }
+
+    }
+
     /*
     var pantallaCargaState = remember{
         mutableStateOf(false)
     }
     */
-
-    // Corrutina para obtener los tickets
-    LaunchedEffect(Unit)
-    {
-
-        withContext(Dispatchers.IO) {
-            //pantallaCargaState.value = true
-            TicketRequests().mostrarTablaTicket { tickets ->
-
-                dataset.addAll(tickets)
-
-            }
-            //pantallaCargaState.value = false
-
-        }
-
-    }
 
     Scaffold(
         topBar = {
@@ -109,11 +111,21 @@ fun BusquedaAdministrador(navController: NavController)
     )
     {
 
+
+
+
+
         Column(modifier = Modifier.padding(25.dp))
         {
             Spacer(modifier = Modifier.padding(45.dp))
-            Row(modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
+            Text("Ingrese los datos correspondientes",
+                modifier = Modifier.fillMaxWidth().padding(5.dp),
+                textAlign = TextAlign.Center,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold)
+            Row(modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 OutlinedTextField(
+                    modifier = Modifier.weight(1F),
                     value = entradaBusquedaState.value,
                     onValueChange = {
                         entradaBusquedaState.value = it
@@ -121,12 +133,14 @@ fun BusquedaAdministrador(navController: NavController)
                     label = {
                         Text(" Descripción a buscar...")
                     },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedLabelColor = Color.Black,
+                        focusedBorderColor = Color.Black
+                    ),
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.padding(5.dp))
-                IconButton(modifier = Modifier, onClick = {
-
-                    Log.d("ENTRADA DE TEXTO", entradaBusquedaState.value)
+                IconButton(modifier = Modifier.size(45.dp), onClick = {
 
                     // Se busca los tickets por sus descripciones
                     buscarTicketState.value = true
@@ -157,20 +171,27 @@ fun BusquedaAdministrador(navController: NavController)
             }
         }
 
+
     }
+
+
     
     if (buscarTicketState.value)
     {
-        LaunchedEffect(Unit) {
-            withContext(Dispatchers.IO) {
 
-                TicketRequests().seleccionarTicketByDescripcion(entradaBusquedaState.value){ tickets ->
+        dataset.clear()
+        //Si la entrada de texto esta vacia, se muestran los ultimos 50 ticktes...
+        if (entradaBusquedaState.value.isEmpty())
+        {
+            obtenerTickets { tickets ->
+                dataset.addAll(tickets)
+            }
+        }
+        else {
 
-                    tickets?.forEach {
-                        Log.d("TICKET FILTRADO", it.toString())
-                    }
+            obtenerTicketsConDescripcion(entradaBusquedaState.value) { tickets ->
 
-                }
+                dataset.addAll(tickets)
 
             }
         }
@@ -181,6 +202,44 @@ fun BusquedaAdministrador(navController: NavController)
 
 }
 
+
+@Composable
+fun obtenerTickets(tickets: (List<Ticket>) -> Unit)
+{
+    LaunchedEffect(Unit) {
+
+        CoroutineScope(Dispatchers.IO).launch {
+
+            TicketRequests().mostrarTablaTicket{ tickets ->
+
+                tickets(tickets)
+
+            }
+
+        }
+
+    }
+}
+
+@Composable
+fun obtenerTicketsConDescripcion(descripcion: String, tickets: (List<Ticket>) -> Unit)
+{
+
+    LaunchedEffect(Unit) {
+
+        CoroutineScope(Dispatchers.IO).launch {
+
+            TicketRequests().seleccionarTicketByDescripcion(descripcion){ tickets ->
+
+                tickets(tickets)
+
+            }
+
+        }
+
+    }
+
+}
 
 @Preview(showBackground = true)
 @Composable

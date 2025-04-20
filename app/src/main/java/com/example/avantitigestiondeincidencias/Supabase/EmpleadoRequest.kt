@@ -1,6 +1,7 @@
 package com.example.avantitigestiondeincidencias.Supabase
 
 import android.util.Log
+import androidx.compose.foundation.layout.Column
 import com.example.avantitigestiondeincidencias.AVANTI.CargoEmpleado
 import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
 import com.example.avantitigestiondeincidencias.AVANTI.Departamento
@@ -13,6 +14,7 @@ import com.example.avantitigestiondeincidencias.ui.screens.componentes.SHA512
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.Login
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.delay
 
 class EmpleadoRequest(): SupabaseClient() {
@@ -48,9 +50,10 @@ class EmpleadoRequest(): SupabaseClient() {
             cargo_empleado(
                 tipo_cargo_empleado
             ),
-            usuario (
+            usuario!inner(
                 id_usuario, 
-                nombre_usuario
+                nombre_usuario,
+                id_tipo_usuario
             )
         )
             
@@ -82,9 +85,10 @@ class EmpleadoRequest(): SupabaseClient() {
             cargo_empleado(
                 tipo_cargo_empleado
             ),
-            usuario(
+            usuario!inner(
                 id_usuario, 
-                nombre_usuario
+                nombre_usuario,
+                id_tipo_usuario
             )
         )
             
@@ -183,6 +187,58 @@ class EmpleadoRequest(): SupabaseClient() {
             }
 
         }.decodeSingle<ClienteInterno>()
+
+    }
+
+    suspend fun buscarCorreoElectronico(correo: String, salida: (Empleado?) -> Unit)
+    {
+        val resultado = getSupabaseClient().from("empleado").
+        select(columns = Columns.raw("correo_electrónico_empleado")){
+            filter {
+                eq("correo_electrónico_empleado", correo)
+            }
+        }.decodeSingleOrNull<Empleado>()
+
+        salida(resultado)
+
+    }
+
+    suspend fun buscarCedula(cedula: String, salida: (Empleado?) -> Unit)
+    {
+        val resultado = getSupabaseClient().from("empleado").
+        select(Columns.raw("cédula_empleado")){
+            filter {
+                eq("cédula_empleado", cedula)
+            }
+        }.decodeSingleOrNull<Empleado>()
+
+        salida(resultado)
+
+    }
+
+    suspend fun buscarTecnicoByNombreUsuario(nombre: String, tecnicos: (List<Tecnico>) -> Unit)
+    {
+
+        val resultados = getSupabaseClient().from("técnico").select(columnasTecnico){
+            filter {
+                like("empleado.usuario.nombre_usuario", "%${nombre}%")
+            }
+        }.decodeList<Tecnico>()
+
+        tecnicos(resultados)
+
+    }
+
+    suspend fun buscarClienteByNombreUsuario(nombre: String, clientes: (List<ClienteInterno>) -> Unit)
+    {
+
+        val resultados = getSupabaseClient().from("cliente_interno").select(columnasClienteInterno){
+            filter {
+                like("empleado.usuario.nombre_usuario", "%${nombre}%")
+            }
+        }.decodeList<ClienteInterno>()
+
+        clientes(resultados)
 
     }
 

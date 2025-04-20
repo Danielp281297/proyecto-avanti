@@ -8,9 +8,9 @@ data class Accion(
     @SerialName("id_acción")
     val id: Int = 0,
     @SerialName("fecha_acción")
-    val fecha: String = " ",
+    var fecha: String = " ",
     @SerialName("hora_acción")
-    val hora: String = " ",
+    var hora: String = " ",
     @SerialName("id_ticket")
     val idTicket: Int = 0,
     @SerialName("id_descripción_acción")

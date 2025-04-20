@@ -8,25 +8,16 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -39,34 +30,31 @@ import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
 import com.example.avantitigestiondeincidencias.AVANTI.Empleado
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
-import com.example.avantitigestiondeincidencias.ui.screens.tecnico.BusquedaUsuarios
+import com.example.avantitigestiondeincidencias.AVANTI.Usuario
+import com.example.avantitigestiondeincidencias.Notification.Notification
+import com.example.avantitigestiondeincidencias.ui.screens.tecnico.CambiarContrasena
+import com.example.avantitigestiondeincidencias.ui.screens.tecnico.CambiarDatosUsuario
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.CrearUsuario
-import com.example.avantitigestiondeincidencias.ui.screens.tecnico.DatePickerScreen
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.HorizontalPagerBottomBarAdministrador
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.HorizontalPagerBottomBarTecnico
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InformacionClienteInterno
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InformacionTecnico
-import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InformeTecnico
-import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InicioAdministrador
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InicioCliente
-import com.example.avantitigestiondeincidencias.ui.screens.tecnico.InicioTecnico
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.Login
-import com.example.avantitigestiondeincidencias.ui.screens.tecnico.PantallaNotificacion
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.PantallaPruebas
+import com.example.avantitigestiondeincidencias.ui.screens.tecnico.PerfilClienteInterno
+import com.example.avantitigestiondeincidencias.ui.screens.tecnico.PerfilTecnico
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.TicketDesplegadoAdministrador
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.TicketDesplegadoBusqueda
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.TicketDesplegadoCliente
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.TicketDesplegadoTecnico
-import com.example.avantitigestiondeincidencias.ui.screens.tecnico.nuevoTicketFormulario
-import com.example.avantitigestiondeincidencias.ui.screens.tecnico.showDatePicker
-import com.example.avantitigestiondeincidencias.ui.screens.usuario.CrearUsuarioFormulario
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlin.system.exitProcess
 
 val paddingPantallas = Modifier.fillMaxSize().padding(15.dp)
 val espacioSpacer = Modifier.padding(7.5.dp)
@@ -86,14 +74,9 @@ class MainActivity : ComponentActivity() {
 
                     // Primero, se pide que el usuario conceda permisos para acceder al almacenamiento del dispositivo,
                     // y a la llegada de notificaciones
+                    Notification().createChannel(context)
                     permisos(context)
-
-                    //InicioCliente()
                     destination()
-                    //InicioTecnico()
-                    //showDatePicker(this)
-                    //CrearUsuarioFormulario()
-                    //InicioAdministrador()
 
 
                 }
@@ -108,20 +91,27 @@ class MainActivity : ComponentActivity() {
 fun permisos(context: Context)
 {
 
-    val permissionState = rememberPermissionState(permission = android.Manifest.permission.POST_NOTIFICATIONS)
+    val permissionState =
+        rememberMultiplePermissionsState(listOf(android.Manifest.permission.POST_NOTIFICATIONS, android.Manifest.permission.CAMERA))//rememberPermissionState(permission = android.Manifest.permission.POST_NOTIFICATIONS)
 
     val estadoPermiso = remember {
         mutableStateOf("Permiso no concedido")
     }
     // Si se concede el permiso, devuelve verdadero; y lo contrario es falso
-    if (permissionState.status.isGranted)
+    if (permissionState.allPermissionsGranted)
     {
         estadoPermiso.value = "Permiso concedido"
     }
-    else LaunchedEffect(true)
+    else LaunchedEffect(Unit)
     {
-        permissionState.launchPermissionRequest()
+        permissionState.launchMultiplePermissionRequest()
     }
+
+    if (permissionState.shouldShowRationale && !permissionState.allPermissionsGranted)
+    {
+        exitProcess(0)
+    }
+
 
 }
 
@@ -139,6 +129,7 @@ fun destination()
             //HorizontalPagerBottomBarTecnico(/*Empleado(), */navController)
             //Login(navController)
             //CrearUsuario(navController)
+            //BorrarUsuarioPrueba()
             //InformeTecnico()
             //PantallaNotificacion()
             //DatePickerScreen()
@@ -149,6 +140,8 @@ fun destination()
             //HorizontalPagerBottomBarAdministrador(Empleado(), navController = navController)
             //TicketDesplegadoAdministrador(navController, Ticket())
             //TicketDesplegadoTecnico(navController, Ticket())
+            //CambiarContrasena(navController, Usuario())
+
         }
 
         composable("login")
@@ -236,28 +229,56 @@ fun destination()
             CrearUsuario(navController)
         }
 
-        composable("mostrarInformacionTecnico" + "/{tecnico}",
-            arguments = listOf(navArgument(name = "tecnico")
+        composable(route = "cambiarContrasena"+ "/{usuario}",
+            arguments = listOf(navArgument(name = "usuario")
             {type = NavType.StringType}))
         { navBackStackEntry ->
-            var tecnicoState = remember{
-                mutableStateOf<Tecnico>(Json.decodeFromString<Tecnico>(navBackStackEntry.arguments!!.getString("tecnico").toString()))
-            }
 
-            InformacionTecnico(navController, tecnicoState.value)
+            val usuario = Json.decodeFromString<Usuario>(navBackStackEntry.arguments!!.getString("usuario").toString())
+
+            CambiarContrasena(navController, usuario)
 
         }
 
-        composable(route = "mostrarInformacionCliente"+ "/{clienteInterno}",
+        composable(route = "informacionPerfilCliente"+ "/{clienteInterno}",
             arguments = listOf(navArgument(name = "clienteInterno")
             {type = NavType.StringType}))
         { navBackStackEntry ->
 
             val clienteInterno = Json.decodeFromString<ClienteInterno>(navBackStackEntry.arguments!!.getString("clienteInterno").toString())
 
-            InformacionClienteInterno(navController, clienteInterno)
+            PerfilClienteInterno(navController, clienteInterno)
 
         }
+
+        composable("informacionPerfilTecnico" + "/{tecnico}",
+            arguments = listOf(navArgument(name = "tecnico")
+            {type = NavType.StringType}))
+        { navBackStackEntry ->
+
+            var tecnicoState = remember{
+                mutableStateOf<Tecnico>(Json.decodeFromString<Tecnico>(navBackStackEntry.arguments!!.getString("tecnico").toString()))
+            }
+
+            PerfilTecnico(navController, tecnicoState.value)
+
+        }
+
+        //Pantalla para cambiar datos del usuario
+        composable("CambiarDatosUsuario" + "/{empleado}",
+            arguments = listOf(navArgument(name = "empleado")
+            {type = NavType.StringType}))
+        { navBackStackEntry ->
+
+            val empleadoState = remember{
+                mutableStateOf<Empleado>(Json.decodeFromString<Empleado>(navBackStackEntry.arguments!!.getString("empleado").toString()))
+            }
+
+            CambiarDatosUsuario(navController, empleadoState.value)
+
+        }
+
+        //Pantalla para los manuales
 
     }
 

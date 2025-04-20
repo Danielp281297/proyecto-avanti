@@ -10,7 +10,7 @@ data class Usuario(
     @SerialName("nombre_usuario")
     val nombre: String = " ",
     @SerialName("contraseña_usuario")
-    val password: String = " ",
+    var password: String = " ",
     @SerialName("id_tipo_usuario")
     val idTipoUsuario: Int = 0,
     @SerialName("tipo_usuario")

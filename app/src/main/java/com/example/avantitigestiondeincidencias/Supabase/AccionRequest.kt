@@ -5,6 +5,7 @@ import com.example.avantitigestiondeincidencias.AVANTI.Accion
 import com.example.avantitigestiondeincidencias.AVANTI.DescripcionAccion
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
+import com.example.avantitigestiondeincidencias.FormatoHoraFecha.FormatoHoraFecha
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.delay
@@ -28,7 +29,7 @@ class AccionRequest: SupabaseClient() {
         descripción_acción( 
             descripción_acción_ejecutada
         ),
-        ticket(
+        ticket!inner (
             id_ticket,
             fecha_ticket,
             hora_ticket,
@@ -117,19 +118,27 @@ class AccionRequest: SupabaseClient() {
         )
     """.trimIndent())
 
-    suspend fun buscarAccionesById(fechaInicio: String, fechaFin: String): List<Accion> {
+    suspend fun buscarAccionesByIdConRangoFechas(idTecnico: Int, fechaInicio: String, fechaFin: String, acciones: (List<Accion>) -> Unit) {
 
          val resultados = getSupabaseClient().from("acción").select(columns = accionRequest){
 
              filter {
                  gte("fecha_acción", fechaInicio)
                  lte("fecha_acción", fechaFin)
+                 eq("ticket.id_técnico", idTecnico)
              }
 
          }
              .decodeList<Accion>()
 
-        return resultados
+        resultados.forEach { accion ->
+
+            accion.fecha = FormatoHoraFecha.formatoFecha(accion.fecha).toString()
+            accion.hora = FormatoHoraFecha.formatoHora(accion.hora)
+
+        }
+        acciones(resultados)
+
     }
 
 
@@ -190,6 +199,21 @@ class AccionRequest: SupabaseClient() {
 
         return indice
 
+    }
+
+    suspend fun seleccionarAccionbyTicketId(id: Int, accion: (Accion) -> Unit) {
+
+        val resultado = getSupabaseClient().from("acción").select(columns = accionRequest){
+            filter {
+                eq("id_ticket", id)
+            }
+        }.decodeSingle<Accion>()
+
+        // Se formatea la fecha y la hora de la accion
+            resultado.fecha = FormatoHoraFecha.formatoFecha(resultado.fecha).toString()
+            resultado.hora = FormatoHoraFecha.formatoHora(resultado.hora)
+
+        accion(resultado)
     }
 
 }

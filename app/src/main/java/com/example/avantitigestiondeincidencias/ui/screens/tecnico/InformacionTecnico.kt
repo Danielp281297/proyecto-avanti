@@ -29,81 +29,38 @@ import io.ktor.util.toUpperCasePreservingASCIIRules
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InformacionTecnico(navController: NavController, tecnico: Tecnico)
+fun InformacionTecnico(tecnico: Tecnico)
 {
 
     val scrollState = rememberScrollState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    Color.White
-                ),
-                title = {
-                    Text("Usuario", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                }
-            )
-        },
-        //Color de fondo
-        containerColor = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919),
-    )
+    Column(modifier = Modifier)
     {
+        EncabezadoInformacionUsuario(
+            com.example.avantitigestiondeincidencias.R.drawable.screwdriver_wrench_solid,
+            "Técnico"
+        )
 
-        Column(modifier = Modifier.padding(15.dp).fillMaxSize().verticalScroll(scrollState, true))
-        {
-            EncabezadoInformacionUsuario(com.example.avantitigestiondeincidencias.R.drawable.screwdriver_wrench_solid, "Técnico")
+        Text(text = "TÉCNICO: ", fontSize = fuenteLetraTicketDesplegado)
+        Text(
+            text = "${tecnico.id}",
+            fontWeight = FontWeight.Bold,
+            fontSize = fuenteLetraTicketDesplegado
+        )
+        Spacer(modifier = Modifier.padding(5.dp))
 
-            Text(text = "TÉCNICO: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(
-                text = "${tecnico.id}",
-                fontWeight = FontWeight.Bold,
-                fontSize = fuenteLetraTicketDesplegado
-            )
-            Spacer(modifier = Modifier.padding(5.dp))
+        informacionPersonalEmpleado(tecnico.empleado)
 
-            informacionPersonalEmpleado(tecnico.empleado)
+        Text(text = "ÁREA: ", fontSize = fuenteLetraTicketDesplegado)
+        Text(
+            text = tecnico.grupoAtencion.grupoAtencion.toUpperCasePreservingASCIIRules(),
+            fontWeight = FontWeight.Bold,
+            fontSize = fuenteLetraTicketDesplegado
+        )
+        Spacer(modifier = Modifier.padding(5.dp))
 
-            Text(text = "ÁREA: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(
-                text = tecnico.grupoAtencion.grupoAtencion.toUpperCasePreservingASCIIRules(),
-                fontWeight = FontWeight.Bold,
-                fontSize = fuenteLetraTicketDesplegado
-            )
-            Spacer(modifier = Modifier.padding(5.dp))
-
-            InformacionLaboralEmpleado(tecnico.empleado)
-
-            Spacer(modifier = Modifier.padding(10.dp))
-            //Boton para cambiar los datos del usuario
-            Button(modifier = modeloButton,
-
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black
-                ),
-                shape = RectangleShape,
-                onClick = {
-                }
-            )
-            {
-                Text(text = "MODIFICAR USUARIO", color = Color.White)
-            }
-            Spacer(modifier = Modifier.padding(15.dp))
-            //Boton para borra el usuario de la base de datos
-            Button(modifier = modeloButton,
-
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black
-                ),
-                shape = RectangleShape,
-                onClick = {
-                }
-            )
-            {
-                Text(text = "BORRAR USUARIO", color = Color.White)
-            }
-
-            Spacer(modifier = Modifier.padding(50.dp))
-        }
+        InformacionLaboralEmpleado(tecnico.empleado)
+        Spacer(modifier = Modifier.padding(15.dp))
     }
+
 }

@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Empleado(
+data class InsertarEmpleado(
     @SerialName("id_empleado")
     var id: Int = 0,
     @SerialName("cédula_empleado")
@@ -22,20 +22,9 @@ data class Empleado(
     @SerialName("id_teléfono_empleado")
     var idTeléfonoEmpleado: Int = 0,
     @SerialName("id_departamento")
-    var idDepartamento: Int = 0,
+    val idDepartamento: Int = 0,
     @SerialName("id_cargo_empleado")
     val idCargoEmpleado: Int = 0,
     @SerialName("id_usuario")
     var idUsuario: Int = 0,
-
-
-    @SerialName("teléfono_empleado")
-    val telefonoEmpleado: TelefonoEmpleado = TelefonoEmpleado(),
-    @SerialName("departamento")
-    val departamento: Departamento = Departamento(),
-    @SerialName("cargo_empleado")
-    val cargoEmpleado: CargoEmpleado = CargoEmpleado(),
-    @SerialName("usuario")
-    val usuario: Usuario = Usuario()
-
 )

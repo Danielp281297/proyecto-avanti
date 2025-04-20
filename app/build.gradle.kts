@@ -71,7 +71,7 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:realtime-kt")
 
     // Okhttp de Ktor para realizar las peticiones a la base de datos
-    implementation("io.ktor:ktor-client-okhttp:3.1.1")
+    implementation("io.ktor:ktor-client-okhttp:3.1.2")
 
     // Corrutinas de kotlinx
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1") // Para Android

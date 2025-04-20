@@ -72,11 +72,11 @@ fun Login(navController: NavController)
 {
     
     var nombreUsuarioState = remember {
-        mutableStateOf("admin")
+        mutableStateOf("")
     }
 
     var contrasenaUsuarioState = remember {
-        mutableStateOf("1234")
+        mutableStateOf("")
     }
     
     var contrasenaVisibleState = remember {
@@ -127,7 +127,7 @@ fun Login(navController: NavController)
                     value = nombreUsuarioState.value,
                     onValueChange = { newText ->
                         // Si el texto es menor a 50 caracteres, se almacena en newText
-                        if (newText.length <= 20)
+                        if (newText.all { !it.isWhitespace() && it.isLetter() || it.isDigit() } && newText.length <= 20)
                             nombreUsuarioState.value = newText
                     },
                     label = { Text("Nombre de usuario", fontSize = 13.sp) },

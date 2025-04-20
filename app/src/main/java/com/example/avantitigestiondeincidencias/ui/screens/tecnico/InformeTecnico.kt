@@ -10,9 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -21,31 +19,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DatePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -58,18 +48,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.avantitigestiondeincidencias.AVANTI.Accion
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
+import com.example.avantitigestiondeincidencias.Notification.Notification
 import com.example.avantitigestiondeincidencias.Supabase.AccionRequest
 import com.example.avantitigestiondeincidencias.modeloButton
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.apache.poi.ss.usermodel.HorizontalAlignment
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Calendar
+import java.time.LocalDate
 import java.util.Date
 
 val weightColumnas = 1F
@@ -78,6 +72,8 @@ val weightColumnas = 1F
 @Composable
 fun InformeTecnico(tecnico: Tecnico)
 {
+
+    val context = LocalContext.current
 
     var showDatePickerState = remember {
         mutableStateOf(false)
@@ -111,6 +107,10 @@ fun InformeTecnico(tecnico: Tecnico)
         mutableStateOf(false)
     }
 
+    var generarExcelState = remember{
+        mutableStateOf(false)
+    }
+
     val horizontalScrollState = rememberScrollState()
 
     Scaffold(
@@ -137,7 +137,7 @@ fun InformeTecnico(tecnico: Tecnico)
             Column(modifier = Modifier.fillMaxHeight().verticalScroll(state = verticalScrollState, enabled = true), verticalArrangement = Arrangement.SpaceEvenly)
             {
 
-                Text(text = "Ingrese los campos correspondientes para imprimir el informe.", textAlign = TextAlign.Center)
+                Text(text = "Ingrese los campos correspondientes para imprimir el informe.", fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                 Row(modifier = Modifier.fillMaxWidth())
                 {
 
@@ -181,7 +181,7 @@ fun InformeTecnico(tecnico: Tecnico)
                     }
                 }
 
-                Button(//enabled = habilitarCargarDatosState.value,
+                Button(enabled = habilitarCargarDatosState.value,
                     modifier = modeloButton,
 
                     colors = ButtonDefaults.buttonColors(
@@ -199,51 +199,56 @@ fun InformeTecnico(tecnico: Tecnico)
                     Text(text = "CARGAR DATOS")
                 }
 
-                LazyColumn(modifier = Modifier.fillMaxWidth().height(240.dp).background(Color.LightGray).horizontalScroll(state = horizontalScrollState, enabled = true))
-                {
+                //Column() {
+                    /*
+                    Row(modifier = Modifier.wrapContentWidth()){
+                        Text("Ticket", modifier = Modifier)
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Text("Usuario", modifier = Modifier)
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Text("Sede", modifier = Modifier)
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Text("Piso", modifier = Modifier)
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Text("Tipo", modifier = Modifier)
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Text("Descripción", modifier = Modifier)
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Text("Fecha ticket", modifier = Modifier)
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Text("Hora ticket", modifier = Modifier)
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Text("Acción Ejecutada", modifier = Modifier)
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Text("Fecha Accion", modifier = Modifier)
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Text("Hora Accion", modifier = Modifier)
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Text("Estado", modifier = Modifier)
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Text("Grupo de Atención", modifier = Modifier)
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Text("Técnico", modifier = Modifier)
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Text("Observaciones", modifier = Modifier)
+                        Spacer(modifier = Modifier.padding(5.dp))
 
-                    items(accionesList.count()){ index ->
-                        Row(modifier = Modifier.wrapContentWidth()){
-                            Text("Ticket", modifier = Modifier)
-                            Spacer(modifier = Modifier.padding(5.dp))
-                            Text("Usuario", modifier = Modifier)
-                            Spacer(modifier = Modifier.padding(5.dp))
-                            Text("Sede", modifier = Modifier)
-                            Spacer(modifier = Modifier.padding(5.dp))
-                            Text("Piso", modifier = Modifier)
-                            Spacer(modifier = Modifier.padding(5.dp))
-                            Text("Tipo", modifier = Modifier)
-                            Spacer(modifier = Modifier.padding(5.dp))
-                            Text("Descripción", modifier = Modifier)
-                            Spacer(modifier = Modifier.padding(5.dp))
-                            Text("Fecha ticket", modifier = Modifier)
-                            Spacer(modifier = Modifier.padding(5.dp))
-                            Text("Hora ticket", modifier = Modifier)
-                            Spacer(modifier = Modifier.padding(5.dp))
-                            Text("Acción Ejecutada", modifier = Modifier)
-                            Spacer(modifier = Modifier.padding(5.dp))
-                            Text("Fecha Accion", modifier = Modifier)
-                            Spacer(modifier = Modifier.padding(5.dp))
-                            Text("Hora Accion", modifier = Modifier)
-                            Spacer(modifier = Modifier.padding(5.dp))
-                            Text("Estado", modifier = Modifier)
-                            Spacer(modifier = Modifier.padding(5.dp))
-                            Text("Grupo de Atención", modifier = Modifier)
-                            Spacer(modifier = Modifier.padding(5.dp))
-                            Text("Técnico", modifier = Modifier)
-                            Spacer(modifier = Modifier.padding(5.dp))
-                            Text("Observaciones", modifier = Modifier)
-                            Spacer(modifier = Modifier.padding(5.dp))
+                        Text("Id_ticket", modifier = Modifier)
+                    }
+                    */
+                    LazyColumn(modifier = Modifier.fillMaxWidth().height(240.dp).background(Color.LightGray).horizontalScroll(state = horizontalScrollState, enabled = true))
+                    {
 
-                            Text("Id_ticket", modifier = Modifier)
+                        items(accionesList.count()){ index ->
+
+                            accionFila(accionesList[index])
+
                         }
-                        accionFila(accionesList[index])
 
                     }
-                    
-                }
+               // }
 
-                Button(//enabled = habilitarBotonGuardarInformeState.value,
+                Button(enabled = habilitarBotonGuardarInformeState.value,
                     modifier = modeloButton,
 
                     colors = ButtonDefaults.buttonColors(
@@ -251,7 +256,7 @@ fun InformeTecnico(tecnico: Tecnico)
                     ),
                     shape = RectangleShape,
                     onClick = {
-                        generalInformeExcel(accionesList, fechaInicioState.value, fechaFinalState.value)
+                        generarExcelState.value = true
                     })
                 {
                     Text(text = "GUARDAR INFORME")
@@ -266,34 +271,34 @@ fun InformeTecnico(tecnico: Tecnico)
 
     }
 
+    if(generarExcelState.value)
+    {
+
+        if (accionesList.isNotEmpty()) {
+            generalInformeExcel(accionesList, fechaInicioState.value, fechaFinalState.value)
+            // Se avisa la creacion del informe\
+            Notification().mostrarNotificacion(
+                context,
+                "AVANTI - Gestión de Incidencias: Informe",
+                "Se guardó el informe en la carpeta de Documentos."
+            )
+        }
+        else
+            Log.d("AVISO", "LISTA VACIA, NO PROCEDE")
+
+
+        generarExcelState.value = false
+    }
+
     if(buscarAccionesByIdState.value)
     {
-        LaunchedEffect(Unit)
-        {
 
-            withContext(Dispatchers.IO) {
-
-
-                AccionRequest().buscarAccionesById(fechaInicioState.value, fechaFinalState.value).forEach { accion ->
-
-
-
-                    if (accion.ticket.tecnico.empleado.idUsuario == tecnico.id)
-                    {
-                        Log.d("ACCION", accion.toString())
-                        accionesList.add(accion)
-                    }
-
-
-
-                }
-
-            }
-            delay(1000)
+        actualizarAcciones(tecnico.id, fechaInicioState.value, fechaFinalState.value) { acciones ->
+            accionesList.addAll(acciones)
+        }
 
             buscarAccionesByIdState.value = false
 
-        }
     }
 
 
@@ -340,6 +345,37 @@ fun InformeTecnico(tecnico: Tecnico)
 
 }
 
+@Composable
+fun actualizarAcciones(idTecnico: Int, fechaInicio: String, fechaFinal: String, acciones: (List<Accion>) -> Unit)
+{
+
+    // Se convierten las fechas en formato YYYY-MM-DDDD
+    val formatoEntrada = DateTimeFormatter.ofPattern("dd-M-yyyy") // Corregido para aceptar mes de un dígito
+
+    val fechaInicio = LocalDate.parse(fechaInicio, formatoEntrada)
+    val fechaFin = LocalDate.parse(fechaFinal, formatoEntrada)
+
+    LaunchedEffect(Unit)
+    {
+
+        CoroutineScope(Dispatchers.IO).launch {
+
+            AccionRequest().buscarAccionesByIdConRangoFechas(
+                idTecnico,
+                fechaInicio.toString(),
+                fechaFin.toString()
+            ) { accion ->
+
+                acciones(accion)
+
+            }
+
+        }
+        delay(1000)
+    }
+
+}
+
 fun generalInformeExcel(
     accions: List<Accion>,
     fechaInicio: String,
@@ -348,7 +384,7 @@ fun generalInformeExcel(
 
     val path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
 
-    val fileName = "informe${LocalDateTime.now().nano}.xlsx"
+    val fileName = "AVANTI_informe${LocalDateTime.now().nano}.xlsx"
 
     val workbook = XSSFWorkbook()
     val sheet = workbook.createSheet("Sheet1")
@@ -411,94 +447,29 @@ fun generalInformeExcel(
 @Composable
 fun accionFila(accion: Accion)
 {
-
-    Row {
+    Row(horizontalArrangement = Arrangement.SpaceBetween) {
 
         Text(accion.ticket.id.toString())
-        Spacer(modifier = Modifier.padding(5.dp))
         Text("${accion.ticket.clienteInterno.empleado.primerNombre} ${accion.ticket.clienteInterno.empleado.primerApellido}")
-Spacer(modifier = Modifier.padding(5.dp))
         Text(accion.ticket.clienteInterno.empleado.departamento.sede.nombre)
-Spacer(modifier = Modifier.padding(5.dp))
         Text(accion.ticket.clienteInterno.empleado.departamento.piso.toString())
-Spacer(modifier = Modifier.padding(5.dp))
         Text(accion.ticket.tipo.tipoTicket)
-Spacer(modifier = Modifier.padding(5.dp))
         Text(accion.ticket.descripcion)
-Spacer(modifier = Modifier.padding(5.dp))
         Text(accion.ticket.fecha)
-Spacer(modifier = Modifier.padding(5.dp))
         Text(accion.ticket.hora)
-Spacer(modifier = Modifier.padding(5.dp))
         Text(accion.descripcionAccion.descripcion)
-Spacer(modifier = Modifier.padding(5.dp))
         Text(accion.fecha)
-Spacer(modifier = Modifier.padding(5.dp))
         Text(accion.hora)
-Spacer(modifier = Modifier.padding(5.dp))
         Text(accion.ticket.estado.tipoEstado)
-Spacer(modifier = Modifier.padding(5.dp))
         Text(accion.ticket.tecnico.grupoAtencion.grupoAtencion)
-Spacer(modifier = Modifier.padding(5.dp))
         Text("${accion.ticket.tecnico.empleado.primerNombre} ${accion.ticket.tecnico.empleado.primerApellido}")
-Spacer(modifier = Modifier.padding(5.dp))
         Text(accion.ticket.observaciones)
-
     }
-
 }
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("DefaultLocale")
-@Composable
-fun showDatePicker(context: Context){
-
-    val year: Int
-    val month: Int
-    val day: Int
-
-    val calendar = Calendar.getInstance()
-    year = calendar.get(Calendar.YEAR)
-    month = calendar.get(Calendar.MONTH)
-    day = calendar.get(Calendar.DAY_OF_MONTH)
-    calendar.time = Date()
-
-    val date = remember { mutableStateOf("") }
-    val datePickerDialog = DatePickerDialog(
-        context,
-        {_: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
-            date.value = "${String.format("%02d", dayOfMonth)}-${String.format("%02d", month + 1)}-$year"
-        }, year, month, day
-    )
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-
-        Text(text = "Selected Date: ${date.value}")
-        Spacer(modifier = Modifier.size(16.dp))
-        Button(onClick = {
-            datePickerDialog.show()
-        }) {
-            Text(text = "Open Date Picker")
-        }
-
-        androidx.compose.material3.DatePickerDialog(content = { }, 
-                                                    onDismissRequest = { },
-                                                    confirmButton = { })
-    }
-
-}
-
 
 @Preview(showBackground = true)
 @Composable
 fun InformeTecnicoPreview() {
-
-    val context = LocalContext.current
 
     AVANTITIGestionDeIncidenciasTheme {
 

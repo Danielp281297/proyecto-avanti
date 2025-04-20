@@ -1,5 +1,6 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExtendedFloatingActionButton
 import androidx.compose.material.FloatingActionButtonDefaults
 import androidx.compose.material.icons.Icons
@@ -26,6 +28,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -45,17 +48,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
+import com.example.avantitigestiondeincidencias.R
+import com.example.avantitigestiondeincidencias.Supabase.EmpleadoRequest
 import com.example.avantitigestiondeincidencias.Supabase.UsuarioRequest
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-
-data class AdministradorOpciones(val label: String, val icon: ImageVector)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,8 +71,13 @@ fun BusquedaUsuarios(navController: NavController)
     var tituloState = remember {
         mutableStateOf("")
     }
+
     var entradaBusquedaState = remember {
         mutableStateOf("")
+    }
+
+    var entradaTextoState = remember{
+        mutableStateOf(false)
     }
 
     var botonTecnicoState = remember{
@@ -85,21 +96,33 @@ fun BusquedaUsuarios(navController: NavController)
         mutableStateListOf<ClienteInterno>()
     }
 
+    var buscarUsuarioState = remember{
+        mutableStateOf(false)
+    }
+
+    /*
     LaunchedEffect(Unit)
     {
         withContext(Dispatchers.IO)
         {
 
-            UsuarioRequest().seleccionarUsuariosClienteInterno { clientes ->
-                usuariosClientesInternos.addAll(clientes)
-            }
+
 
             UsuarioRequest().seleccionarUsuariosTecnico{ tecnico ->
                 usuariosTecnicoLista.addAll(tecnico)
             }
         }
     }
+    */
 
+    buscarTecnicos(entradaBusquedaState.value)
+    {
+        usuariosTecnicoLista.addAll(it)
+    }
+
+    buscarClientesInternos(entradaBusquedaState.value) {
+        usuariosClientesInternos.addAll(it)
+    }
 
     Scaffold(
         topBar = {
@@ -119,31 +142,46 @@ fun BusquedaUsuarios(navController: NavController)
 
         //Spacer(modifier = Modifier.padding(35.dp))
 
-        Box(modifier = Modifier.fillMaxSize().padding(15.dp))
+        Box(modifier = Modifier.fillMaxSize().padding(25.dp))
         {
 
             Column(modifier = Modifier)
             {
                 Spacer(modifier = Modifier.padding(45.dp))
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Ingrese el tipo de usuario para realizar la busqueda",
+                    modifier = Modifier.fillMaxWidth().padding(5.dp),
+                    //textAlign = TextAlign.Center,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center)
+                Row(modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                     OutlinedTextField(
+                        modifier = Modifier.weight(1F),
+                        readOnly = !entradaTextoState.value,
                         value = entradaBusquedaState.value,
                         onValueChange = {
                             entradaBusquedaState.value = it
                         },
                         label = {
-                            Text(" Nombre de usuario a buscar...")
+                            Text(" Usuario a buscar...")
                         },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedLabelColor = Color.Black,
+                            focusedBorderColor = Color.Black
+                        ),
                         singleLine = true
                     )
                     Spacer(modifier = Modifier.padding(5.dp))
-                    IconButton(modifier = Modifier, onClick = {})
+                    IconButton(modifier = Modifier.size(45.dp),
+                        enabled = entradaTextoState.value,
+                        onClick = {
+
+                        // Se busca los tickets por sus descripciones
+                        buscarUsuarioState.value = true
+
+                    })
                     {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Boton Busqueda",
-                            modifier = Modifier.size(45.dp)
-                        )
+                        Icon(imageVector = Icons.Default.Search, contentDescription = "Boton Busqueda", modifier = Modifier.size(45.dp))
                     }
                 }
                 Spacer(modifier = Modifier.padding(5.dp))
@@ -225,25 +263,100 @@ fun BusquedaUsuarios(navController: NavController)
             }
 
             ExtendedFloatingActionButton(onClick = {
+
                 navController.navigate("crearUsuario")
+                
             },
                 text = {
                     Icon(
-                        painter = painterResource(com.example.avantitigestiondeincidencias.R.drawable.nuevo_usuario_logo),
-                        contentDescription = "Crear Usuario",
-                        modifier = Modifier.size(25.dp))
+                        painter = painterResource(R.drawable.nuevo_usuario_logo),
+                        contentDescription = "Crear Nuevo Ticket",
+                        modifier = Modifier.size(25.dp)
+                    )
                 },
                 contentColor = Color.White,
                 backgroundColor = Color.White,
-                shape = RectangleShape,
-                modifier = Modifier.wrapContentWidth().height(80.dp).padding(0.dp, 0.dp).align(Alignment.BottomEnd).border(1.dp, Color.LightGray, RectangleShape),
+                shape = RoundedCornerShape(0.dp),
+                modifier = Modifier.wrapContentWidth().padding(15.dp, 140.dp).align(Alignment.BottomEnd).border(1.dp, Color.LightGray, RectangleShape),
                 elevation = FloatingActionButtonDefaults.elevation(0.dp)
-                )
+            )
 
         }
 
     }
 
+    // Si una de los dos botones son presionados, se habilita la entrada de texto...
+    if(botonTecnicoState.value || botonClienteInternoState.value)
+    {
+        entradaTextoState.value = true
+    }
+
+    if (buscarUsuarioState.value)
+    {
+        if(botonTecnicoState.value)
+        {
+
+            usuariosTecnicoLista.clear()
+            buscarTecnicos(entradaBusquedaState.value) {
+                usuariosTecnicoLista.addAll(it)
+            }
+
+        }
+        else if (botonClienteInternoState.value)
+        {
+            usuariosClientesInternos.clear()
+            buscarClientesInternos(entradaBusquedaState.value) {
+                usuariosClientesInternos.addAll(it)
+            }
+        }
+
+        buscarUsuarioState.value = false
+    }
+
+}
+
+@Composable
+fun buscarClientesInternos(nombreUsuario: String, clientes: (List<ClienteInterno>) -> Unit)
+{
+    LaunchedEffect(Unit) {
+        CoroutineScope(Dispatchers.IO).launch {
+
+            if (nombreUsuario.isNotEmpty()) {
+                EmpleadoRequest().buscarClienteByNombreUsuario(nombreUsuario) {
+                    clientes(it)
+                }
+            }
+            else{
+                UsuarioRequest().seleccionarUsuariosClienteInterno {
+                    clientes(it)
+                }
+            }
+
+        }
+    }
+}
+
+@Composable
+fun buscarTecnicos(nombreUsuario: String, tecnicos: (List<Tecnico>) -> Unit)
+{
+    
+    LaunchedEffect(Unit) {
+        CoroutineScope(Dispatchers.IO).launch {
+
+            if (nombreUsuario.isNotEmpty()) {
+                EmpleadoRequest().buscarTecnicoByNombreUsuario(nombreUsuario) {
+                    tecnicos(it)
+                }
+            }
+            else{
+                UsuarioRequest().seleccionarUsuariosTecnico{
+                    tecnicos(it)
+                }
+            }
+
+        }
+    }
+    
 }
 
 @Composable
@@ -255,7 +368,7 @@ fun TargetaUsuarioTecnico(
     Column(modifier = Modifier.fillMaxWidth().padding(5.dp).clickable {
 
         val json = Json.encodeToString(tecnico)
-        navController.navigate("mostrarInformacionTecnico" + "/${json}")
+        navController.navigate("informacionPerfilTecnico" + "/${json}")
 
     })
     {
@@ -316,7 +429,7 @@ fun TargetaUsuarioClienteInterno(clienteInterno: ClienteInterno, navController: 
     Column(modifier = Modifier.fillMaxWidth().padding(5.dp).clickable {
 
         val json = Json.encodeToString(clienteInterno)
-        navController.navigate("mostrarInformacionCliente" + "/${json}")
+        navController.navigate("informacionPerfilCliente" + "/${json}")
 
     })
     {
@@ -342,7 +455,7 @@ fun CuentaAdministraPreview() {
 
     AVANTITIGestionDeIncidenciasTheme {
 
-        InformacionTecnico(navController, Tecnico())
+        BusquedaUsuarios(navController)
 
     }
 }
