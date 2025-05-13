@@ -54,7 +54,7 @@ fun AVANTITIGestionDeIncidenciasTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = montserratTypography,
         content = content
     )
 }

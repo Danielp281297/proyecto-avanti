@@ -1,5 +1,7 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.annotation.SuppressLint
+import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +34,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -39,25 +42,28 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Empleado
 import com.example.avantitigestiondeincidencias.AVANTI.Usuario
+import com.example.avantitigestiondeincidencias.Network.Network
+import com.example.avantitigestiondeincidencias.Supabase.UsuarioRequest
 import com.example.avantitigestiondeincidencias.modeloButton
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDialogPersonalizado
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlin.system.exitProcess
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PerfilUsuario(navController: NavController,
-                         empleado: Empleado,
-                         contenidoPantalla: @Composable () -> Unit,
-                         configurarPerfilAction: @Composable () -> Unit,
-                         borrarCuentaAction: () -> Unit)
+                  context: Context,
+                  empleado: Empleado,
+                  containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919),
+                  contenidoPantalla: @Composable () -> Unit,
+                  configurarPerfilAction: @Composable () -> Unit)
 {
-
-
 
     var json = ""
 
@@ -75,14 +81,19 @@ fun PerfilUsuario(navController: NavController,
 
     val scrollState = rememberScrollState()
 
+    Network.networkCallback(navController, context)
+
     Scaffold(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    Color.White
+                    containerColor
                 ),
                 title = {
-                    Text("Perfil", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Bold)
+                    Text("Perfil",
+                        modifier = Modifier.fillMaxWidth(),
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = montserratFamily)
                 },
                 navigationIcon = {
                     IconButton(modifier = Modifier, onClick = {
@@ -95,7 +106,7 @@ fun PerfilUsuario(navController: NavController,
             )
         },
         //Color de fondo
-        containerColor = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919)
+        containerColor = containerColor
     )
     {
 
@@ -124,7 +135,7 @@ fun PerfilUsuario(navController: NavController,
                 )
                 {
 
-                    Text(text = "CONFIGURAR PERFIL", color = Color.White)
+                    Text(text = "EDITAR PERFIL", color = Color.White)
 
                 }
                 Spacer(modifier = Modifier.padding(5.dp))
@@ -163,7 +174,7 @@ fun PerfilUsuario(navController: NavController,
                     )
                     {
 
-                        Text(text = "BORRAR CUENTA", color = Color.White)
+                        Text(text = "BORRAR USUARIO", color = Color.White)
 
                     }
                 }
@@ -175,6 +186,7 @@ fun PerfilUsuario(navController: NavController,
     if (configurarPerfilState.value)
     {
 
+        navController.popBackStack()
         json = Json { ignoreUnknownKeys = true }.encodeToString(empleado)
         navController.navigate("CambiarDatosUsuario" + "/${json}")
         configurarPerfilAction()
@@ -196,22 +208,25 @@ fun PerfilUsuario(navController: NavController,
 
         val scope = rememberCoroutineScope()
         AlertDialogPersonalizado(
-            titulo = "Cerrar Sesión",
-            contenido = "¿Deseas borrar el usuario? Al finalizar, se cerrará la aplicación ",
+            titulo = "Borrar Usuario",
+            contenido = "¿Deseas borrar el usuario?",
             onDismissRequest = {
                 borrarCuentaState.value = false
             },
             aceptarAccion = {
-                scope.launch {
 
-                    borrarCuentaAction()
-                    exitProcess(0)
+                    borrarUsuario(empleado.idUsuario)
                     borrarCuentaState.value = false
+                    navController.popBackStack()
 
-                }
             },
             cancelarAccion = {
-                borrarCuentaState.value = false
+
+                androidx.compose.material.Text("CANCELAR", color = Color.Black, modifier = Modifier.clickable {
+
+                    borrarCuentaState.value = false
+                })
+
             }
         )
 
@@ -219,14 +234,25 @@ fun PerfilUsuario(navController: NavController,
 
 }
 
+
+fun borrarUsuario(idUsuario: Int)
+{
+        CoroutineScope(Dispatchers.IO).launch {
+
+            UsuarioRequest().borrarUsuarioById(idUsuario)
+
+        }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun PerfilUsuarioPreview() {
 
     val navController = rememberNavController()
+    val context = LocalContext.current
     AVANTITIGestionDeIncidenciasTheme {
 
-        PerfilUsuario(navController, Empleado(), {}, {}, {})
+        //PerfilUsuario(navController, context, Empleado(),{}, {})
 
     }
 }

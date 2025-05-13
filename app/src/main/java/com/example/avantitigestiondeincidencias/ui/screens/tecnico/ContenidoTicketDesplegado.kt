@@ -1,5 +1,7 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -17,12 +19,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
@@ -33,11 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -45,29 +40,55 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.avantitigestiondeincidencias.AVANTI.Accion
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
+import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.R
+import com.example.avantitigestiondeincidencias.Supabase.AccionRequest
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
-import com.example.avantitigestiondeincidencias.modeloButton
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDialogPersonalizado
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 val fuenteLetraTicketDesplegado = 15.sp
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ContenidoTicketDesplegado(navController: NavController, ticket: Ticket, function: @Composable () -> Unit)
+fun ContenidoTicketDesplegado(navController: NavController, context: Context, ticket: Ticket, function: @Composable () -> Unit)
 {
-
-
-    val iconos = listOf<Int>(R.drawable.incidencia_icon, R.drawable.clipboard_question_solid, R.drawable.screwdriver_wrench_solid, R.drawable.gears_solid)
+    
+    val iconos = listOf(R.drawable.incidencia_icon, R.drawable.clipboard_question_solid, R.drawable.screwdriver_wrench_solid, R.drawable.gears_solid)
     val scrollState = rememberScrollState()
     var borrarTicketState = remember {
         mutableStateOf(false)
     }
-    val context = LocalContext.current
 
+    var accion = remember {
+        mutableStateOf<Accion?>(null)
+    }
+
+    var cargarPantalla = remember {
+        mutableStateOf(true)
+    }
+
+    Network.networkCallback(navController, context)
+
+
+    obtenerAccion(ticket.id) {
+        accion.value = it
+        cargarPantalla.value = false
+    }
+
+    if (cargarPantalla.value)
+    {
+        PantallaCarga()
+    }
+    else
     Scaffold(
         topBar = {
             TopAppBar(
@@ -78,7 +99,8 @@ fun ContenidoTicketDesplegado(navController: NavController, ticket: Ticket, func
                     androidx.compose.material3.Text(
                         "Ticket",
                         modifier = Modifier.fillMaxWidth(),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = montserratFamily
                     )
                 },
                 navigationIcon = {
@@ -86,7 +108,7 @@ fun ContenidoTicketDesplegado(navController: NavController, ticket: Ticket, func
                         navController.popBackStack()
                     }
                     ) {
-                        androidx.compose.material3.Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Volver")
+                        Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Volver")
                     }
                 }
             )
@@ -104,7 +126,7 @@ fun ContenidoTicketDesplegado(navController: NavController, ticket: Ticket, func
             Spacer(modifier = Modifier.padding(50.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center)
             {
-                androidx.compose.material3.Icon(
+                Icon(
                     painter = painterResource(iconos[ticket.idTipoTicket - 1]),
                     contentDescription = "",
                     modifier = Modifier.size(50.dp)
@@ -174,11 +196,92 @@ fun ContenidoTicketDesplegado(navController: NavController, ticket: Ticket, func
             )
             Spacer(modifier = Modifier.padding(15.dp))
 
+            // Si el ticket ya fue asignado, pero no cancelado, se muestra la fecha y hora de su asignacion
+            if (ticket.idEstadoTicket > 1 && ticket.idEstadoTicket != 6)
+            {
+                Text(text = "FECHA Y HORA DE LA ASIGNACIÓN DEL TICKET: ", fontSize = fuenteLetraTicketDesplegado)
+                Text(
+                    text = "${ticket.fechaAsignacion} - ${ticket.horaAsignacion}  \n",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = fuenteLetraTicketDesplegado
+                )
+            }
+
+            //Si el ticket esta cerrado, se muestran los datos de la accion
+            if (accion.value != null)
+            {
+
+                Text(text = "ACCIÓN EJECUTADA: ", fontSize = fuenteLetraTicketDesplegado)
+                Text(
+                    text = "${accion.value!!.descripcionAccion.descripcion} \n",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = fuenteLetraTicketDesplegado
+                )
+
+                Text(text = "FECHA Y HORA DE LA ACCIÓN: ", fontSize = fuenteLetraTicketDesplegado)
+                Text(
+                    text = "${accion.value!!.fecha} - ${accion.value!!.hora}  \n",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = fuenteLetraTicketDesplegado
+                )
+
+                Text(text = "TÉCNICO ENCARGADO: ", fontSize = fuenteLetraTicketDesplegado)
+                Text(
+                    text = "${ticket.tecnico.empleado.primerNombre} ${ticket.tecnico.empleado.segundoNombre} ${ticket.tecnico.empleado.primerApellido} ${ticket.tecnico.empleado.segundoApellido}\n",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = fuenteLetraTicketDesplegado
+                )
+
+                Text(text = "GRUPO DE ATENCIÓN : ", fontSize = fuenteLetraTicketDesplegado)
+                Text(
+                    text = "${ticket.tecnico.grupoAtencion.grupoAtencion} \n",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = fuenteLetraTicketDesplegado
+                )
+
+                Text(text = "OBSERVACIONES: ", fontSize = fuenteLetraTicketDesplegado)
+                Text(
+                    text = "${ticket.observaciones} \n",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = fuenteLetraTicketDesplegado
+                )
+
+            }
+
             function()
 
             Spacer(modifier = Modifier.padding(50.dp))
 
         }
+    }
+
+    var alertdialogRealTime = remember{
+        mutableStateOf(false)
+    }
+
+
+    realtimeTicketCambiosCancelado(ticket) {
+
+        if (it == true)
+        {
+            alertdialogRealTime.value = true
+            //navController.popBackStack()
+        }
+    }
+
+    if (alertdialogRealTime.value)
+    {
+
+        AlertDialogPersonalizado(
+            titulo = "Atención.",
+            contenido = "El ticket que ha desplegado ha sido cancelado. Pulse Aceptar para volver.",
+            onDismissRequest = {false},
+            aceptarAccion = {
+                    navController.popBackStack()
+                    alertdialogRealTime.value = false},
+            cancelarAccion = { }
+        )
+
     }
 
     if (borrarTicketState.value)
@@ -187,8 +290,8 @@ fun ContenidoTicketDesplegado(navController: NavController, ticket: Ticket, func
         val scope = rememberCoroutineScope()
         var borrarTicketBandera = remember { mutableStateOf(false) }
         AlertDialogPersonalizado(
-            titulo = "Borrar Ticket",
-            contenido = "¿Deseas borrar el ticket?",
+            titulo = "Cancelar Ticket",
+            contenido = "¿Deseas cancelar el ticket?",
             onDismissRequest = {
                 borrarTicketState.value = false
             },
@@ -196,7 +299,11 @@ fun ContenidoTicketDesplegado(navController: NavController, ticket: Ticket, func
                 borrarTicketBandera.value = true
             },
             cancelarAccion = {
-                borrarTicketState.value = false
+
+                Text("Cancelar", modifier = Modifier.clickable{
+                    borrarTicketState.value = false
+                })
+
             }
         )
 
@@ -205,11 +312,11 @@ fun ContenidoTicketDesplegado(navController: NavController, ticket: Ticket, func
             LaunchedEffect(Unit) {
 
                 scope.launch {
-                    TicketRequests().borrarTicket(ticket)
+                    TicketRequests().cancelarTicket(ticket){}
 
                 }
             }
-            Toast.makeText(context, "Ticket borrado con éxito.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Ticket cancelado con éxito.", Toast.LENGTH_SHORT).show()
             borrarTicketBandera.value = false
             borrarTicketState.value = false
             navController.popBackStack()
@@ -217,9 +324,52 @@ fun ContenidoTicketDesplegado(navController: NavController, ticket: Ticket, func
 
     }
 
+}
+
+@Composable
+fun obtenerAccion(idTicket: Int, resultado: (Accion?) -> Unit){
+
+    LaunchedEffect(Unit) {
+        CoroutineScope(Dispatchers.IO).launch {
+
+            AccionRequest().seleccionarAccionbyTicketId(idTicket){
+                    resultado(it)
+            }
+
+        }
+    }
 
 }
 
+// Una funcion especial, que devuelve a la pantalla anterior cuando se que el ticket se ha cancelado en la base de datos
+@Composable
+fun realtimeTicketCambiosCancelado(ticket: Ticket, resultados: (Boolean) -> Unit)
+{
+
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit)
+    {
+
+        delay(1000)
+        scope.launch {
+
+            CoroutineScope(Dispatchers.IO).launch {
+
+                TicketRequests().realtimeTicketCanceladoRequest(
+                    scope = scope,
+                    ticket = ticket
+                ) {
+                    resultados(it)
+                }
+
+            }
+
+        }
+
+
+    }
+}
 
 @Preview(showBackground = true)
 @Composable

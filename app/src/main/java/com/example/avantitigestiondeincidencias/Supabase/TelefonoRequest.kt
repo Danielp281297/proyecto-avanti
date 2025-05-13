@@ -9,6 +9,7 @@ import io.github.jan.supabase.postgrest.query.Columns
 class TelefonoRequest: SupabaseClient() {
 
     private val columnaTelefono = Columns.raw("""
+        id_teléfono_empleado,
         id_código_operadora_teléfono,
         extensión_teléfono
     """.trimIndent())
@@ -25,7 +26,7 @@ class TelefonoRequest: SupabaseClient() {
 
         val resultado = getSupabaseClient().from("teléfono_empleado").select(columnaTelefono){
             filter{
-                eq("id_código_operadora_teléfono", telefonoEmpleado.idCodigoExtensionTelefono)
+                eq("id_código_operadora_teléfono", telefonoEmpleado.idCodigoOperadoraTelefono)
                 eq("extensión_teléfono", telefonoEmpleado.extension)
             }
         }.decodeSingleOrNull<TelefonoEmpleado>()

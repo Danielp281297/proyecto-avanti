@@ -6,10 +6,13 @@ import android.content.Context
 import android.os.Environment
 import android.util.Log
 import android.widget.DatePicker
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -51,12 +55,27 @@ import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.Notification.Notification
 import com.example.avantitigestiondeincidencias.Supabase.AccionRequest
 import com.example.avantitigestiondeincidencias.modeloButton
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonPersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.shimmerEffect
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.apache.poi.ss.usermodel.BorderStyle
+import org.apache.poi.ss.usermodel.FillPatternType
+import org.apache.poi.ss.usermodel.HorizontalAlignment
+import org.apache.poi.ss.usermodel.IndexedColors
+import org.apache.poi.ss.usermodel.VerticalAlignment
+import org.apache.poi.ss.util.CellRangeAddress
+import org.apache.poi.xddf.usermodel.chart.ChartTypes
+import org.apache.poi.xddf.usermodel.chart.XDDFDataSourcesFactory
+import org.apache.poi.xssf.usermodel.XSSFChart
+import org.apache.poi.xssf.usermodel.XSSFDrawing
+import org.apache.poi.xssf.usermodel.XSSFSheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.File
 import java.io.FileOutputStream
@@ -68,9 +87,13 @@ import java.util.Date
 
 val weightColumnas = 1F
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InformeTecnico(tecnico: Tecnico)
+fun InformeTecnico(
+    tecnico: Tecnico,
+    containerColor: Color = Color.Transparent
+)
 {
 
     val context = LocalContext.current
@@ -112,29 +135,27 @@ fun InformeTecnico(tecnico: Tecnico)
     }
 
     val horizontalScrollState = rememberScrollState()
+    val verticalScrollState = rememberScrollState()
 
-    Scaffold(
-        containerColor = Color.White,
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(Color.White),
-                title = {
-                    Text("Informe", modifier = Modifier.fillMaxWidth().padding(0.dp), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
-                }
-            )
-        }
+
+    ScaffoldSimplePersonalizado(
+        tituloPantalla = "Informe",
+        containerColor = containerColor
     ) {
 
-        val verticalScrollState = rememberScrollState()
 
-        Column(modifier = Modifier.padding(25.dp).fillMaxSize())
+        Column(modifier = Modifier
+            .padding(25.dp)
+            .fillMaxSize())
         {
 
 
 
             Spacer(modifier = Modifier.padding(40.dp))
 
-            Column(modifier = Modifier.fillMaxHeight().verticalScroll(state = verticalScrollState, enabled = true), verticalArrangement = Arrangement.SpaceEvenly)
+            Column(modifier = Modifier
+                .fillMaxHeight()
+                .verticalScroll(state = verticalScrollState, enabled = true), verticalArrangement = Arrangement.SpaceEvenly)
             {
 
                 Text(text = "Ingrese los campos correspondientes para imprimir el informe.", fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
@@ -177,89 +198,41 @@ fun InformeTecnico(tecnico: Tecnico)
                             HorizontalDivider(thickness = 1.dp)
 
                         }
-
                     }
                 }
 
-                Button(enabled = habilitarCargarDatosState.value,
-                    modifier = modeloButton,
-
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black
-                    ),
-                    shape = RectangleShape,
-                    onClick = {
-
-                        //Se buscan los datos de los tickets cerrados, en base a las acciones ejecutadas y el id del
-                        // tecnico, y se obtienen estos datos
-                        buscarAccionesByIdState.value = true
-
-                    })
+                BotonPersonalizado(onClick = {
+                    //Se buscan los datos de los tickets cerrados, en base a las acciones ejecutadas y el id del
+                    // tecnico, y se obtienen estos datos
+                    buscarAccionesByIdState.value = true
+                },
+                    enabled = habilitarCargarDatosState.value)
                 {
-                    Text(text = "CARGAR DATOS")
+                    Text(text = "CARGAR DATOS", fontFamily = montserratFamily)
                 }
 
-                //Column() {
-                    /*
-                    Row(modifier = Modifier.wrapContentWidth()){
-                        Text("Ticket", modifier = Modifier)
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Text("Usuario", modifier = Modifier)
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Text("Sede", modifier = Modifier)
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Text("Piso", modifier = Modifier)
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Text("Tipo", modifier = Modifier)
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Text("Descripción", modifier = Modifier)
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Text("Fecha ticket", modifier = Modifier)
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Text("Hora ticket", modifier = Modifier)
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Text("Acción Ejecutada", modifier = Modifier)
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Text("Fecha Accion", modifier = Modifier)
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Text("Hora Accion", modifier = Modifier)
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Text("Estado", modifier = Modifier)
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Text("Grupo de Atención", modifier = Modifier)
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Text("Técnico", modifier = Modifier)
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Text("Observaciones", modifier = Modifier)
-                        Spacer(modifier = Modifier.padding(5.dp))
-
-                        Text("Id_ticket", modifier = Modifier)
-                    }
-                    */
-                    LazyColumn(modifier = Modifier.fillMaxWidth().height(240.dp).background(Color.LightGray).horizontalScroll(state = horizontalScrollState, enabled = true))
+                    LazyColumn(modifier = Modifier
+                        .fillMaxWidth()
+                        .height(240.dp)
+                        .horizontalScroll(state = horizontalScrollState, enabled = true)
+                        .border(1.dp, Color.Black, RectangleShape))
                     {
 
-                        items(accionesList.count()){ index ->
+                        items(accionesList.count()) { index ->
 
                             accionFila(accionesList[index])
 
                         }
 
                     }
-               // }
 
-                Button(enabled = habilitarBotonGuardarInformeState.value,
-                    modifier = modeloButton,
-
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black
-                    ),
-                    shape = RectangleShape,
+                BotonPersonalizado(
                     onClick = {
                         generarExcelState.value = true
-                    })
-                {
-                    Text(text = "GUARDAR INFORME")
+                    },
+                    enabled = habilitarBotonGuardarInformeState.value,
+                ) {
+                    Text(text = "GUARDAR INFORME", fontFamily = montserratFamily)
                 }
 
                 Spacer(modifier = Modifier.padding(40.dp))
@@ -275,7 +248,7 @@ fun InformeTecnico(tecnico: Tecnico)
     {
 
         if (accionesList.isNotEmpty()) {
-            generalInformeExcel(accionesList, fechaInicioState.value, fechaFinalState.value)
+            generalInformeExcel(accionesList, fechaInicioState.value, fechaFinalState.value, ){_,_->}
             // Se avisa la creacion del informe\
             Notification().mostrarNotificacion(
                 context,
@@ -295,9 +268,8 @@ fun InformeTecnico(tecnico: Tecnico)
 
         actualizarAcciones(tecnico.id, fechaInicioState.value, fechaFinalState.value) { acciones ->
             accionesList.addAll(acciones)
-        }
-
             buscarAccionesByIdState.value = false
+        }
 
     }
 
@@ -317,9 +289,11 @@ fun InformeTecnico(tecnico: Tecnico)
         var datePickerInput = ""
 
 
-        DatePicker(showDatePickerState.value, {
-            showDatePickerState.value = false
-        }, {
+        DatePicker(
+            showDialog = showDatePickerState.value,
+            containerColor = containerColor,
+            ondismiss = { showDatePickerState.value = false },
+            fecha = {
             datePickerInput = it
 
             if(banderaState.value == 1)
@@ -377,60 +351,155 @@ fun actualizarAcciones(idTecnico: Int, fechaInicio: String, fechaFinal: String, 
 }
 
 fun generalInformeExcel(
-    accions: List<Accion>,
+    acciones: List<Accion>,
     fechaInicio: String,
-    fechaFin: String
+    fechaFin: String,
+    adicional: (sheet: XSSFSheet?, indice: Int) -> Unit
 ) {
 
     val path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
 
-    val fileName = "AVANTI_informe${LocalDateTime.now().nano}.xlsx"
+    val fileName = "AVANTI_informe${fechaInicio} ${fechaFin} ${LocalDateTime.now().nano}.xlsx"
 
     val workbook = XSSFWorkbook()
     val sheet = workbook.createSheet("Sheet1")
 
+    // Fuente de letra para los encabezados
+
+    val fuenteLetraEncabezado = workbook.createFont()
+    fuenteLetraEncabezado.apply {
+        color = IndexedColors.WHITE.index
+        bold = true
+    }
+
+    // Estilo para el encabezado
+    var encabezadoCellStyle = workbook.createCellStyle()
+    encabezadoCellStyle.apply {
+        fillForegroundColor = IndexedColors.DARK_BLUE.index       // Fondo de la casilla
+        fillPattern = FillPatternType.SOLID_FOREGROUND
+
+        // Bordes de la casilla delgadas y negras
+        borderBottom = BorderStyle.THIN
+        bottomBorderColor = IndexedColors.BLACK.index
+
+        borderTop = BorderStyle.THIN
+        topBorderColor = IndexedColors.BLACK.index
+
+        borderLeft = BorderStyle.THIN
+        leftBorderColor = IndexedColors.BLACK.index
+
+        borderRight = BorderStyle.THIN
+        rightBorderColor = IndexedColors.BLACK.index
+
+        setFont(fuenteLetraEncabezado)                      // Fuente de letra
+        alignment = HorizontalAlignment.CENTER              // Alineacion horizontal
+        verticalAlignment = VerticalAlignment.CENTER        // Alineacion vertical
+        wrapText = true                                     // Ajustar texto en la casilla
+    }
+
+
     // Se crea el encabezado de las columnas
+    val camposEncabezado = listOf("Ticket", "Usuario", "Sede", "Piso", "Departamento", "Tipo", "Descripción", "fecha del ticket", "hora del ticket", "Acción Ejecutada", "Fecha Acción", "Hora Acción", "Estado", "Grupo de Atención", "Caso atendido por:", "Observaciones")
+
     val headerRow = sheet.createRow(0)
-    var headerCell = headerRow.createCell(0).setCellValue("Ticket")
-    headerCell = headerRow.createCell(1).setCellValue("Usuario")
-    headerCell = headerRow.createCell(2).setCellValue("Sede")
-    headerCell = headerRow.createCell(3).setCellValue("Piso")
-    headerCell = headerRow.createCell(4).setCellValue("Departamento")
-    headerCell = headerRow.createCell(5).setCellValue("Tipo")
-    headerCell = headerRow.createCell(6).setCellValue("Descripción")
-    headerCell = headerRow.createCell(7).setCellValue("fecha del ticket")
-    headerCell = headerRow.createCell(8).setCellValue("hora del ticket")
-    headerCell = headerRow.createCell(9).setCellValue("Acción Ejecutada")
-    headerCell = headerRow.createCell(10).setCellValue("Fecha Acción")
-    headerCell = headerRow.createCell(11).setCellValue("Hora Acción")
-    headerCell = headerRow.createCell(12).setCellValue("Estado")
-    headerCell = headerRow.createCell(13).setCellValue("Grupo de Atención")
-    headerCell = headerRow.createCell(14).setCellValue("Caso atendido por:")
-    headerCell = headerRow.createCell(15).setCellValue("Observaciones")
+    var headerCell = headerRow
+    for (i in 0..camposEncabezado.count() - 1)
+    {
+        headerCell.createCell(i).apply {
+            cellStyle = encabezadoCellStyle
+            setCellValue(camposEncabezado[i])
+        }
+    }
 
     // Se insertan los datos de cada uno de las acciones
-    for (i in 0..accions.count() - 1)
+    var rowCellStyle = workbook.createCellStyle()
+    rowCellStyle.apply {
+        alignment = HorizontalAlignment.CENTER              // Alineacion horizontal
+        verticalAlignment = VerticalAlignment.CENTER        // Alineacion vertical
+
+        // Bordes de la casilla delgadas y negras
+        borderBottom = BorderStyle.THIN
+        bottomBorderColor = IndexedColors.BLACK.index
+
+        borderTop = BorderStyle.THIN
+        topBorderColor = IndexedColors.BLACK.index
+
+        borderLeft = BorderStyle.THIN
+        leftBorderColor = IndexedColors.BLACK.index
+
+        borderRight = BorderStyle.THIN
+        rightBorderColor = IndexedColors.BLACK.index
+
+        wrapText = true                                     // Ajustar texto en la casilla
+    }
+
+    for (i in 0..acciones.count() - 1)
     {
 
         var row = sheet.createRow(i + 1)
-        var rowcell = row.createCell(0).setCellValue(accions[i].ticket.id.toString())
-            rowcell = row.createCell(1).setCellValue("${accions[i].ticket.clienteInterno.empleado.primerNombre} ${accions[i].ticket.clienteInterno.empleado.segundoNombre} ${accions[i].ticket.clienteInterno.empleado.primerApellido} ${accions[i].ticket.clienteInterno.empleado.segundoApellido}")
-            rowcell = row.createCell(2).setCellValue(accions[i].ticket.clienteInterno.empleado.departamento.sede.nombre)
-            rowcell = row.createCell(3).setCellValue(accions[i].ticket.clienteInterno.empleado.departamento.piso.toString())
-            rowcell = row.createCell(4).setCellValue(accions[i].ticket.clienteInterno.empleado.departamento.nombre)
-            rowcell = row.createCell(5).setCellValue(accions[i].ticket.tipo.tipoTicket)
-            rowcell = row.createCell(6).setCellValue(accions[i].ticket.descripcion)
-            rowcell = row.createCell(7).setCellValue(accions[i].ticket.fecha)
-            rowcell = row.createCell(8).setCellValue(accions[i].ticket.hora)
-            rowcell = row.createCell(9).setCellValue(accions[i].descripcionAccion.descripcion)
-            rowcell = row.createCell(10).setCellValue(accions[i].fecha)
-            rowcell = row.createCell(11).setCellValue(accions[i].hora)
-            rowcell = row.createCell(12).setCellValue(accions[i].ticket.estado.tipoEstado)
-            rowcell = row.createCell(13).setCellValue(accions[i].ticket.tecnico.grupoAtencion.grupoAtencion)
-            rowcell = row.createCell(14).setCellValue("${accions[i].ticket.tecnico.empleado.primerNombre} ${accions[i].ticket.tecnico.empleado.segundoNombre} ${accions[i].ticket.tecnico.empleado.primerApellido} ${accions[i].ticket.tecnico.empleado.segundoApellido}")
-            rowcell = row.createCell(15).setCellValue(accions[i].ticket.observaciones)
+        var rowcell =
+                      row.createCell(0).apply{
+                          setCellValue(acciones[i].ticket.id.toString())
+                          cellStyle = rowCellStyle
+                      }
+            rowcell = row.createCell(1).apply{
+                setCellValue("${acciones[i].ticket.clienteInterno.empleado.primerNombre} ${acciones[i].ticket.clienteInterno.empleado.segundoNombre} ${acciones[i].ticket.clienteInterno.empleado.primerApellido} ${acciones[i].ticket.clienteInterno.empleado.segundoApellido}")
+                cellStyle = rowCellStyle
+            }
+
+            rowcell = row.createCell(2).apply {setCellValue(acciones[i].ticket.clienteInterno.empleado.departamento.sede.nombre)
+                        cellStyle = rowCellStyle
+            }
+            rowcell = row.createCell(3).apply {setCellValue(acciones[i].ticket.clienteInterno.empleado.departamento.piso.toString())
+                        cellStyle = rowCellStyle
+            }
+            rowcell = row.createCell(4).apply {setCellValue(acciones[i].ticket.clienteInterno.empleado.departamento.nombre)
+                        cellStyle = rowCellStyle
+            }
+            rowcell = row.createCell(5).apply {setCellValue(acciones[i].ticket.tipo.tipoTicket)
+                        cellStyle = rowCellStyle
+            }
+            rowcell = row.createCell(6).apply {setCellValue(acciones[i].ticket.descripcion)
+                        cellStyle = rowCellStyle
+            }
+            rowcell = row.createCell(7).apply {setCellValue(acciones[i].ticket.fecha)
+                        cellStyle = rowCellStyle
+            }
+            rowcell = row.createCell(8).apply {setCellValue(acciones[i].ticket.hora)
+                        cellStyle = rowCellStyle
+            }
+            rowcell = row.createCell(9).apply {setCellValue(acciones[i].descripcionAccion.descripcion)
+                        cellStyle = rowCellStyle
+            }
+            rowcell = row.createCell(10).apply {setCellValue(acciones[i].fecha)
+                        cellStyle = rowCellStyle
+            }
+            rowcell = row.createCell(11).apply {setCellValue(acciones[i].hora)
+                        cellStyle = rowCellStyle
+            }
+            rowcell = row.createCell(12).apply {setCellValue(acciones[i].ticket.estado.tipoEstado)
+                        cellStyle = rowCellStyle
+            }
+            rowcell = row.createCell(13).apply {setCellValue(acciones[i].ticket.tecnico.grupoAtencion.grupoAtencion)
+                        cellStyle = rowCellStyle
+            }
+            rowcell = row.createCell(14).apply {setCellValue("${acciones[i].ticket.tecnico.empleado.primerNombre} ${acciones[i].ticket.tecnico.empleado.segundoNombre} ${acciones[i].ticket.tecnico.empleado.primerApellido} ${acciones[i].ticket.tecnico.empleado.segundoApellido}")
+                        cellStyle = rowCellStyle
+            }
+            rowcell = row.createCell(15).apply {setCellValue(acciones[i].ticket.observaciones)
+                        cellStyle = rowCellStyle
+            }
 
     }
+
+    //Se ajusta de forma automatica el ancho de las columnas
+    for (i in 0..camposEncabezado.count() - 1) // El contenido mas el encabezado
+    {
+        sheet.setColumnWidth(i, 5000)
+    }
+
+    //AQUI ES DONDE ES DONDE SE IMPRIME EL GRAFICO DE TORTA
+    adicional(sheet, acciones.count())
 
     // Se crea el archivo
     val outputStream  = FileOutputStream(

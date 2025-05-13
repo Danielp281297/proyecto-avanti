@@ -1,6 +1,8 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.content.Context
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,8 +19,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,55 +33,71 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.avantitigestiondeincidencias.AVANTI.Empleado
+import com.example.avantitigestiondeincidencias.DataStore.DataStore
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.modeloButton
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDialogPersonalizado
+import kotlinx.coroutines.launch
 
 @Composable
-fun MenuLateralContenido(navController: NavController, empleado: Empleado, perfil: () -> Unit, manualUsuarioEvento: () -> Unit)
+fun MenuLateralContenido(
+    navController: NavController,
+    context: Context,
+    empleado: Empleado,
+    perfil: () -> Unit,
+    manualUsuarioEvento: () -> Unit)
 {
+
+    val scope = rememberCoroutineScope()
+
+    var avisoSalirState = remember{
+        mutableStateOf(false)
+    }
 
     var salirUsuarioState = remember{
         mutableStateOf(false)
     }
 
-    if (salirUsuarioState.value)
+    if(salirUsuarioState.value)
+    {
+        LaunchedEffect(Unit) {
+            scope.launch {
+
+                DataStore(context).setData(
+                    tipo = -1,
+                    json = " ",
+                    sesionAbierta = false
+                )
+                navController.navigate("Login") { popUpTo(navController.graph.id) }
+
+            }
+        }
+    }
+
+    if (avisoSalirState.value)
     {
 
-        AlertDialog(
-            shape = RectangleShape,
-            containerColor = Color.White,
-            onDismissRequest = {
-                salirUsuarioState.value = false
+        AlertDialogPersonalizado(
+            titulo = "Cerrar Sesión",
+            contenido = "¿Deseas salir de la Sesión?",
+            onDismissRequest = { avisoSalirState.value = false},
+            aceptarAccion = {
+                salirUsuarioState.value = true
             },
-            confirmButton = {
-
-                Text("ACEPTAR", color = Color.Black, modifier = Modifier.clickable {
-
-                    // Se borra las pantalla de la pila y se dirige al login
-                    navController.navigate("Login"){ popUpTo(navController.graph.id) }
-
+            cancelarAccion = {
+                Text("CANCELAR",
+                    color = if (!isSystemInDarkTheme()) Color.Black else Color.White,
+                    modifier = Modifier.clickable{
+                    avisoSalirState.value = false
                 })
-
-            },
-            dismissButton = {
-
-                Text("CANCELAR", color = Color.Black, modifier = Modifier.clickable {
-
-                    salirUsuarioState.value = false
-
-                })
-
-            },
-            title = {
-                Text("Cerrar Sesión")
-            },
-            text = {
-                Text("¿Deseas salir de la Sesión?")
             }
         )
     }
 
-    Column(modifier = Modifier.fillMaxHeight().width(240.dp).padding(15.dp), verticalArrangement = Arrangement.SpaceBetween)
+    Column(modifier = Modifier
+        .fillMaxHeight()
+        .width(240.dp)
+        .padding(15.dp), verticalArrangement = Arrangement.SpaceBetween)
     {
 
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -110,7 +130,7 @@ fun MenuLateralContenido(navController: NavController, empleado: Empleado, perfi
         }
 
         Row(modifier = modeloButton.clickable {
-            salirUsuarioState.value = true
+            avisoSalirState.value = true
 
         }, verticalAlignment = Alignment.CenterVertically)
         {

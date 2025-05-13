@@ -1,6 +1,8 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -8,18 +10,18 @@ import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 
 @Composable
-fun PerfilClienteInterno(navController: NavController, clienteInterno: ClienteInterno)
+fun PerfilClienteInterno(navController: NavController, context: Context, clienteInterno: ClienteInterno)
 {
 
     PerfilUsuario(
         navController = navController,
+        context = context,
         empleado = clienteInterno.empleado,
         contenidoPantalla = {
 
             InformacionClienteInterno(clienteInterno)
         },
-        configurarPerfilAction = {},
-        borrarCuentaAction = {}
+        configurarPerfilAction = {}
     )
 
 }
@@ -29,9 +31,11 @@ fun PerfilClienteInterno(navController: NavController, clienteInterno: ClienteIn
 fun PerfilClienteInternoPreview() {
 
     val navController = rememberNavController()
+    val context = LocalContext.current
+
     AVANTITIGestionDeIncidenciasTheme {
 
-        PerfilClienteInterno(navController, ClienteInterno())
+        PerfilClienteInterno(navController, context, ClienteInterno())
 
     }
 }

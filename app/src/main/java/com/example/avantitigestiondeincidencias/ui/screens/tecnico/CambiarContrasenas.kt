@@ -1,6 +1,9 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -46,21 +49,30 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Usuario
+import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.UsuarioRequest
 import com.example.avantitigestiondeincidencias.modeloButton
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDialogPersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonCargaPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.SHA512
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.rojo
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import kotlinx.coroutines.launch
 import kotlin.text.isWhitespace
 
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CambiarContrasena(navController: NavController, usuario: Usuario)
+fun CambiarContrasena(
+    navController: NavController,
+    context: Context,
+    usuario: Usuario,
+    containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919))
 {
-
-    val context = LocalContext.current
 
     val scope = rememberCoroutineScope()
 
@@ -84,37 +96,25 @@ fun CambiarContrasena(navController: NavController, usuario: Usuario)
         FocusRequester()
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    Color.White
-                ),
-                title = {
-                    Text("Cambiar contraseña", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
-                },
-                navigationIcon = {
-                    IconButton(modifier = Modifier, onClick = {
-                        navController.popBackStack()
-                    }
-                    ) {
-                        Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Volver")
-                    }
-                }
-            )
-        },
-        //Color de fondo
-        containerColor = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919)
+    Network.networkCallback(navController, context)
+
+    ScaffoldSimplePersonalizado(
+        tituloPantalla = "Cambiar contraseña",
+        containerColor = containerColor
     )
     {
 
-        Column(modifier = Modifier.padding(25.dp).fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween)
+        Column(modifier = Modifier
+            .padding(25.dp)
+            .fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween)
         {
 
             Column(modifier = Modifier.fillMaxWidth()) {
-                Spacer(modifier = Modifier.padding(25.dp))
+                Spacer(modifier = Modifier.padding(50.dp))
                 Text("Ingrese los datos correspondientes",
-                    modifier = Modifier.fillMaxWidth().padding(5.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(5.dp),
                     textAlign = TextAlign.Center,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold)
@@ -142,7 +142,9 @@ fun CambiarContrasena(navController: NavController, usuario: Usuario)
                 {
                     Text("Contraseña", fontWeight = FontWeight.Bold)
                     OutlinedTextField(
-                        modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester),
                         value = contrasenaState.value,
                         onValueChange = { newText ->
                             // Si el texto es menor a 50 caracteres, se almacena en newText
@@ -204,7 +206,9 @@ fun CambiarContrasena(navController: NavController, usuario: Usuario)
                 {
                     Text("Confirmar contraseña", fontWeight = FontWeight.Bold)
                     OutlinedTextField(
-                        modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester),
                         value = confirmarContrasenaState.value,
                         onValueChange = { newText ->
                             // Si el texto es menor a 50 caracteres, se almacena en newText
@@ -265,26 +269,15 @@ fun CambiarContrasena(navController: NavController, usuario: Usuario)
             }
 
             Column() {
-                Button(
-                    modifier = modeloButton,
 
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black
-                    ),
-                    shape = RectangleShape,
+                BotonCargaPersonalizado(
                     onClick = {
-
                         //Se obtiene los datos del empleado, en base al usuario y contrasena
                         ingresarbuttonState.value = true
-
-                    }
-                )
-                {
-                    if (ingresarbuttonState.value) {
-                        iconoCarga(Modifier)
-                    } else
-                        Text(text = "CAMBIAR CONTRASEÑA", color = Color.White)
-
+                    },
+                    isLoading = ingresarbuttonState.value
+                ) {
+                    Text(text = "CAMBIAR CONTRASEÑA", color = Color.White)
                 }
                 Spacer(modifier = Modifier.padding(30.dp))
             }
@@ -334,7 +327,14 @@ fun CambiarContrasena(navController: NavController, usuario: Usuario)
                     navController.popBackStack()
                     ingresarbuttonState.value = false
                 },
-                cancelarAccion = { ingresarbuttonState.value = false }
+                cancelarAccion = {
+
+                    androidx.compose.material.Text("CANCELAR", color = Color.Black, modifier = Modifier.clickable {
+
+                        ingresarbuttonState.value = false
+                    })
+                }
+
             )
         }
     }
@@ -346,9 +346,11 @@ fun CambiarContrasena(navController: NavController, usuario: Usuario)
 fun CambiarContrasenaPreview() {
 
     val navController = rememberNavController()
+    val context = LocalContext.current
+
     AVANTITIGestionDeIncidenciasTheme {
 
-        CambiarContrasena(navController, Usuario())
+        //CambiarContrasena(navController, context,  Usuario())
 
     }
 }

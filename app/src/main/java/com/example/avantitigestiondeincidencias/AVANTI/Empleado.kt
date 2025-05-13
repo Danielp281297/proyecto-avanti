@@ -36,6 +36,6 @@ data class Empleado(
     @SerialName("cargo_empleado")
     val cargoEmpleado: CargoEmpleado = CargoEmpleado(),
     @SerialName("usuario")
-    val usuario: Usuario = Usuario()
+    var usuario: Usuario = Usuario()
 
 )

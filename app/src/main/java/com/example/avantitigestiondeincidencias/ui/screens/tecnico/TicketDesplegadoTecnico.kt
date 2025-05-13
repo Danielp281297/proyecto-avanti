@@ -1,5 +1,7 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -28,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
@@ -35,6 +38,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -45,28 +49,42 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.DescripcionAccion
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
+import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.AccionRequest
 import com.example.avantitigestiondeincidencias.Supabase.TecnicoRequest
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
 import com.example.avantitigestiondeincidencias.modeloButton
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.AutocompleteTextField
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonCargaPersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.OutlinedTextFieldPersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.Spinner
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "SuspiciousIndentation")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TicketDesplegadoTecnico(navController: NavController, ticket: Ticket)
+fun TicketDesplegadoTecnico(
+    navController: NavController,
+    context: Context,
+    ticket: Ticket,
+    containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919))
 {
 
     val image = R.drawable.ticket_solid
 
-    val context = LocalContext.current
-
     val scrollState = rememberScrollState()
+
+    val focusRequester = remember{
+        FocusRequester()
+    }
 
     val fuenteLetraTicketDesplegado = 15.sp
 
@@ -86,187 +104,126 @@ fun TicketDesplegadoTecnico(navController: NavController, ticket: Ticket)
         mutableStateOf(false)
     }
 
-    var cerrarTicketState = remember{ mutableStateOf(false) }
+    var cancelarTicketState = remember{ mutableStateOf(false) }
+
+    var cargandoContenidoSpinners = remember{
+        mutableStateOf(true)
+    }
+
+    Network.networkCallback(navController, context)
+
+    if (cargandoContenidoSpinners.value)
+    {
+        PantallaCarga()
+    }
 
     LaunchedEffect(Unit)
     {
         withContext(Dispatchers.IO)
         {
             descripcionAccionList.addAll(AccionRequest().buscarDescripcionAccion())
+            cargandoContenidoSpinners.value = false
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    Color.White
-                ),
-                title = {
-                    androidx.compose.material3.Text(
-                        "Ticket - " + ticket.tipo.tipoTicket,
-                        modifier = Modifier.fillMaxWidth(),
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            )
-        },
-        //Color de fondo
-        containerColor = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919)
+    if(cargandoContenidoSpinners.value)
+    {
+        PantallaCarga()
+    }
+    else
+    ScaffoldSimplePersonalizado(
+        tituloPantalla = "Ticket",
+        containerColor = containerColor
     )
     {
+            ContenidoTicketDesplegado(
+                navController = navController,
+                context = context,
+                ticket = ticket,
 
-        Column(modifier = Modifier.fillMaxSize().padding(25.dp).verticalScroll(state = scrollState, enabled = true), verticalArrangement = Arrangement.Center)
-        {
-            Spacer(modifier = Modifier.padding(50.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center)
-            {
-                androidx.compose.material3.Icon(
-                    painter = painterResource(image),
-                    contentDescription = "",
-                    modifier = Modifier.size(50.dp).rotate(135F)
+            ) {
+
+                Text("ACCIÓN EJECUTADA: ", fontSize = fuenteLetraTicketDesplegado)
+                AutocompleteTextField(
+                    initialText = descripcionAccionState.value,
+                    label = "Indique aqui",
+                    suggestions = descripcionAccionList.map { it.descripcion },
+                    onClearResults = {},
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                ) { descripcionAccionState.value = it.text }
+
+                Spacer(modifier = Modifier.padding(15.dp))
+                Text("OBSERVACIONES: ", fontSize = fuenteLetraTicketDesplegado)
+                OutlinedTextFieldPersonalizado(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = observacionesState.value,
+                    onValueChange = {newText ->
+                        // Si el texto es menor a 50 caracteres, se almacena en newText
+                        if (newText.length <= 100)
+                            observacionesState.value = newText
+                    },
+                    label = { androidx.compose.material3.Text("Indique aquí", fontSize = 13.sp) },
+                    supportingText = true,
+                    imeActionNext = false,
+                    maximoCaracteres = 100,
                 )
+
+                Spacer(modifier = Modifier.padding(15.dp))
+                BotonCargaPersonalizado(
+                    onClick = {
+                        ingresarbuttonState.value = true
+
+                        // Si la accion ejecutada o la descripcion no estan vacios, se crea la accion y se actualiza el ticket en la base de datos
+                        if (descripcionAccionState.value.isNotEmpty() && observacionesState.value.isNotEmpty())
+                        {
+                            Log.d("RESULTADO", "ADMITIDO")
+
+                            //Se regresa a la pantalla anterior
+                            cancelarTicketState.value = true
+
+
+                        }
+                        else {
+                            Log.e("RESULTADO", "NO ADMITIDO")
+                            Toast.makeText(context, "Por favor, llene los campos correspondientes.", Toast.LENGTH_SHORT).show()
+                            ingresarbuttonState.value = false
+                        }
+                    },
+                    isLoading = ingresarbuttonState.value,
+                    CuerpoBoton = {
+                        Text(text = "INCIDENCIA RESUELTA", color = Color.White, fontFamily = montserratFamily)
+                    }
+                )
+
             }
-            Spacer(modifier = Modifier.padding(5.dp))
-            Text("Ticket - " + ticket.tipo.tipoTicket,
-                modifier = Modifier.fillMaxWidth(),
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                fontSize = fuenteLetraTicketDesplegado
-            )
-            Spacer(modifier = Modifier.padding(5.dp))
-            HorizontalDivider(modifier = Modifier.height(5.dp))
-
             Spacer(modifier = Modifier.padding(30.dp))
-            Text(text = "TICKET: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.id} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
 
-            Text(text = "FECHA Y HORA: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.fecha} ${ticket.hora} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
+        val view = LocalView.current
 
-            Text(text = "DESCRIPCIÓN: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.descripcion} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
-
-            Text(text = "PRIORIDAD: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.prioridad.nivel} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
-
-            Text(text = "CLIENTE INTERNO: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.clienteInterno.empleado.primerNombre} ${ticket.clienteInterno.empleado.segundoNombre} ${ticket.clienteInterno.empleado.primerApellido} ${ticket.clienteInterno.empleado.segundoApellido} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
-
-            Text(text = "TELÉFONO: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.clienteInterno.empleado.telefonoEmpleado.codigoOperadoraTelefono.operadora}-${ticket.clienteInterno.empleado.telefonoEmpleado.extension} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
-
-            Text(text = "SEDE: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.clienteInterno.empleado.departamento.sede.nombre} \n", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
-
-            Text(text = "DEPARTAMENTO: ", fontSize = fuenteLetraTicketDesplegado)
-            Text(text = "${ticket.clienteInterno.empleado.departamento.piso} - ${ticket.clienteInterno.empleado.departamento.nombre}", fontWeight = FontWeight.Bold, fontSize = fuenteLetraTicketDesplegado)
-            Spacer(modifier = Modifier.padding(15.dp))
-
-            Text("ACCIÓN EJECUTADA: ", fontSize = fuenteLetraTicketDesplegado)
-            AutocompleteTextField(
-                initialText = descripcionAccionState.value,
-                label = "Indique aqui",
-                suggestions = descripcionAccionList.map { it.descripcion },
-                onClearResults = {},
-                modifier = Modifier.fillMaxWidth(),
-            ) { descripcionAccionState.value = it.text }
-
-            Spacer(modifier = Modifier.padding(15.dp))
-            Text("OBSERVACIONES: ", fontSize = fuenteLetraTicketDesplegado)
-
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth().focusRequester(focusRequester = FocusRequester.Default),
-                value = observacionesState.value,
-                onValueChange = { newText ->
-                    // Si el texto es menor a 50 caracteres, se almacena en newText
-                    if (newText.length <= 100)
-                        observacionesState.value = newText
-                },
-                label = { androidx.compose.material3.Text("Indique aqui", fontSize = 13.sp) },
-                placeholder = {  },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedLabelColor = Color.Black,
-                    focusedBorderColor = Color.Black),
-                supportingText = {
-
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Spacer(modifier = Modifier.padding(0.dp))
-
-                        androidx.compose.material3.Text(
-                            text = "${observacionesState.value.length}/100",
-                            color = if (observacionesState.value.length < 95) Color.LightGray else Color.Red,
-                            modifier = Modifier
-                        )
-                    }
-
-
-                }
-            )
-
-            Spacer(modifier = Modifier.padding(15.dp))
-            Button(modifier = modeloButton,
-
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black
-                ),
-                shape = RectangleShape,
-                onClick = {
-
-                    ingresarbuttonState.value = true
-
-                    // Si la accion ejecutada o la descripcion no estan vacios, se crea la accion y se actualiza el ticket en la base de datos
-                    if (descripcionAccionState.value.isNotEmpty() && observacionesState.value.isNotEmpty())
-                    {
-                        Log.d("RESULTADO", "ADMITIDO")
-
-                        //Se regresa a la pantalla anterior
-                        cerrarTicketState.value = true
-
-
-                    }
-                    else {
-                        Log.e("RESULTADO", "NO ADMITIDO")
-                        Toast.makeText(context, "Por favor, llene los campos correspondientes.", Toast.LENGTH_SHORT).show()
-                        ingresarbuttonState.value = false
-                    }
-                    //Se cambia el estado de Abierto a En proceso
-                    //Se cambia el nombre del tecnico
-
-
-                }
-            )
-            {
-                if (ingresarbuttonState.value)
-                {
-                    iconoCarga(Modifier)
-                }else
-                androidx.compose.material3.Text(text = "CERRAR TICKET", color = Color.White)
-            }
-
-            Spacer(modifier = Modifier.padding(30.dp))
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+            view.bringToFront()
         }
 
     }
 
-    if (cerrarTicketState.value == true)
+    if (cancelarTicketState.value == true)
     {
 
         LaunchedEffect(Unit) {
             withContext(Dispatchers.IO) {
 
                 //Se crea la fila de la accion, y se actualiza el estado del ticket
-                TicketRequests().cerrarTicket(ticket, observacionesState.value)
+                TicketRequests().resolverTicket(ticket, observacionesState.value)
 
                 AccionRequest()
-                    .cerrarTicket(ticket, descripcionAccionState.value)
+                    .insertarAccion(ticket, descripcionAccionState.value)
                 mensajeAccionExistosaState.value = true
 
             }
 
             ingresarbuttonState.value = false
-            cerrarTicketState.value = false
+            cancelarTicketState.value = false
             navController.popBackStack()
 
         }
@@ -286,9 +243,9 @@ fun TicketDesplegadoTecnico(navController: NavController, ticket: Ticket)
 fun TicketDesplegadoTecnicoPreview() {
 
     val navController = rememberNavController()
-
+    val context = LocalContext.current
     AVANTITIGestionDeIncidenciasTheme {
 
-        TicketDesplegadoTecnico(navController, Ticket())
+        TicketDesplegadoTecnico(navController, context, Ticket())
     }
 }

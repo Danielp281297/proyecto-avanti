@@ -1,9 +1,11 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,12 +29,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
@@ -42,13 +39,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.text.isDigitsOnly
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
@@ -56,16 +53,25 @@ import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.EmpleadoRequest
 import com.example.avantitigestiondeincidencias.Supabase.UsuarioRequest
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.LoadingShimmerEffectScreen
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.OutlinedTextFieldPersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.Spinner
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.TicketLoading
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BusquedaUsuarios(navController: NavController)
+fun BusquedaUsuarios(
+    navController: NavController,
+    context: Context,
+    containerColor: Color = Color.Transparent)
 {
 
     var tituloState = remember {
@@ -100,76 +106,66 @@ fun BusquedaUsuarios(navController: NavController)
         mutableStateOf(false)
     }
 
-    /*
-    LaunchedEffect(Unit)
-    {
-        withContext(Dispatchers.IO)
-        {
+    var busquedaInicialState = remember{
+        mutableStateOf(true)
+    }
+
+    var filtroList = remember{
+        mutableStateListOf("Nombre de Usuario", "Nombre del empleado", "Número de cédula")
+    }
+
+    var filtroItemSelected = remember {
+        mutableStateOf(0)
+    }
+
+    var mostrarfiltroState = remember{
+        mutableStateOf(false)
+    }
 
 
-
-            UsuarioRequest().seleccionarUsuariosTecnico{ tecnico ->
-                usuariosTecnicoLista.addAll(tecnico)
-            }
+        seleccionarTecnicosConUsuarios(entradaBusquedaState.value) {
+            usuariosTecnicoLista.addAll(it)
+            busquedaInicialState.value = false
         }
-    }
-    */
+        seleccionarClienteInternoConUsuarios(entradaBusquedaState.value) {
+            usuariosClientesInternos.addAll(it)
+            busquedaInicialState.value = false
+        }
 
-    buscarTecnicos(entradaBusquedaState.value)
-    {
-        usuariosTecnicoLista.addAll(it)
-    }
-
-    buscarClientesInternos(entradaBusquedaState.value) {
-        usuariosClientesInternos.addAll(it)
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    Color.White
-                ),
-                title = {
-                    Text("Usuarios", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                }
-            )
-        },
-        //Color de fondo
-        containerColor = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919)
+    ScaffoldSimplePersonalizado(
+        tituloPantalla = "Usuarios",
+        containerColor = containerColor
     )
     {
 
         //Spacer(modifier = Modifier.padding(35.dp))
-
-        Box(modifier = Modifier.fillMaxSize().padding(25.dp))
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(25.dp))
         {
 
             Column(modifier = Modifier)
             {
                 Spacer(modifier = Modifier.padding(45.dp))
                 Text("Ingrese el tipo de usuario para realizar la busqueda",
-                    modifier = Modifier.fillMaxWidth().padding(5.dp),
-                    //textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(5.dp),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center)
-                Row(modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    OutlinedTextField(
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                    OutlinedTextFieldPersonalizado(
                         modifier = Modifier.weight(1F),
-                        readOnly = !entradaTextoState.value,
                         value = entradaBusquedaState.value,
                         onValueChange = {
                             entradaBusquedaState.value = it
                         },
-                        label = {
-                            Text(" Usuario a buscar...")
-                        },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedLabelColor = Color.Black,
-                            focusedBorderColor = Color.Black
-                        ),
-                        singleLine = true
+                        label = {Text(" Usuario a buscar...")},
+                        readOnly = !entradaTextoState.value,
+                        imeActionNext = false,
                     )
                     Spacer(modifier = Modifier.padding(5.dp))
                     IconButton(modifier = Modifier.size(45.dp),
@@ -184,6 +180,27 @@ fun BusquedaUsuarios(navController: NavController)
                         Icon(imageVector = Icons.Default.Search, contentDescription = "Boton Busqueda", modifier = Modifier.size(45.dp))
                     }
                 }
+
+                // Si se toca este texto, se mostrará el spinner con los filtros
+                Text("Filtros de búsqueda",
+                    modifier = Modifier
+                        .fillMaxWidth().clickable{
+                            mostrarfiltroState.value = !mostrarfiltroState.value
+                        },
+                    fontWeight = FontWeight.Bold)
+
+                if (mostrarfiltroState.value)
+                {
+                    Spinner(
+                        modifier = Modifier.fillMaxWidth(),
+                        itemList = filtroList,
+                        onItemSelected = {
+                            filtroItemSelected.value = filtroList.indexOf(it)
+                            Log.d("ITEM FILTRO", filtroItemSelected.value.toString())
+                        }
+                    )
+                }
+
                 Spacer(modifier = Modifier.padding(5.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly)
                 {
@@ -199,7 +216,7 @@ fun BusquedaUsuarios(navController: NavController)
                             botonClienteInternoState.value = false
                         })
                     {
-                        Text("Técnico", color = Color.Black)
+                        Text("Técnico", color = Color.Black, fontFamily = montserratFamily)
                     }
 
                     Button(
@@ -218,7 +235,7 @@ fun BusquedaUsuarios(navController: NavController)
 
                         })
                     {
-                        Text("Cliente", color = Color.Black)
+                        Text("Cliente", color = Color.Black, fontFamily = montserratFamily)
                     }
                 }
                 Spacer(modifier = Modifier.padding(5.dp))
@@ -236,11 +253,31 @@ fun BusquedaUsuarios(navController: NavController)
 
                     tituloState.value = "CLIENTES INTERNOS"
 
-                    LazyColumn(modifier = Modifier.fillMaxWidth().height(420.dp))
+                    LazyColumn(modifier = Modifier
+                        .fillMaxWidth()
+                        .height(240.dp))
                     {
 
-                        items(usuariosClientesInternos.count()) { index ->
-                            TargetaUsuarioClienteInterno(usuariosClientesInternos[index], navController)
+                        if(busquedaInicialState.value)
+                        {
+                            items(10)
+                            {
+
+                                Column(modifier = Modifier.fillMaxSize()) {
+                                    LoadingShimmerEffectScreen(
+                                        true,
+                                        {
+                                            TicketLoading()
+                                        },
+                                        {}
+                                    )
+                                }
+                            }
+                        }
+                        else {
+                            items(usuariosClientesInternos.count()) { index ->
+                                TargetaUsuarioClienteInterno(usuariosClientesInternos[index], navController)
+                            }
                         }
 
                     }
@@ -250,11 +287,31 @@ fun BusquedaUsuarios(navController: NavController)
 
                     tituloState.value = "TÉCNICOS"
 
-                    LazyColumn(modifier = Modifier.fillMaxWidth().height(420.dp))
+                    LazyColumn(modifier = Modifier
+                        .fillMaxWidth()
+                        .height(240.dp))
                     {
 
-                        items(usuariosTecnicoLista.count()) { index ->
-                            TargetaUsuarioTecnico(usuariosTecnicoLista[index], navController)
+                        if(busquedaInicialState.value)
+                        {
+                            items(10)
+                            {
+
+                                Column(modifier = Modifier.fillMaxSize()) {
+                                    LoadingShimmerEffectScreen(
+                                        true,
+                                        {
+                                            TicketLoading()
+                                        },
+                                        {}
+                                    )
+                                }
+                            }
+                        }
+                        else {
+                            items(usuariosTecnicoLista.count()) { index ->
+                                TargetaUsuarioTecnico(usuariosTecnicoLista[index], navController)
+                            }
                         }
 
                     }
@@ -275,9 +332,13 @@ fun BusquedaUsuarios(navController: NavController)
                     )
                 },
                 contentColor = Color.White,
-                backgroundColor = Color.White,
+                backgroundColor = containerColor,
                 shape = RoundedCornerShape(0.dp),
-                modifier = Modifier.wrapContentWidth().padding(15.dp, 140.dp).align(Alignment.BottomEnd).border(1.dp, Color.LightGray, RectangleShape),
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .padding(15.dp, 140.dp)
+                    .align(Alignment.BottomEnd)
+                    .border(1.dp, Color.LightGray, RectangleShape),
                 elevation = FloatingActionButtonDefaults.elevation(0.dp)
             )
 
@@ -293,24 +354,259 @@ fun BusquedaUsuarios(navController: NavController)
 
     if (buscarUsuarioState.value)
     {
+        busquedaInicialState.value = true
+
         if(botonTecnicoState.value)
         {
-
             usuariosTecnicoLista.clear()
-            buscarTecnicos(entradaBusquedaState.value) {
-                usuariosTecnicoLista.addAll(it)
+            if(entradaBusquedaState.value.isNotEmpty()) {
+                //Se buscan los usuarios por la entrada y por el tipo de usuario tecnico
+                buscarTecnicoUsuarios(context, filtroItemSelected.value, entradaBusquedaState.value)
+                {
+                    usuariosTecnicoLista.addAll(it)
+                    busquedaInicialState.value = false
+                    buscarUsuarioState.value = false
+                }
+            }
+            else
+            {
+                seleccionarTecnicosConUsuarios(entradaBusquedaState.value){
+                    usuariosTecnicoLista.addAll(it)
+                    busquedaInicialState.value = false
+                    buscarUsuarioState.value = false
+                }
             }
 
         }
         else if (botonClienteInternoState.value)
         {
             usuariosClientesInternos.clear()
-            buscarClientesInternos(entradaBusquedaState.value) {
-                usuariosClientesInternos.addAll(it)
+            if(entradaBusquedaState.value.isNotEmpty()) {
+
+                buscarClienteInternoUsuario(context, filtroItemSelected.value, entradaBusquedaState.value){
+                    usuariosClientesInternos.addAll(it)
+                    busquedaInicialState.value = false
+                    buscarUsuarioState.value = false
+                }
+
+            }else{
+                seleccionarClienteInternoConUsuarios(entradaBusquedaState.value) {
+                    usuariosClientesInternos.addAll(it)
+                    busquedaInicialState.value = false
+                    buscarUsuarioState.value = false
+                }
             }
         }
 
-        buscarUsuarioState.value = false
+
+    }
+
+}
+
+@Composable
+fun buscarClienteInternoUsuario(context: Context, filtro: Int, entrada: String, clienteInterno: (List<ClienteInterno>) -> Unit)
+{
+    when (filtro)
+    {
+        // Nombre de usuario
+        0 -> buscarUsuariosClienteInternoPorNombre(entrada) {
+            clienteInterno(it)
+        }
+        // Primer nombre del empleado
+        1 -> buscarUsuarioClienteInternoPorNombreEmpleado(entrada) {
+            clienteInterno(it)
+        }
+        // Número de cédula
+        2 -> buscarUsuarioClienteInternoPorCedulaEmpleado(context, entrada){
+            clienteInterno(it)
+        }
+
+    }
+}
+
+@Composable
+fun buscarTecnicoUsuarios(context: Context, filtro: Int, entrada: String, tecnicos: (List<Tecnico>) -> Unit)
+{
+    when (filtro)
+    {
+        // Nombre de usuario
+        0 -> buscarUsuariosTecnicosPorNombre(entrada) {
+            tecnicos(it)
+        }
+        // Primer nombre del empleado
+        1 -> buscarUsuarioTecnicoPorNombreEmpleado(entrada){
+            tecnicos(it)
+        }
+        // Número de cédula
+        2 -> buscarUsuarioTecnicoPorCedulaEmpleado(context, entrada) {
+            tecnicos(it)
+        }
+
+    }
+}
+
+@Composable
+fun buscarUsuarioClienteInternoPorCedulaEmpleado(context: Context, entrada: String, tecnicos: (List<ClienteInterno>) -> Unit){
+
+    // Si es un dato conformado por numeros, de hace la consulta
+    if (entrada.isDigitsOnly())
+    {
+        LaunchedEffect(Unit) {
+            CoroutineScope(Dispatchers.IO).launch{
+
+                EmpleadoRequest().seleccionarClienteInternoPorCedula(entrada){
+
+                    tecnicos(it)
+
+                }
+
+            }
+        }
+    }
+    else
+    // En caso contrario se muestran los usuarios con mensaje de error
+    {
+        Toast.makeText(context, "Dato inválido, intente de nuevo", Toast.LENGTH_SHORT).show()
+        seleccionarClienteInternoConUsuarios("") {
+            tecnicos(it)
+        }
+    }
+
+}
+
+@Composable
+fun buscarUsuarioTecnicoPorCedulaEmpleado(context: Context, entrada: String, tecnicos: (List<Tecnico>) -> Unit){
+
+    // Si es un dato conformado por numeros, de hace la consulta
+    if (entrada.isDigitsOnly())
+    {
+        LaunchedEffect(Unit) {
+            CoroutineScope(Dispatchers.IO).launch{
+
+                EmpleadoRequest().seleccionarTecnicoPorCedula(entrada){
+
+                    tecnicos(it)
+
+                }
+
+            }
+        }
+    }
+    else
+    // En caso contrario se muestran los usuarios con mensaje de error
+    {
+        Toast.makeText(context, "Dato inválido, intente de nuevo", Toast.LENGTH_SHORT).show()
+        seleccionarTecnicosConUsuarios("") {
+            tecnicos(it)
+        }
+    }
+
+}
+
+@Composable
+fun buscarUsuarioClienteInternoPorNombreEmpleado(entrada:String, clienteInterno: (List<ClienteInterno>) -> Unit)
+{
+    LaunchedEffect(Unit) {
+        CoroutineScope(Dispatchers.IO).launch{
+
+            EmpleadoRequest().seleccionarClienteInternoPorNombreEmpleado(entrada){
+                clienteInterno(it)
+            }
+
+        }
+    }
+}
+
+@Composable
+fun buscarUsuarioTecnicoPorNombreEmpleado(entrada:String, tecnicos: (List<Tecnico>) -> Unit)
+{
+    LaunchedEffect(Unit) {
+        CoroutineScope(Dispatchers.IO).launch{
+
+            EmpleadoRequest().seleccionarTecnicoPorNombreEmpleado(entrada){
+                tecnicos(it)
+            }
+
+        }
+    }
+}
+
+@Composable
+fun buscarUsuariosClienteInternoPorNombre(entrada: String, clientes: (List<ClienteInterno>) -> Unit)
+{
+    LaunchedEffect(Unit) {
+        CoroutineScope(Dispatchers.IO).launch {
+
+            EmpleadoRequest().seleccionarUsuariosClientesInternoByNombre(entrada){
+                clientes(it)
+            }
+
+        }
+    }
+}
+
+@Composable
+fun buscarUsuariosTecnicosPorNombre(entrada: String, usuarios: (List<Tecnico>) -> Unit)
+{
+
+    LaunchedEffect(Unit) {
+        CoroutineScope(Dispatchers.IO).launch {
+
+            EmpleadoRequest().seleccionarUsuariosTecnicosByNombre(entrada){
+                usuarios(it)
+            }
+
+        }
+    }
+}
+
+
+@Composable
+fun seleccionarClienteInternoConUsuarios(entrada: String, clientes: (List<ClienteInterno>) -> Unit){
+
+    var dataset = remember{
+        mutableStateListOf<ClienteInterno>()
+    }
+
+    buscarClientesInternos(entrada) {
+
+        dataset.addAll(it)
+
+        CoroutineScope(Dispatchers.IO).launch{
+            dataset.forEach {tecnico ->
+                UsuarioRequest().seleccionarUsuarioById(tecnico.empleado.idUsuario){usuario ->
+                    tecnico.empleado.usuario = usuario
+                }
+            }
+
+            clientes(dataset)
+        }
+
+    }
+
+}
+
+@Composable
+fun seleccionarTecnicosConUsuarios(entrada: String, tecnicos: (List<Tecnico>) -> Unit){
+
+    var dataset = remember{
+        mutableStateListOf<Tecnico>()
+    }
+
+    buscarTecnicos(entrada)
+    {
+
+        dataset.addAll(it)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            dataset.forEach { tecnico ->
+                UsuarioRequest().seleccionarUsuarioById(tecnico.empleado.idUsuario) { usuario ->
+                    tecnico.empleado.usuario = usuario
+                }
+            }
+            tecnicos(dataset)
+        }
+
     }
 
 }
@@ -327,7 +623,7 @@ fun buscarClientesInternos(nombreUsuario: String, clientes: (List<ClienteInterno
                 }
             }
             else{
-                UsuarioRequest().seleccionarUsuariosClienteInterno {
+                EmpleadoRequest().seleccionarUsuariosClienteInterno {
                     clientes(it)
                 }
             }
@@ -343,15 +639,8 @@ fun buscarTecnicos(nombreUsuario: String, tecnicos: (List<Tecnico>) -> Unit)
     LaunchedEffect(Unit) {
         CoroutineScope(Dispatchers.IO).launch {
 
-            if (nombreUsuario.isNotEmpty()) {
-                EmpleadoRequest().buscarTecnicoByNombreUsuario(nombreUsuario) {
-                    tecnicos(it)
-                }
-            }
-            else{
-                UsuarioRequest().seleccionarUsuariosTecnico{
-                    tecnicos(it)
-                }
+            EmpleadoRequest().seleccionarUsuariosTecnico{
+                tecnicos(it)
             }
 
         }
@@ -365,15 +654,20 @@ fun TargetaUsuarioTecnico(
     navController: NavController
 ) {
 
-    Column(modifier = Modifier.fillMaxWidth().padding(5.dp).clickable {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(5.dp)
+        .clickable {
 
-        val json = Json.encodeToString(tecnico)
-        navController.navigate("informacionPerfilTecnico" + "/${json}")
+            val json = Json.encodeToString(tecnico)
+            navController.navigate("informacionPerfilTecnico" + "/${json}")
 
-    })
+        })
     {
 
-        Column(modifier = Modifier.padding(5.dp).fillMaxWidth())
+        Column(modifier = Modifier
+            .padding(5.dp)
+            .fillMaxWidth())
         {
             //Text("${tecnico.empleado.departamento.sede.nombre}: ${tecnico.empleado.departamento.piso} - ${tecnico.empleado.departamento.nombre}")
             Text("Grupo de atención: ${tecnico.grupoAtencion.grupoAtencion}")
@@ -419,22 +713,23 @@ fun EncabezadoInformacionUsuario(icono: Int, titulo: String)
     }
 }
 
-
-
-
-
 @Composable
 fun TargetaUsuarioClienteInterno(clienteInterno: ClienteInterno, navController: NavController)
 {
-    Column(modifier = Modifier.fillMaxWidth().padding(5.dp).clickable {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(5.dp)
+        .clickable {
 
-        val json = Json.encodeToString(clienteInterno)
-        navController.navigate("informacionPerfilCliente" + "/${json}")
+            val json = Json.encodeToString(clienteInterno)
+            navController.navigate("informacionPerfilCliente" + "/${json}")
 
-    })
+        })
     {
 
-        Column(modifier = Modifier.padding(5.dp).fillMaxWidth())
+        Column(modifier = Modifier
+            .padding(5.dp)
+            .fillMaxWidth())
         {
             Text("${clienteInterno.empleado.departamento.sede.nombre}: ${clienteInterno.empleado.departamento.piso} - ${clienteInterno.empleado.departamento.nombre}")
             Text("${clienteInterno.empleado.primerNombre} ${clienteInterno.empleado.segundoNombre} ${clienteInterno.empleado.primerApellido} ${clienteInterno.empleado.segundoApellido}",
@@ -455,7 +750,7 @@ fun CuentaAdministraPreview() {
 
     AVANTITIGestionDeIncidenciasTheme {
 
-        BusquedaUsuarios(navController)
+        //BusquedaUsuarios(navController)
 
     }
 }

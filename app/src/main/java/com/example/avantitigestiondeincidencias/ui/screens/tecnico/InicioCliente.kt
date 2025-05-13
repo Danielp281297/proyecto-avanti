@@ -1,9 +1,12 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +30,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,6 +46,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,21 +54,31 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
+import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.Notification.Notification
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
 import com.example.avantitigestiondeincidencias.modeloButton
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDialogPersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.LoadingShimmerEffectScreen
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldConMenuLateral
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.TicketLoading
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import kotlin.system.exitProcess
+import java.time.LocalTime
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
-fun InicioCliente(clienteInterno: ClienteInterno, navController: NavController)
+fun InicioCliente(
+    clienteInterno: ClienteInterno,
+    navController: NavController,
+    containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919)
+    )
 {
 
     val context = LocalContext.current
@@ -79,81 +95,118 @@ fun InicioCliente(clienteInterno: ClienteInterno, navController: NavController)
 
     val scope = rememberCoroutineScope()
 
-
-    var pantallaCargaState = remember{
-        mutableStateOf(false)
+    var buscarTicketsCliente = remember {
+        mutableStateOf(true)
     }
 
-    // Corrutina para obtener los tickets
-    fetchTicketDataCliente(clienteInterno.empleado.id, { tickets ->
+    Network.networkCallback(navController, context)
 
-        ticketsCliente.addAll(tickets)
+    TiempoHabilitarClienteInterno(containerColor)
+    {
 
-    })
+        // Corrutina para obtener los tickets
+        fetchTicketDataCliente(clienteInterno.empleado.id, { tickets ->
 
-    ScaffoldConMenuLateral("Inicio - Cliente Interno", {
-        MenuLateralContenido(
-            navController, clienteInterno.empleado,
-            perfil = {
-                // Se covierte el objeto en json para enviarlo a la pantalla
-                val json = Json { ignoreUnknownKeys = true }.encodeToString(clienteInterno)
+            ticketsCliente.addAll(tickets)
+            buscarTicketsCliente.value = false
 
-                navController.navigate("informacionPerfilCliente" + "/${json}")
-            },
-            manualUsuarioEvento = {
+        })
 
-            },
-        )
-    },{
+        ScaffoldConMenuLateral(
+            titulo = "Inicio - Cliente Interno",
+            containerColor = containerColor,
+            contenidoMenu = {
+                MenuLateralContenido(
+                    navController, context, clienteInterno.empleado,
+                    perfil = {
+                        // Se covierte el objeto en json para enviarlo a la pantalla
+                        val json = Json { ignoreUnknownKeys = true }.encodeToString(clienteInterno)
 
-        Box(
-            modifier = Modifier.fillMaxSize().padding(25.dp)
-        )
-        {
+                        navController.navigate("informacionPerfilCliente" + "/${json}")
+                    },
+                    manualUsuarioEvento = {
 
-            Column(modifier = Modifier.fillMaxSize())
-            {
-                Spacer(modifier = Modifier.padding(45.dp))
-
-                Text(text = "Bienvenido, ${clienteInterno.empleado.usuario.nombre}")
-                Text(
-                    text = " Últimos tickets: \n",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.fillMaxWidth()
+                    },
                 )
+        }, fondoPantalla =  {
 
-                LazyColumn(modifier = Modifier.fillMaxHeight().fillMaxWidth(), content = {
 
-                    items(ticketsCliente.count()) { index ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(25.dp)
+            )
+            {
 
-                        TicketsCliente(navController, ticketsCliente[index])
+                Column(modifier = Modifier.fillMaxSize())
+                {
+                    Spacer(modifier = Modifier.padding(45.dp))
 
-                    }
-                })
+                    Text(text = "Bienvenido, ${clienteInterno.empleado.usuario.nombre}")
+                    Text(
+                        text = " Últimos tickets: \n",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(), content = {
+
+                            if (buscarTicketsCliente.value) {
+                                items(10)
+                                {
+
+                                    Column(modifier = Modifier.fillMaxSize()) {
+                                        LoadingShimmerEffectScreen(
+                                            true,
+                                            {
+                                                TicketLoading()
+                                            },
+                                            {}
+                                        )
+                                    }
+                                }
+                            } else {
+                                items(ticketsCliente.count()) { index ->
+
+                                    TicketsCliente(navController, ticketsCliente[index])
+
+                                }
+                            }
+                        })
+
+                }
+
+                ExtendedFloatingActionButton(
+                    onClick = {
+
+                        mostrarFormularioNuevoTicket.value = true
+                    },
+                    text = {
+                        Icon(
+                            painter = painterResource(R.drawable.nuevo_ticket_icon),
+                            contentDescription = "Crear Nuevo Ticket",
+                            modifier = Modifier.size(25.dp)
+                        )
+                    },
+                    contentColor = Color.White,
+                    backgroundColor = containerColor,
+                    shape = RoundedCornerShape(0.dp),
+                    modifier = Modifier
+                        .wrapContentWidth()
+                        .padding(0.dp, 50.dp)
+                        .align(Alignment.BottomEnd)
+                        .border(1.dp, Color.LightGray, RectangleShape),
+                    elevation = FloatingActionButtonDefaults.elevation(0.dp)
+                )
 
             }
 
-            ExtendedFloatingActionButton(onClick = {
-
-                mostrarFormularioNuevoTicket.value = true
-            },
-                text = {
-                    Icon(
-                        painter = painterResource(R.drawable.nuevo_ticket_icon),
-                        contentDescription = "Crear Nuevo Ticket",
-                        modifier = Modifier.size(25.dp)
-                    )
-                },
-                contentColor = Color.White,
-                backgroundColor = Color.White,
-                shape = RoundedCornerShape(0.dp),
-                modifier = Modifier.wrapContentWidth().padding(0.dp, 50.dp).align(Alignment.BottomEnd).border(1.dp, Color.LightGray, RectangleShape),
-                elevation = FloatingActionButtonDefaults.elevation(0.dp)
-            )
-
-        }
-    })
+        })
+    }
 
     // Bottom Sheet
     if (mostrarFormularioNuevoTicket.value) {
@@ -164,7 +217,7 @@ fun InicioCliente(clienteInterno: ClienteInterno, navController: NavController)
             content = {
 
                 // Se almacena los datos en un nuevo ticket
-                nuevoTicketFormulario(clienteInterno.id, {
+                nuevoTicketFormulario(clienteInterno.id, containerColor, {
 
                     mostrarFormularioNuevoTicket.value = false
 
@@ -222,7 +275,7 @@ fun ticketsEstadosNotificaciones(context: Context, ticket: Ticket)
     {
 
         Notification().mostrarNotificacion(context, "${ticket.tipo.tipoTicket} - ${ticket.descripcion}"
-            , "Su ${ticket.tipo.tipoTicket} fue resuelta por ${ticket.tecnico.empleado.primerNombre} ${ticket.tecnico.empleado.primerApellido}")
+            , "Su ${ticket.tipo.tipoTicket} fue resuelta por ${ticket.tecnico.empleado.primerNombre} ${ticket.tecnico.empleado.primerApellido}. Por favor, cierre el ticket para terminar con la gestión.")
 
     }
 }
@@ -253,14 +306,18 @@ fun fetchTicketDataCliente(id: Int, lambda: (tickets: List<Ticket>) -> Unit) {
 fun TicketsCliente(navController: NavController, ticket: Ticket)
 {
 
-    Box(modifier = Modifier.fillMaxWidth().clickable {
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .clickable {
 
-        val jsonState = Json.encodeToString(ticket)
-        navController.navigate("TicketDesplegadoCliente" + "/${jsonState}")
+            val jsonState = Json.encodeToString(ticket)
+            navController.navigate("TicketDesplegadoCliente" + "/${jsonState}")
 
-    })
+        })
     {
-        Column(modifier = Modifier.fillMaxWidth().padding(1.dp, 5.dp, 1.dp, 5.dp))
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .padding(1.dp, 5.dp, 1.dp, 5.dp))
         {
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween)
@@ -272,7 +329,7 @@ fun TicketsCliente(navController: NavController, ticket: Ticket)
             //Text(text = " Fecha: ${ticket.fecha}")
             //Text(text = " Hora: ${ticket.hora}")
 
-            Text(text = " ${ticket.descripcion}", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text(text = " ${ticket.descripcion}", fontSize = 15.sp, fontWeight = FontWeight.Bold)
             // Si el id del tecnico encargado es diferente de 1, se muestra su nombre completo
             Text(fontSize = 13.sp, text = " Técnico Encargado: " + if(ticket.tecnico.id > 1){ "${ticket.tecnico.empleado.primerNombre} ${ticket.tecnico.empleado.segundoNombre} ${ticket.tecnico.empleado.primerApellido} ${ticket.tecnico.empleado.segundoApellido}"} else " ")
 
@@ -290,13 +347,42 @@ fun TicketDesplegadoCliente(navController: NavController, ticket:Ticket)
 
     val context = LocalContext.current
 
-    var borrarTicketState = remember {
+    val scope = rememberCoroutineScope()
+
+    var cancelarTicketState = remember {
         mutableStateOf(false)
     }
 
-        ContenidoTicketDesplegado(navController, ticket) {
+    var cerrarTicketState = remember{
+        mutableStateOf(false)
+    }
 
-            if (ticket.idEstadoTicket < 4) {
+        ContenidoTicketDesplegado(navController, context, ticket) {
+
+            if (ticket.idEstadoTicket >= 4)
+            {
+
+                if (ticket.idEstadoTicket == 4) {
+
+                    Button(
+                        modifier = modeloButton,
+
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black
+                        ),
+                        shape = RectangleShape,
+                        onClick = {
+
+                            cerrarTicketState.value = true
+
+                        }
+                    )
+                    {
+                        Text(text = "CERRAR TICKET", color = Color.White)
+                    }
+                }
+
+            } else if(ticket.idEstadoTicket < 3) {
                 Button(
                     modifier = modeloButton,
 
@@ -306,34 +392,39 @@ fun TicketDesplegadoCliente(navController: NavController, ticket:Ticket)
                     shape = RectangleShape,
                     onClick = {
 
-                        borrarTicketState.value = true
+                        cancelarTicketState.value = true
 
                     }
                 )
                 {
-                    Text(text = "BORRAR TICKET", color = Color.White)
+                    Text(text = "CANCELAR TICKET", color = Color.White)
                 }
             }
 
         }
 
-    if (borrarTicketState.value)
-    {
+    if (cerrarTicketState.value){
 
-        val scope = rememberCoroutineScope()
-        var borrarTicketBandera = remember { mutableStateOf(false) }
+        var calificarState = remember{
+            mutableStateOf(false)
+        }
 
+        var calificacionValue = remember {
+            mutableStateOf(0f)
+        }
+
+        // Se obtiene la calificación de la incidencia
         AlertDialog(
             shape = RectangleShape,
             containerColor = Color.White,
             onDismissRequest = {
-                borrarTicketState.value = false
+
             },
             confirmButton = {
 
-                Text("ACEPTAR", color = Color.Black, modifier = Modifier.clickable {
+                Text("CALIFICAR", color = Color.Black, modifier = Modifier.clickable {
 
-                    borrarTicketBandera.value = true
+                    calificarState.value = true
 
                 })
 
@@ -342,34 +433,185 @@ fun TicketDesplegadoCliente(navController: NavController, ticket:Ticket)
 
                 Text("CANCELAR", color = Color.Black, modifier = Modifier.clickable {
 
-                    borrarTicketState.value = false
+                    cerrarTicketState.value = false
 
                 })
 
             },
             title = {
-                Text("Borrar Ticket")
+                Text("Cerrar Ticket", textAlign = TextAlign.Center)
             },
             text = {
-                Text("¿Deseas borrar el ticket?")
+
+                var iconosEstrellas = remember {
+                    mutableStateListOf(R.drawable.una_estrella, R.drawable.dos_estrellas, R.drawable.tres_estrellas, R.drawable.cuatro_estrellas, R.drawable.cinco_estrellas)
+                }
+
+                Column (verticalArrangement = Arrangement.SpaceEvenly){
+
+                    Text("Por favor, califique la gestión de la incidencia", textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.padding(5.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        iconosEstrellas.forEach {
+
+                            Column(modifier = Modifier.wrapContentWidth()) {
+                                Icon(
+                                    painter = painterResource(it),
+                                    contentDescription = "Estrella",
+                                    modifier = Modifier.size(40.dp)
+                                )
+                                Text("    ${iconosEstrellas.indexOf(it) + 1}",textAlign = TextAlign.Center)
+                            }
+
+                        }
+
+                    }
+
+                    Slider(value = calificacionValue.value
+                        , onValueChange = {
+
+                            calificacionValue.value = it
+
+                            Log.d("CALIFICACION", (calificacionValue.value).toString())
+
+                        },
+                        enabled = true,
+                        steps = 3,
+                        valueRange = 1f..5f,
+                        modifier = Modifier.padding(start = 9.dp, end = 9.dp),
+                        colors = SliderColors(
+                            thumbColor = Color.Black,
+                            activeTrackColor = Color.Black,
+                            activeTickColor = Color.Black,
+                            inactiveTrackColor = Color.Transparent,
+                            inactiveTickColor = Color.Black,
+                            disabledThumbColor = Color.LightGray,
+                            disabledActiveTrackColor = Color.LightGray,
+                            disabledActiveTickColor = Color.LightGray,
+                            disabledInactiveTrackColor = Color.LightGray,
+                            disabledInactiveTickColor = Color.LightGray
+                        )
+
+                    )
+
+                }
             }
         )
 
-        if (borrarTicketBandera.value) {
+        if(calificarState.value)
+        {
 
             LaunchedEffect(Unit) {
 
                 scope.launch {
-                    TicketRequests().borrarTicket(ticket)
+
+                    TicketRequests().cerrarTicket(ticket, calificacionValue.value.toInt()){
+                        Toast.makeText(context, "Ticket cerrado con éxito.", Toast.LENGTH_SHORT).show()
+                    }
 
                 }
             }
-            Toast.makeText(context, "Ticket borrado con éxito.", Toast.LENGTH_SHORT).show()
-            borrarTicketBandera.value = false
-            borrarTicketState.value = false
+
+            navController.popBackStack()
+            calificarState.value = false
+        }
+
+    }
+
+    if (cancelarTicketState.value)
+    {
+
+        var cancelarTicketBandera = remember { mutableStateOf(false) }
+
+        AlertDialogPersonalizado(
+            titulo = "Cancelar Ticket",
+            contenido = "¿Deseas cancelar el ticket?",
+            onDismissRequest = {
+                cancelarTicketState.value = false
+            },
+            aceptarAccion = { cancelarTicketBandera.value = true },
+            cancelarAccion = {
+
+                Text("Cancelar", color = Color.Black, modifier = Modifier.clickable {
+
+                    cancelarTicketState.value = false
+
+                })
+
+            },
+        )
+
+        if (cancelarTicketBandera.value) {
+
+            LaunchedEffect(Unit) {
+
+                scope.launch {
+                    TicketRequests().cancelarTicket(ticket){
+                            Toast.makeText(context, "Ticket cancelado con éxito.", Toast.LENGTH_SHORT).show()
+                    }
+
+                }
+            }
+            cancelarTicketBandera.value = false
+            cancelarTicketState.value = false
             navController.popBackStack()
         }
 
+    }
+
+}
+
+@Composable
+fun TiempoHabilitarClienteInterno(
+    containerColor: Color,
+    casoContrario: @Composable () -> Unit
+) {
+
+    var tiempoFueraRango = remember {
+        mutableStateOf(false)
+    }
+
+    val horaPeriodoInicio = LocalTime.of(8, 0)
+    val horaPeriodoFin = LocalTime.of(17, 30)
+
+    LaunchedEffect(Unit) {
+        CoroutineScope(Dispatchers.IO).launch {
+
+            do {
+
+                val horaActual = LocalTime.now()
+
+                // Se comprueba que la aplicacion haya sido aceptado en la hora
+                if (horaActual.isBefore(horaPeriodoInicio) || horaActual.isAfter(horaPeriodoFin))
+                    tiempoFueraRango.value = true
+                else
+                    tiempoFueraRango.value = false
+
+                delay(5000)
+
+            } while (true)
+
+        }
+    }
+
+    if (tiempoFueraRango.value)
+    {
+        Log.d("TIEMPO", "FUERA DE RANGO")
+        Column (modifier = Modifier
+            .fillMaxSize()
+            .background(containerColor),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center)
+        {
+            Text("Hora fuera de rango. Ingrese de 8:00am a 5:30pm para poder crear tickets.",
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold)
+        }
+
+    }
+    else
+    {
+        casoContrario()
     }
 
 }

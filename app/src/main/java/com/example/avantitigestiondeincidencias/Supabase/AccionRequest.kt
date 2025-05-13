@@ -33,6 +33,8 @@ class AccionRequest: SupabaseClient() {
             id_ticket,
             fecha_ticket,
             hora_ticket,
+            fecha_asignación_ticket,
+            hora_asignación_ticket,
             descripción_ticket,
             observaciones_ticket,
             id_tipo_ticket,
@@ -109,22 +111,41 @@ class AccionRequest: SupabaseClient() {
                     ),
                     cargo_empleado(
                         tipo_cargo_empleado
-                    ),
-                    usuario(
-                        id_usuario
                     )
                 )
             )
         )
     """.trimIndent())
 
-    suspend fun buscarAccionesByIdConRangoFechas(idTecnico: Int, fechaInicio: String, fechaFin: String, acciones: (List<Accion>) -> Unit) {
+    suspend fun seleccionarAcciones(resultados: (List<Accion>) -> Unit){
+
+        var resultados = getSupabaseClient().from("acción").select(columns = accionRequest).
+            decodeList<Accion>()
+
+        resultados.forEach {
+
+            it.hora = FormatoHoraFecha.formatoHora(it.hora)
+            it.fecha = FormatoHoraFecha.formatoFecha(it.fecha).toString()
+
+            it.ticket.hora = FormatoHoraFecha.formatoHora(it.ticket.hora)
+            it.ticket.fecha = FormatoHoraFecha.formatoFecha(it.ticket.fecha).toString()
+
+            it.ticket.fechaAsignacion = FormatoHoraFecha.formatoFecha(it.ticket.fechaAsignacion)!!
+            it.ticket.horaAsignacion  = FormatoHoraFecha.formatoHora(it.ticket.horaAsignacion)
+
+        }
+
+        resultados(resultados)
+
+    }
+
+    suspend fun buscarAccionesByIdConRangoFechas(idTecnico: Int, inicioFecha: String, finFecha: String, acciones: (List<Accion>) -> Unit) {
 
          val resultados = getSupabaseClient().from("acción").select(columns = accionRequest){
 
              filter {
-                 gte("fecha_acción", fechaInicio)
-                 lte("fecha_acción", fechaFin)
+                 gte("fecha_acción", inicioFecha)
+                 lte("fecha_acción", finFecha)
                  eq("ticket.id_técnico", idTecnico)
              }
 
@@ -148,7 +169,7 @@ class AccionRequest: SupabaseClient() {
 
     }
 
-    suspend fun cerrarTicket(ticket: Ticket, accion: String)
+    suspend fun insertarAccion(ticket: Ticket, accion: String)
     {
 
         val accion = Accion(
@@ -201,19 +222,54 @@ class AccionRequest: SupabaseClient() {
 
     }
 
-    suspend fun seleccionarAccionbyTicketId(id: Int, accion: (Accion) -> Unit) {
+    suspend fun seleccionarAccionbyTicketId(id: Int, accion: (Accion?) -> Unit) {
 
         val resultado = getSupabaseClient().from("acción").select(columns = accionRequest){
             filter {
                 eq("id_ticket", id)
             }
-        }.decodeSingle<Accion>()
+        }.decodeSingleOrNull<Accion>()
+
+        Log.d("ACCION", resultado.toString())
 
         // Se formatea la fecha y la hora de la accion
+        if (resultado != null)
+        {
             resultado.fecha = FormatoHoraFecha.formatoFecha(resultado.fecha).toString()
             resultado.hora = FormatoHoraFecha.formatoHora(resultado.hora)
+        }
 
         accion(resultado)
+    }
+
+    suspend fun seleccionarAccionesbyRangoFechas(fechaInicio: String, fechaFin: String, acciones: (List<Accion>) -> Unit)
+    {
+
+        var resultados = getSupabaseClient().from("acción").select(columns = accionRequest){
+            filter {
+                if (fechaInicio.isNotEmpty())
+                    gte("fecha_acción", FormatoHoraFecha.formatoFechaSupabase(fechaInicio)!!)
+
+                if (fechaFin.isNotEmpty())
+                    lte("fecha_acción", FormatoHoraFecha.formatoFechaSupabase(fechaFin)!!)
+            }
+        }.decodeList<Accion>()
+
+        resultados.forEach {
+
+            it.fecha = FormatoHoraFecha.formatoFecha(it.fecha)!!
+            it.hora  = FormatoHoraFecha.formatoHora(it.hora)
+
+            it.ticket.fecha = FormatoHoraFecha.formatoFecha(it.ticket.fecha)!!
+            it.ticket.hora  = FormatoHoraFecha.formatoHora(it.ticket.hora)
+
+            //it.ticket.fechaAsignacion = FormatoHoraFecha.formatoFecha(it.ticket.fechaAsignacion)!!
+            //it.ticket.horaAsignacion  = FormatoHoraFecha.formatoHora(it.ticket.horaAsignacion)
+
+        }
+
+        acciones(resultados)
+
     }
 
 }

@@ -52,8 +52,8 @@ dependencies {
     implementation ("com.google.accompanist:accompanist-pager-indicators:0.30.1")
 
     // APACHE POI para el excel
-    implementation ("org.apache.poi:poi:5.2.2")
-    implementation ("org.apache.poi:poi-ooxml:5.2.2")
+    implementation ("org.apache.poi:poi:5.4.0")
+    implementation ("org.apache.poi:poi-ooxml:5.4.0")
 
     //Navigation Host
     implementation ("androidx.navigation:navigation-compose:2.8.5")
@@ -76,6 +76,9 @@ dependencies {
     // Corrutinas de kotlinx
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1") // Para Android
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.1.6")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

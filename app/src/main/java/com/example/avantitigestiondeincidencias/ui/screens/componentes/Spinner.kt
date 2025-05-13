@@ -1,5 +1,7 @@
 package com.example.avantitigestiondeincidencias.ui.screens.componentes
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExposedDropdownMenuBox
@@ -14,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
+import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import kotlin.math.exp
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -21,12 +24,15 @@ import kotlin.math.exp
 fun Spinner(
     modifier: Modifier,
     itemList: List<String>,
+    posicionInicial: Int = 0,
+    containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919),
+    optionTextColor: Color = if (!isSystemInDarkTheme()) Color.Black else Color.LightGray,
     onItemSelected: (selectedItem: String) -> Unit
 )
 {
 
     var selectedItem = remember{
-        mutableStateOf(itemList[0])
+        mutableStateOf(itemList[posicionInicial])
     }
 
     var expandido = remember{
@@ -43,14 +49,16 @@ fun Spinner(
     )
     {
         TextField(
+            modifier = modifier,
             readOnly = true,
             value = selectedItem.value,
             onValueChange = { },
             label = {},
             colors = TextFieldDefaults.textFieldColors(
-                backgroundColor = Color.White,          // Color de fondo
-                focusedIndicatorColor = Color.Black,     // Color del marco cuando se pulsa el spinner
-                trailingIconColor = Color.Black
+                backgroundColor = containerColor,          // Color de fondo
+                focusedIndicatorColor = optionTextColor,     // Color del marco cuando se pulsa el spinner
+                trailingIconColor = optionTextColor,
+                textColor = optionTextColor
             ),
             trailingIcon = {
 
@@ -60,6 +68,7 @@ fun Spinner(
             }
         )
         ExposedDropdownMenu(
+            modifier = Modifier.background(containerColor),
             expanded = expandido.value,
             onDismissRequest = {
                 expandido.value = false
@@ -67,13 +76,14 @@ fun Spinner(
         )
         {
             itemList.forEach { option ->
-                DropdownMenuItem(onClick = {
+                DropdownMenuItem(
+                    onClick = {
                     selectedItem.value = option
                     expandido.value = false
                 })
                 {
 
-                    Text(text = option, fontSize = 13.sp)
+                    Text(text = option, color = optionTextColor, fontSize = 15.sp, fontFamily = montserratFamily)
 
                         onItemSelected(selectedItem.value)
 

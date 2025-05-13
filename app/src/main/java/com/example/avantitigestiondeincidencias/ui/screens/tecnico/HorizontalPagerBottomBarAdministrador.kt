@@ -1,5 +1,7 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.annotation.SuppressLint
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.size
@@ -21,18 +23,23 @@ import androidx.compose.material3.NavigationBarItemColors
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
+import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldConMenuLateral
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
@@ -42,15 +49,21 @@ import kotlinx.serialization.json.Json
 
 data class NavItem(val label: String, val icon: ImageVector)
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun HorizontalPagerBottomBarAdministrador(administrador: Tecnico, navController: NavController)
+fun HorizontalPagerBottomBarAdministrador(
+    navController: NavController,
+    context: Context,
+    administrador: Tecnico,
+    containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919),
+    )
 {
 
     val corroutineScope = rememberCoroutineScope()
 
     val navItemList = listOf(
         NavItem("Inicio", Icons.Default.List),
-        NavItem("Busqueda", Icons.Default.Search),
+        NavItem("Buscar\nticket", Icons.Default.Search),
         NavItem("Indicadores", ImageVector.Companion.vectorResource(R.drawable.indicadores_icon)),
         NavItem("Usuarios", Icons.Default.Person)
 
@@ -60,10 +73,15 @@ fun HorizontalPagerBottomBarAdministrador(administrador: Tecnico, navController:
         mutableStateOf(navItemList.count())
     }
 
-    val state = rememberPagerState(initialPage = 0, pageCount = { numPantalla.value })
+    val state = rememberPagerState(initialPage = 1, pageCount = { numPantalla.value })
 
-    ScaffoldConMenuLateral("", {
-        MenuLateralContenido(navController, administrador.empleado, perfil =  {
+    Network.networkCallback(navController, context)
+
+    ScaffoldConMenuLateral(
+        titulo = "",
+        containerColor =  containerColor,
+        contenidoMenu = {
+        MenuLateralContenido(navController, context, administrador.empleado, perfil =  {
 
             // Se covierte el objeto en json para enviarlo a la pantalla
             val json = Json { ignoreUnknownKeys = true }.encodeToString(administrador)
@@ -90,8 +108,8 @@ fun HorizontalPagerBottomBarAdministrador(administrador: Tecnico, navController:
 
                             },
                             colors = NavigationBarItemColors(
-                                selectedIconColor = Color.Black,
-                                selectedTextColor = Color.Black,
+                                selectedIconColor = if (isSystemInDarkTheme()) Color.LightGray else Color.Black,
+                                selectedTextColor = if (isSystemInDarkTheme()) Color.LightGray else Color.Black,
                                 selectedIndicatorColor = Color.Transparent,
                                 unselectedIconColor = Color.White,
                                 unselectedTextColor = Color.White,
@@ -99,16 +117,13 @@ fun HorizontalPagerBottomBarAdministrador(administrador: Tecnico, navController:
                                 disabledTextColor = Color.White
                             ),
                             icon = { Icon(imageVector = item.icon, contentDescription = item.label, modifier = Modifier.size(20.dp)) },
-                            label = { Text(text = item.label) }
+                            label = { Text(text = item.label, textAlign = TextAlign.Center) }
                         )
 
                     }
 
                 }
             },
-
-            //Color de fondo
-            containerColor = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919)
         )
         {
 
@@ -116,16 +131,27 @@ fun HorizontalPagerBottomBarAdministrador(administrador: Tecnico, navController:
             { page ->
 
                     when (page) {
-                        0 -> InicioAdministrador(navController)
-                        1 -> BusquedaAdministrador(navController)
-                        2 -> true
-                        3 -> BusquedaUsuarios(navController)
+                        0 -> InicioAdministrador(navController, containerColor)
+                        1 -> BusquedaTicket(navController, context, administrador, clickAccion = { json ->
+                            
+                            //LaunchedEffect(Unit) {
+
+                                //
+                            navController.navigate("ticketDesplegadoAdministrador" + "/${json}")
+
+                            //}
+
+
+                        }, containerColor)
+                        2 -> IndicadoresAdministrador(navController, context, administrador, containerColor)
+                        3 -> BusquedaUsuarios(navController, context, containerColor)
                     }
             }
 
 
         }
     }
+
 }
 
 @Preview(showBackground = true)
@@ -133,10 +159,11 @@ fun HorizontalPagerBottomBarAdministrador(administrador: Tecnico, navController:
 fun HorizontalPagerBottomBarPreview() {
 
     val navController = rememberNavController()
+    val context = LocalContext.current
 
     AVANTITIGestionDeIncidenciasTheme {
 
-        HorizontalPagerBottomBarAdministrador(Tecnico(), navController)
+        HorizontalPagerBottomBarAdministrador(navController, context, Tecnico())
 
     }
 }

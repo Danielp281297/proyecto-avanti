@@ -11,10 +11,18 @@ data class Ticket(
     var fecha: String = "",
     @SerialName("hora_ticket")
     var hora: String = "",
+
+    @SerialName("fecha_asignación_ticket")
+    var fechaAsignacion: String = "",
+    @SerialName("hora_asignación_ticket")
+    var horaAsignacion: String = "",
+
     @SerialName("descripción_ticket")
     val descripcion: String = "",
     @SerialName("observaciones_ticket")
     val observaciones: String = " ",
+    @SerialName("calificación_gestión_ticket")
+    val calificacionGestionTicket: Int = 0,
 
     @SerialName("id_tipo_ticket")
     val idTipoTicket: Int = 0,

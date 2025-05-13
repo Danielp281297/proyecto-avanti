@@ -16,6 +16,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.datetime.LocalDate
+import java.time.LocalTime
 
 class TicketRequests(): SupabaseClient() {
 
@@ -23,8 +25,11 @@ class TicketRequests(): SupabaseClient() {
             id_ticket,
             fecha_ticket,
             hora_ticket,
+            fecha_asignación_ticket,
+            hora_asignación_ticket,
             descripción_ticket,
             observaciones_ticket,
+            calificación_gestión_ticket,
             id_tipo_ticket,
             id_estado_ticket,
             id_cliente_interno,
@@ -114,7 +119,6 @@ class TicketRequests(): SupabaseClient() {
 
             // Se ordenan los datos de forma descendente
             order(column = "id_ticket", order = Order.DESCENDING)
-            limit(count = 50)
 
         }.decodeList<Ticket>()
 
@@ -153,6 +157,39 @@ class TicketRequests(): SupabaseClient() {
 
         ticketsAbiertos(resultados)
 
+    }
+
+
+
+    @OptIn(SupabaseExperimental::class)
+    suspend fun realtimeTicketCanceladoRequest(scope: CoroutineScope, ticket: Ticket, lambda: (bandera: Boolean) -> Unit){
+
+        val channel = getSupabaseClient().channel(channelId = "ChannelTicket")
+
+        val channelFlow = channel.postgresChangeFlow<PostgresAction>(schema = "public"){
+            table = "ticket"
+        }
+
+        var dataset = mutableListOf<Ticket>()
+
+        channelFlow.onEach {
+
+            var results = getSupabaseClient().from("ticket").selectAsFlow(Ticket::id)
+
+            results.collect {
+
+                it.forEach {
+                    if (it.id == ticket.id && it.idEstadoTicket == 6)
+                        lambda(true)
+                }
+
+
+
+            }
+
+        }.launchIn(scope)
+
+        channel.subscribe()
     }
 
     @OptIn(SupabaseExperimental::class)
@@ -255,6 +292,8 @@ class TicketRequests(): SupabaseClient() {
 
             ticket.fecha = FormatoHoraFecha.formatoFecha(ticket.fecha).toString()
             ticket.hora = FormatoHoraFecha.formatoHora(ticket.hora)
+            ticket.fechaAsignacion = FormatoHoraFecha.formatoFecha(ticket.fechaAsignacion).toString()
+            ticket.horaAsignacion = FormatoHoraFecha.formatoHora(ticket.horaAsignacion)
 
         }
 
@@ -297,11 +336,14 @@ class TicketRequests(): SupabaseClient() {
 
     }
 
-    suspend fun updateTicketEnProcesoTecnicoEstadoById(idTicket: Int, idTecnico: Int)
+    suspend fun updateTicketEnProcesoTecnicoEstadoById(idTicket: Int, idPrioridadTicket: Int, idTecnico: Int)
     {
 
         getSupabaseClient().from("ticket").update({
+            set("fecha_asignación_ticket", java.time.LocalDate.now().toString())
+            set("hora_asignación_ticket", LocalTime.now().toString())
             set("id_estado_ticket", 2)
+            set("id_prioridad_ticket", idPrioridadTicket)
             set("id_técnico", idTecnico)
         }){
             filter{
@@ -312,7 +354,6 @@ class TicketRequests(): SupabaseClient() {
         delay(1000)
         getSupabaseClient().from("ticket").update({
             set("id_estado_ticket", 3)
-            set("id_técnico", idTecnico)
         }){
             filter{
                 eq("id_ticket", idTicket)
@@ -324,18 +365,20 @@ class TicketRequests(): SupabaseClient() {
     suspend fun buscarTicketByTecnicoId(id: Int, lambda: (List<Ticket>) -> Unit) {
 
 
-        val resultados =  getSupabaseClient().from("ticket").select(columns = this.columnas){
+        var resultados =  getSupabaseClient().from("ticket").select(columns = this.columnas){
 
             // Se ordenan los datos de forma descendente
             order(column = "id_ticket", order = Order.DESCENDING)
             limit(count = 50)
             // Se buscan los tickets que no esten cerrados
             filter {
+                eq("id_técnico", id)
                 lt("id_estado_ticket", 4)
             }
 
         }.decodeList<Ticket>()
 
+        /*
         // Se formatea la fecha y la hora de los tickets
         resultados.forEach {ticket ->
 
@@ -345,8 +388,19 @@ class TicketRequests(): SupabaseClient() {
         }
 
         val lista = resultados.filter { it.tecnico.empleado.id == id }
+        */
 
-        lambda(lista)
+        resultados.forEach {
+
+            it.hora = FormatoHoraFecha.formatoHora(it.hora)
+            it.fecha = FormatoHoraFecha.formatoFecha(it.fecha).toString()
+
+            it.fechaAsignacion = FormatoHoraFecha.formatoFecha(it.fechaAsignacion)!!
+            it.horaAsignacion  = FormatoHoraFecha.formatoHora(it.horaAsignacion)
+
+        }
+
+        lambda(resultados)
 
     }
 
@@ -386,7 +440,7 @@ class TicketRequests(): SupabaseClient() {
 
     }
 
-    suspend fun cerrarTicket(ticket: Ticket, observaciones: String)
+    suspend fun resolverTicket(ticket: Ticket, observaciones: String)
     {
 
         // Se comprueba si la accion ya ha sido creada
@@ -401,37 +455,39 @@ class TicketRequests(): SupabaseClient() {
                 eq("id_ticket", ticket.id)
             }
         }
-        delay(1000)
+
+    }
+
+    suspend fun cerrarTicket(ticket: Ticket, calificacion: Int, resultado: () -> Unit)
+    {
+
+        //Se actualiza el ticket a cerrado
         getSupabaseClient().from("ticket").update({
             set("id_estado_ticket", 5)
+            set("calificación_gestión_ticket", calificacion)
         }){
             filter {
                 eq("id_ticket", ticket.id)
             }
         }
 
+        resultado()
+
     }
 
-    suspend fun borrarTicket(ticket: Ticket)
+    suspend fun cancelarTicket(ticket: Ticket, resultado: (Ticket?) -> Unit)
     {
 
-        Log.d("TICKET ID", ticket.id.toString())
-
-        // Primero, se verifica si el ticket tiene una accion asociada
-        /*
-        getSupabaseClient().from("acción").delete{
-            filter {
-                eq("id_ticket", ticket.id)
-            }
-        }
-        */
-
         // Se borra el ticket
-        getSupabaseClient().from("ticket").delete{
+        val resultado = getSupabaseClient().from("ticket").update({
+            set("id_estado_ticket", 6) //CANCELADO
+        }){
             filter {
                 eq("id_ticket", ticket.id)
             }
-        }
+        }.decodeAsOrNull<Ticket>()
+
+        resultado(resultado)
 
     }
 
@@ -457,6 +513,60 @@ class TicketRequests(): SupabaseClient() {
         }
 
         tickets(resultados)
+    }
+
+    suspend fun seleccionarTicketsByIdTecnicoYRangoFechas(idTecnico: Int, inicioFecha: String, finFecha: String, tickets: (List<Ticket>) -> Unit)
+    {
+
+        val resultados = getSupabaseClient().from("ticket").select(columnas){
+
+            filter {
+                gte("fecha_ticket", inicioFecha)
+                lte("fecha_ticket", finFecha)
+                eq("id_técnico", idTecnico)
+            }
+
+            order(column = "id_ticket", order = Order.DESCENDING)
+
+        }.decodeList<Ticket>()
+
+        tickets(resultados)
+
+    }
+
+    suspend fun buscarTicketsByTecnicoIdYFechas(id: Int, fechaInicio: String, fechaFin: String, descripcion: String, tickets:(List<Ticket>) -> Unit){
+
+
+        var resultados = getSupabaseClient().from("ticket").select(columnas){
+            order("id_ticket", Order.DESCENDING)
+            filter {
+
+                if (fechaInicio.isNotEmpty())
+                    gte("fecha_ticket", FormatoHoraFecha.formatoFechaSupabase(fechaInicio)!!)
+
+                if (fechaFin.isNotEmpty())
+                    lte("fecha_ticket", FormatoHoraFecha.formatoFechaSupabase(fechaFin)!!)
+
+                if (descripcion.isNotEmpty())
+                    like("descripción_ticket", "%${descripcion}%")
+
+                if (id > 1)
+                eq("id_técnico", id)
+            }
+        }.decodeList<Ticket>()
+
+        resultados.forEach {
+
+            it.hora = FormatoHoraFecha.formatoHora(it.hora)
+            it.fecha = FormatoHoraFecha.formatoFecha(it.fecha).toString()
+
+            it.fechaAsignacion = FormatoHoraFecha.formatoFecha(it.fechaAsignacion)!!
+            it.horaAsignacion  = FormatoHoraFecha.formatoHora(it.horaAsignacion)
+
+        }
+
+       tickets(resultados)
+
     }
 
 }

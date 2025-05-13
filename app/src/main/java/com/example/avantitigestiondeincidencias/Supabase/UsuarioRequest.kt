@@ -8,6 +8,7 @@ import com.example.avantitigestiondeincidencias.AVANTI.InsertarTecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.TelefonoEmpleado
 import com.example.avantitigestiondeincidencias.AVANTI.Usuario
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.SHA512
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.Login
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
@@ -16,118 +17,17 @@ import io.ktor.sse.COLON
 
 class UsuarioRequest(): SupabaseClient() {
 
-    private val columnaTecnico = Columns.raw("""
+
+    private val columnaUsuario = Columns.raw("""
         
-        id_técnico,
-        grupo_atención(
-            id_grupo_atención,
-            nombre_grupo_atención
-        ),
-        empleado!inner(
-            id_empleado,
-            cédula_empleado,
-            primer_nombre_empleado,
-            segundo_nombre_empleado,
-            primer_apellido_empleado,
-            segundo_apellido_empleado,
-            correo_electrónico_empleado,
-            teléfono_empleado(
-                id_teléfono_empleado,
-                extensión_teléfono,
-                código_operadora_teléfono(
-                    operadora_teléfono
-                )
-            ),
-            departamento(
-                nombre_departamento,
-                piso_departamento,
-                sede(
-                    nombre_sede
-                )
-            ),
-            cargo_empleado(
-                tipo_cargo_empleado
-            ),
-            usuario!inner(
-                id_usuario,
-                nombre_usuario,
-                id_tipo_usuario,
-                tipo_usuario(
-                    tipo_usuario
-                )
-            )
+        id_usuario,
+        nombre_usuario,
+        id_tipo_usuario,
+        tipo_usuario(
+            tipo_usuario
         )
-        
+            
     """.trimIndent())
-
-    private val columnaClienteInterno = Columns.raw("""
-        id_cliente_interno,
-        empleado!inner(
-            id_empleado,
-            cédula_empleado,
-            primer_nombre_empleado,
-            segundo_nombre_empleado,
-            primer_apellido_empleado,
-            segundo_apellido_empleado,
-            correo_electrónico_empleado,
-            teléfono_empleado(
-                id_teléfono_empleado,
-                extensión_teléfono,
-                código_operadora_teléfono(
-                    operadora_teléfono
-                )
-            ),
-            departamento(
-                nombre_departamento,
-                piso_departamento,
-                sede(
-                    nombre_sede
-                )
-            ),
-            cargo_empleado(
-                tipo_cargo_empleado
-            ),
-            usuario!inner(
-                id_usuario,
-                nombre_usuario,
-                id_tipo_usuario,
-                tipo_usuario(
-                    tipo_usuario
-                )
-            )
-        )
-    """.trimIndent())
-
-    // Metodo para devolver los datos de los tecnicos de forma descendente
-    suspend fun seleccionarUsuariosTecnico(function: (List<Tecnico>) -> Unit) {
-
-        val dataset = getSupabaseClient().from("técnico").select(columns = columnaTecnico){
-
-            order("id_técnico", Order.DESCENDING)
-            filter {
-                gt("id_técnico", 1)
-            }
-
-        }.decodeList<Tecnico>()
-
-        function(dataset)
-
-    }
-
-    // Metodo para devolver los datos de los clientes tecnicos de forma descendente
-    suspend fun seleccionarUsuariosClienteInterno(function: (List<ClienteInterno>) -> Unit) {
-
-        val dataset = getSupabaseClient().from("cliente_interno").
-        select(columns = columnaClienteInterno){
-            order("id_cliente_interno", Order.DESCENDING)
-            filter {
-                gt("id_cliente_interno", 1)
-            }
-        }.decodeList<ClienteInterno>()
-
-        function(dataset)
-
-    }
 
     suspend fun insertarUsuarioClienteInterno(clienteInterno: ClienteInterno)
     {
@@ -290,21 +190,7 @@ class UsuarioRequest(): SupabaseClient() {
         }
     }
 
-    suspend fun seleccionarClienteInternoById(id:Int): ClienteInterno {
-        return getSupabaseClient().from("cliente_interno").select(columns = columnaClienteInterno){
-            filter {
-                eq("id_cliente_interno", id)
-            }
-        }.decodeSingle<ClienteInterno>()
-    }
 
-    suspend fun seleccionarTecnicoById(id:Int): Tecnico {
-        return getSupabaseClient().from("técnico").select(columns = columnaTecnico){
-            filter {
-                eq("id_técnico", id)
-            }
-        }.decodeSingle<Tecnico>()
-    }
 
     suspend fun buscarNombreUsuario(nombre: String, salida: (Usuario?) -> Unit)
     {
@@ -335,6 +221,53 @@ class UsuarioRequest(): SupabaseClient() {
 
         actualizacion(resultados)
 
+    }
+
+    suspend fun seleccionarUsuarioById(id: Int, usuario: (Usuario) -> Unit){
+
+        val resultado = getSupabaseClient().from("usuario").select(columnaUsuario){
+            filter{
+                eq("id_usuario", id)
+            }
+        }.decodeSingle<Usuario>()
+
+        usuario(resultado)
+
+    }
+
+    suspend fun seleccionarUsuarioByNombre(nombre: String, usuario: (Usuario?) -> Unit)
+    {
+        val resultados = getSupabaseClient().from("usuario").select(columnaUsuario){
+            filter {
+                eq("nombre_usuario", nombre)
+            }
+        }.decodeSingleOrNull<Usuario>()
+
+        Log.d("RESULTADOS USUARIO", resultados.toString())
+
+        usuario(resultados)
+    }
+
+    suspend fun borrarUsuarioById(id: Int)
+    {
+        // Se obtiene los datos del usuario
+        val usuario = getSupabaseClient().from("usuario").select(){
+            filter {
+                eq("id_usuario", id)
+            }
+        }.decodeSingle<Usuario>()
+
+        // Se crea la consulta con sus datos hasheados
+        getSupabaseClient().from("usuario").update({
+
+            set("nombre_usuario", SHA512(SHA512(usuario.nombre)).subSequence(0, 20).toString())
+            set("contraseña_usuario", SHA512(usuario.password))
+
+        }){
+            filter {
+                eq("id_usuario", id)
+            }
+        }
     }
 
 }

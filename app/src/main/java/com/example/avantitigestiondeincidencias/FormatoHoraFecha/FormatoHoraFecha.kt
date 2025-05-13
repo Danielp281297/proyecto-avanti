@@ -16,7 +16,14 @@ class FormatoHoraFecha() {
 
         fun formatoFecha(fecha: String): String? {
             val formatoEntrada = DateTimeFormatter.ofPattern("yyyy-M-dd")
-            val formatoSalida = DateTimeFormatter.ofPattern("dd-M-yyyy")
+            val formatoSalida = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+            val fechaFormateada = LocalDate.parse(fecha, formatoEntrada).format(formatoSalida)
+            return fechaFormateada
+        }
+
+        fun formatoFechaSupabase(fecha: String): String? {
+            val formatoEntrada = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+            val formatoSalida = DateTimeFormatter.ofPattern("yyyy-MM-dd")
             val fechaFormateada = LocalDate.parse(fecha, formatoEntrada).format(formatoSalida)
             return fechaFormateada
         }

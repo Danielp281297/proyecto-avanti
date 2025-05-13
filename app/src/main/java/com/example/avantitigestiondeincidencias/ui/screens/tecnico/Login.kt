@@ -1,10 +1,13 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.drawable.AnimatedImageDrawable
-import android.os.Build
 import android.util.Log
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,62 +16,62 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
+import androidx.datastore.dataStore
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.avantitigestiondeincidencias.AVANTI.Empleado
-import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Usuario
+import com.example.avantitigestiondeincidencias.DataStore.DataStore
+import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.EmpleadoRequest
-import com.example.avantitigestiondeincidencias.Supabase.TecnicoRequest
 import com.example.avantitigestiondeincidencias.modeloButton
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDialogPersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonCargaPersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.OutlinedTextFieldPersonalizado
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Login(navController: NavController)
+fun Login(
+    navController: NavController,
+    context: Context,
+    navigateToDos: (Int, String) -> Unit,
+    containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919))
 {
     
     var nombreUsuarioState = remember {
@@ -91,12 +94,46 @@ fun Login(navController: NavController)
         FocusRequester()
     }
 
-    
+    val datosIncorrectosAlertDialogState = remember {
+        mutableStateOf(false)
+    }
+
+    val enviarPantallaState = remember{
+        mutableStateOf(false)
+    }
+
+    var usuario = remember{
+        mutableStateOf<Usuario?>(null)
+    }
+
+    var jsonState = remember {
+        mutableStateOf("")
+    }
+
+    var mostrarLogin = remember {
+        mutableStateOf(false)
+    }
+
+    var scope = rememberCoroutineScope()
+
+
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+
+            if (DataStore(context).getSesionAbierta()) {
+                navigateToDos(DataStore(context).getTipoUsuario(), DataStore(context).getJson())
+            }
+            else mostrarLogin.value = true
+        }
+    }
+
+    if (mostrarLogin.value)
+
     Scaffold(
-        containerColor = Color.White,
+        containerColor = containerColor,
 
     ) {
-
 
         Column(modifier = Modifier.fillMaxSize().padding(15.dp),
             verticalArrangement = Arrangement.Center,
@@ -104,104 +141,63 @@ fun Login(navController: NavController)
         {
             Column(modifier = Modifier.fillMaxWidth().height(300.dp),
                 verticalArrangement = Arrangement.SpaceEvenly) {
-                Image(painter = painterResource(R.drawable.logo),
+                Icon(imageVector = ImageVector.Companion.vectorResource(R.drawable.logo),
                     contentDescription = "Logo de Avanti",
                     modifier = Modifier.size(144.dp).align(Alignment.CenterHorizontally))
-                Text("AVANTI BY FRIGILUX, C.A. \n J-501548218 \n Gestión de incidencias",
+                Text("AVANTI BY FRIGILUX, C.A. \n J-501548218",
                     modifier = Modifier.fillMaxWidth().padding(5.dp),
                     textAlign = TextAlign.Center,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold)
+                Text("Gestión de incidencias",
+                    modifier = Modifier.fillMaxWidth().padding(5.dp),
+                    textAlign = TextAlign.Center,
+                    fontSize = 18.sp)
             }
-            Spacer(modifier = Modifier.padding(15.dp))
             Column(modifier = Modifier.fillMaxWidth().height(320.dp),
                 verticalArrangement = Arrangement.Center) {
                 Text("Ingrese los datos correspondientes",
                     modifier = Modifier.fillMaxWidth().padding(5.dp),
                     textAlign = TextAlign.Center,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold)
+                    fontSize = 18.sp)
                 Text("Nombre de usuario", fontWeight = FontWeight.Bold)
-                OutlinedTextField(
+                OutlinedTextFieldPersonalizado(
                     modifier = Modifier.fillMaxWidth(),
                     value = nombreUsuarioState.value,
-                    onValueChange = { newText ->
-                        // Si el texto es menor a 50 caracteres, se almacena en newText
+                    onValueChange = {newText ->
                         if (newText.all { !it.isWhitespace() && it.isLetter() || it.isDigit() } && newText.length <= 20)
                             nombreUsuarioState.value = newText
                     },
                     label = { Text("Nombre de usuario", fontSize = 13.sp) },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedLabelColor = Color.Black,
-                        focusedBorderColor = Color.Black
-                    ),
-                    keyboardOptions = KeyboardOptions(
-                        // Habilita el boton Next en el teclado, dirigiendo al siguiente campo de texto...
-                        imeAction = ImeAction.Next)
+                    supportingText = false
                 )
-                Spacer(modifier = Modifier.padding(15.dp))
                 Text("Contraseña", fontWeight = FontWeight.Bold)
-                OutlinedTextField(
-                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                OutlinedTextFieldPersonalizado(
+                    modifier = Modifier.fillMaxWidth(),
                     value = contrasenaUsuarioState.value,
-                    onValueChange = { newText ->
-                        // Si el texto es menor a 50 caracteres, se almacena en newText
-                        if (newText.length <= 20)
+                    password = true,
+                    onValueChange = {newText ->
+                        if (newText.all { !it.isWhitespace() } && newText.length <= 20)
                             contrasenaUsuarioState.value = newText
                     },
                     label = { Text("Contraseña", fontSize = 13.sp) },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedLabelColor = Color.Black,
-                        focusedBorderColor = Color.Black
-                    ),
-                    trailingIcon = {
-                        val image = if (contrasenaVisibleState.value == true)
-                        {
-                            R.drawable.visible_icono
-                        }else
-                            R.drawable.no_visible_icono
-
-                        IconButton(onClick = {
-
-                            if (contrasenaVisibleState.value)
-                            {
-                                contrasenaVisibleState.value = false
-                            }else
-                                contrasenaVisibleState.value = true
-
-                        }) {
-                            Icon(painter = painterResource(image), contentDescription = "", modifier = Modifier.size(25.dp))
-                        }
-
-
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    visualTransformation = if(contrasenaVisibleState.value) VisualTransformation.None else PasswordVisualTransformation()
+                    empezarMayusculas = false,
+                    imeActionNext = false,
+                    supportingText = false
                 )
                 Spacer(modifier = Modifier.padding(15.dp))
-                Button(modifier = modeloButton,
+                BotonCargaPersonalizado({
 
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black
-                    ),
-                    shape = RectangleShape,
-                    onClick = {
+                    //Se obtiene los datos del empleado, en base al usuario y contrasena
+                    ingresarbuttonState.value = true
 
-                        //Se obtiene los datos del empleado, en base al usuario y contrasena
-                        ingresarbuttonState.value = true
-
-                    }
-                )
-                {
-                    if (ingresarbuttonState.value)
+                }, isLoading = ingresarbuttonState.value)
                     {
-                        iconoCarga(Modifier)
-                    }else
-                    Text(text = "INGRESAR", color = Color.White)
+
+                        Text(text = "INGRESAR", color = Color.White, fontFamily = montserratFamily)
 
                 }
+
             }
             Spacer(modifier = Modifier.padding(5.dp))
             Text(text = "¿No está registrado? Comuníquese con el administrador", fontSize = 12.sp, textAlign = TextAlign.Center)
@@ -209,84 +205,75 @@ fun Login(navController: NavController)
 
     }
 
-    val datosIncorrectosAlertDialogState = remember {
-        mutableStateOf(false)
-    }
-    val enviarPantallaState = remember{
-        mutableStateOf(false)
-    }
-    var usuario = remember{
-        mutableStateOf<Usuario?>(null)
-    }
-    var jsonState = remember {
-        mutableStateOf("")
-    }
+
 
     if (ingresarbuttonState.value)
     {
-        LaunchedEffect(Unit) {
-            withContext(Dispatchers.IO) {
 
-                usuario.value = EmpleadoRequest().obtenerDatosUsuario(nombreUsuarioState.value, contrasenaUsuarioState.value)
-                if(usuario.value != null)
-                {
-                    
-                    Log.d("USUARIO", "Encontrado")
-                    enviarPantalla(usuario.value!!){ json ->
-                        jsonState.value = json
-                       enviarPantallaState.value = true
+        if(!Network.isConnect(context))
+        {
+            Toast.makeText(context, "Sin conectividad. Compruebe la conexión a internet y vuelva a intentarlo.", Toast.LENGTH_SHORT).show()
+            ingresarbuttonState.value = false
+        }
+        else {
+            LaunchedEffect(Unit) {
+                withContext(Dispatchers.IO) {
 
+                    usuario.value =
+                        EmpleadoRequest().obtenerDatosUsuario(nombreUsuarioState.value, contrasenaUsuarioState.value)
+
+                    if (usuario.value != null) {
+
+                        Log.d("USUARIO", "Encontrado")
+                        enviarPantalla(usuario.value!!) { json ->
+                            jsonState.value = json
+                            enviarPantallaState.value = true
+
+                        }
+
+                    } else {
+                        Log.d("USUARIO", "No encontrado")
+                        datosIncorrectosAlertDialogState.value = true
                     }
 
                 }
-                else {
-                    Log.d("USUARIO", "No encontrado")
-                    datosIncorrectosAlertDialogState.value = true
-                }
-
+                ingresarbuttonState.value = false
             }
-            ingresarbuttonState.value = false
         }
 
     }
 
     if(datosIncorrectosAlertDialogState.value)
     {
-        AlertDialog(
-            shape = RectangleShape,
-            containerColor = Color.White,
-            onDismissRequest = {
+        AlertDialogPersonalizado(
+            titulo = "AVISO",
+            contenido = "Datos Incorrectos. Intente de nuevo",
+            onDismissRequest = { datosIncorrectosAlertDialogState.value = false },
+            aceptarAccion = {
                 datosIncorrectosAlertDialogState.value = false
             },
-            confirmButton = {
-                Button(
-                    modifier = modeloButton,
-
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black
-                    ),
-                    shape = RectangleShape,
-                    onClick = {
-                        datosIncorrectosAlertDialogState.value = false
-                    })
-                {
-                    Text(text = "ACEPTAR")
-                }
-            },
-            title = {
-                Text("AVISO")
-            },
-            text = {
-                Text("Datos Incorrectos. Intente de nuevo")
-            }
+            cancelarAccion = {}
         )
+
     }
 
     if (enviarPantallaState.value)
     {
         enviarPantallaState.value = false
         navController.popBackStack()
-        pasarPantalla(usuario.value!!.idTipoUsuario, jsonState.value, navController)
+        //pasarPantalla(usuario.value!!.idTipoUsuario, jsonState.value, navController)
+        // Se guardan los datos de las variables necesarias
+        LaunchedEffect(Unit) {
+            scope.launch {
+                DataStore(context).setData(
+                    tipo = usuario.value!!.idTipoUsuario,
+                    json = jsonState.value,
+                    sesionAbierta = true
+                )
+
+            }
+        }
+        navigateToDos(usuario.value!!.idTipoUsuario, jsonState.value)
 
     }
 
@@ -309,7 +296,10 @@ fun iconoCarga(modifier: Modifier)
     )
 }
 
-fun pasarPantalla(tipoUsuario: Int, json: String, navController: NavController)
+fun pasarPantalla(
+    tipoUsuario: Int,
+    json: String,
+    navController: NavController)
 {
 
     when(tipoUsuario)
@@ -318,9 +308,25 @@ fun pasarPantalla(tipoUsuario: Int, json: String, navController: NavController)
         1 -> navController.navigate("principalTécnico" + "/${json}")
         2 -> navController.navigate("principalCliente" + "/${json}")
         3 -> navController.navigate("principalAdministrador" + "/${json}")
+
     }
 
 }
+
+/*
+
+when(tipoUsuario)
+    {
+        // Ingresar a la pantalla de Tecnico
+        1 -> navController.navigate("principalTécnico" + "/${json}")
+
+        2 -> navController.navigate("principalCliente" + "/${json}")
+
+        3 -> navController.navigate("principalAdministrador" + "/${json}")
+
+    }
+
+ */
 
 suspend fun enviarPantalla(usuario: Usuario, jsonFormato: (json: String) -> Unit)
 {
@@ -331,34 +337,25 @@ suspend fun enviarPantalla(usuario: Usuario, jsonFormato: (json: String) -> Unit
     {
 
         1 -> {
-            val tecnico = EmpleadoRequest().seleccionarTecnicobyUsuarioId(usuario.id)
+            var tecnico = EmpleadoRequest().seleccionarTecnicobyUsuarioId(usuario.id)
             // Se crea el objeto json
             json = Json { ignoreUnknownKeys = true }.encodeToString(tecnico)
             }
 
         2 -> {
-            val clienteInterno = EmpleadoRequest().seleccionarClienteInternobyUsuarioId(usuario.id)
+            var clienteInterno = EmpleadoRequest().seleccionarClienteInternobyUsuarioId(usuario.id)
+
             json = Json { ignoreUnknownKeys = true }.encodeToString(clienteInterno)
         }
         
         3 ->{
-            val administrador = EmpleadoRequest().seleccionarTecnicobyUsuarioId(usuario.id)
+            var administrador = EmpleadoRequest().seleccionarTecnicobyUsuarioId(usuario.id)
+
             json = Json { ignoreUnknownKeys = true }.encodeToString(administrador)
         }
     }
 
     jsonFormato(json)
-
-    /*
-
-
-            when(empleado.usuario.idTipoUsuario)
-            {
-                1 -> navController.navigate("principalTécnico" + "/${json}")
-                2 -> navController.navigate("principalCliente" + "/${json}")
-                3 -> navController.navigate("principalAdministrador" + "/${json}")
-            }
-    */
 }
 
 @Preview(showBackground = true)
@@ -366,7 +363,8 @@ suspend fun enviarPantalla(usuario: Usuario, jsonFormato: (json: String) -> Unit
 fun LoginPreview() {
 
     val navController = rememberNavController()
+    val context = LocalContext.current
     AVANTITIGestionDeIncidenciasTheme {
-        Login(navController)
+        //Login(navController, context)
     }
 }

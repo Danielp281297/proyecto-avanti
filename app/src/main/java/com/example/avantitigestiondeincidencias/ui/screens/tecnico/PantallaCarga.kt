@@ -1,6 +1,7 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,17 +15,18 @@ import androidx.compose.ui.text.font.FontWeight
 @Composable
 fun PantallaCarga()
 {
-
-    Box(modifier = Modifier.fillMaxSize().background(Color.White))
-    {
-
-        Column(modifier = Modifier.align(Alignment.Center))
+        Box(
+            modifier = Modifier.fillMaxSize().background(if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919))
+        )
         {
 
-            Text("CARGANDO", fontWeight = FontWeight.Bold)
+            Column(modifier = Modifier.align(Alignment.Center))
+            {
+
+                Text("CARGANDO", fontWeight = FontWeight.Bold)
+
+            }
 
         }
-
-    }
 
 }

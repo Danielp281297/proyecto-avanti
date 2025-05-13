@@ -1,5 +1,6 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.background
@@ -47,7 +48,11 @@ import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.Notification.Notification
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.LoadingShimmerEffectScreen
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.TicketLoading
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -58,9 +63,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
-fun InicioTecnico(empleado: Empleado, navController: NavController)
+fun InicioTecnico(
+    tecnico: Tecnico,
+    navController: NavController,
+    containerColor: Color = Color.Transparent)
 {
     // Se crea la variable de estado con la lista
     // Se comprueba si la lista esta vacia, de ser asi, se crea un aviso en el centro
@@ -68,45 +77,23 @@ fun InicioTecnico(empleado: Empleado, navController: NavController)
         mutableStateListOf<Ticket>()
     }
 
-    val scope = rememberCoroutineScope()
-
-
-    // Corrutina para obtener los tickets
-    /*
-    fetchTicketDataTecnico(empleado.id, { tickets ->
-
-        ticketsTecnicoList.addAll(tickets)
-
-    })
-    */
-    LaunchedEffect(Unit) {
-
-        CoroutineScope(Dispatchers.IO).launch {
-
-            ticketsTecnicoList.clear()
-
-            TicketRequests().buscarTicketByTecnicoId(empleado.id) { tickets ->
-
-                ticketsTecnicoList.addAll(tickets)
-
-            }
-
-        }
-
+    var buscarTicketsTecnico = remember {
+        mutableStateOf(true)
     }
 
+    val scope = rememberCoroutineScope()
 
-    Scaffold(
-        containerColor = Color.White,
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(Color.White),
-                title = {
-                    Text("Inicio - Técnico", modifier = Modifier.fillMaxWidth().padding(0.dp), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                }
-            )
-        }
-    ) {
+    buscarTicketTecnico(tecnico.id) {
+
+        ticketsTecnicoList.clear()
+        ticketsTecnicoList.addAll(it)
+        buscarTicketsTecnico.value = false
+    }
+
+    ScaffoldSimplePersonalizado(
+        tituloPantalla = "Inicio - Técnico",
+        containerColor = containerColor
+    ){
 
         Box(modifier = Modifier.fillMaxSize().padding(25.dp)
         )
@@ -117,7 +104,7 @@ fun InicioTecnico(empleado: Empleado, navController: NavController)
 
                 Spacer(modifier = Modifier.padding(45.dp))
 
-                Text(text = "Bienvenido, ${empleado.usuario.nombre}")
+                Text(text = "Bienvenido, ${tecnico.empleado.usuario.nombre}")
                 Text(text = " Últimos tickets: \n",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
@@ -125,11 +112,29 @@ fun InicioTecnico(empleado: Empleado, navController: NavController)
 
                 LazyColumn(modifier = Modifier.height(520.dp).fillMaxWidth(), content = {
 
-                    items(ticketsTecnicoList.count()) { index ->
+                    if(buscarTicketsTecnico.value){
+                        items(10)
+                        {
 
-                        TicketsTecnico(ticketsTecnicoList[index], navController)
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                LoadingShimmerEffectScreen(
+                                    true,
+                                    {
+                                        TicketLoading()
+                                    },
+                                    {}
+                                )
+                            }
+                        }
+                    }else
+                    {
+                        items(ticketsTecnicoList.count()) { index ->
 
+                            TicketsTecnico(ticketsTecnicoList[index], navController)
+
+                        }
                     }
+
                 })
 
             }
@@ -140,7 +145,7 @@ fun InicioTecnico(empleado: Empleado, navController: NavController)
     {
         CoroutineScope(Dispatchers.IO).launch {
 
-            TicketRequests().realtimeTicketRequestTecnicoId(scope, empleado.id) { tickets ->
+            TicketRequests().realtimeTicketRequestTecnicoId(scope, tecnico.id) { tickets ->
 
                 ticketsTecnicoList.clear()
                 ticketsTecnicoList.addAll(tickets)
@@ -151,17 +156,28 @@ fun InicioTecnico(empleado: Empleado, navController: NavController)
 
 }
 
+@Composable
+fun buscarTicketTecnico(id: Int, resultados: (List<Ticket>) -> Unit)
+{
+    LaunchedEffect(Unit) {
+
+        CoroutineScope(Dispatchers.IO).launch {
+
+            TicketRequests().buscarTicketByTecnicoId(id) { tickets ->
+
+                resultados(tickets)
+
+            }
+
+        }
+
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TicketsTecnico(ticket: Ticket, navController: NavController)
 {
-
-    var mostrarAlertDialogTicket = remember{
-        mutableStateOf(false)
-    }
-
-    var empleado = Empleado()
-
 
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -202,7 +218,7 @@ fun TicketsTecnico(ticket: Ticket, navController: NavController)
 
         Column(modifier = Modifier.padding(10.dp, 0.dp, 10.dp, 0.dp))
         {
-            Text(text = ticket.descripcion, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text(text = ticket.descripcion, fontWeight = FontWeight.Bold, fontSize = 15.sp)
             Text(text = "${ticket.fecha} - ${ticket.hora}", fontSize = 12.sp)
         }
 
@@ -222,7 +238,7 @@ fun InicioTecnicoPreview() {
 
     AVANTITIGestionDeIncidenciasTheme {
 
-        InicioTecnico(Empleado(), navController)
+        InicioTecnico(Tecnico(), navController)
 
     }
 }

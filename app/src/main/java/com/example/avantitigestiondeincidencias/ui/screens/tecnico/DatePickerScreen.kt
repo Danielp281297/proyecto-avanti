@@ -6,6 +6,7 @@ import android.view.textclassifier.TextSelection
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,7 +44,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.example.avantitigestiondeincidencias.modeloButton
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonPersonalizado
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.ZoneId
@@ -68,10 +71,12 @@ fun DatePickerScreen()
     {
 
         Text(text = fechaState.value)
-        Button(onClick = {
-            showDatePickerState.value = true
-        }) {
-            Text("DATE PICKER DIALOG")
+        BotonPersonalizado(
+            onClick = {
+                showDatePickerState.value = true
+            }
+        ) {
+            Text("DATE PICKER DIALOG", fontFamily = montserratFamily)
         }
 
         Column (modifier = Modifier.clickable {
@@ -86,9 +91,11 @@ fun DatePickerScreen()
 
     if (showDatePickerState.value == true) {
         Log.d("FECHA", "ABIERTA")
-        DatePicker(showDatePickerState.value, {
-            showDatePickerState.value = false
-        }, {
+        DatePicker(
+            showDialog = showDatePickerState.value,
+            ondismiss = { showDatePickerState.value = false },
+            containerColor = Color.Transparent,
+            fecha = {
             fechaState.value = it
             showDatePickerState.value = false
         })
@@ -104,7 +111,13 @@ fun convertirMilisegundosAFecha(milisegundos: Long): String {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DatePicker(showDialog: Boolean, ondismiss: () -> Unit, fecha: (String) -> Unit)
+fun DatePicker(
+    showDialog: Boolean,
+    containerColor: Color,
+    optionTextColor: Color = if (!isSystemInDarkTheme()) Color.White else Color.LightGray,
+
+    ondismiss: () -> Unit,
+    fecha: (String) -> Unit)
 {
     var showDatePickerState = remember {
         mutableStateOf(showDialog)
@@ -120,7 +133,7 @@ fun DatePicker(showDialog: Boolean, ondismiss: () -> Unit, fecha: (String) -> Un
 
     var datePickerState = rememberDatePickerState()
 
-
+    val color = if (!isSystemInDarkTheme()) Color.Black else Color.LightGray
 
     if (showDatePickerState.value == true)
     {
@@ -130,97 +143,104 @@ fun DatePicker(showDialog: Boolean, ondismiss: () -> Unit, fecha: (String) -> Un
                 ondismiss()
             },
             dismissButton = {
-                Button(modifier = Modifier.border(0.dp, Color.Transparent, RectangleShape),
+                Button(modifier = Modifier.background(Color.Transparent).border(1.dp, color),
                     onClick = {
                     ondismiss()
                 },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black
+                        containerColor = Color.Transparent
                     ),
                 ) {
-                    Text("CANCELAR")
+                    Text("CANCELAR", color = color)
                 }
             },
             shape = RectangleShape,
             colors = DatePickerColors(
-                containerColor = Color.White,
-                titleContentColor = Color.White,
-                headlineContentColor = Color.White,
-                weekdayContentColor = Color.White,
-                subheadContentColor = Color.White,
-                navigationContentColor = Color.White,
-                yearContentColor = Color.White,
-                disabledYearContentColor = Color.White,
-                currentYearContentColor = Color.White,
-                selectedYearContentColor = Color.White,
-                disabledSelectedYearContentColor = Color.White,
-                selectedYearContainerColor = Color.White,
-                disabledSelectedYearContainerColor = Color.White,
-                dayContentColor = Color.White,
-                disabledDayContentColor = Color.White,
-                selectedDayContentColor = Color.White,
-                disabledSelectedDayContentColor = Color.White,
-                selectedDayContainerColor = Color.White,
-                disabledSelectedDayContainerColor = Color.White,
-                todayContentColor =Color.White,
-                todayDateBorderColor = Color.White,
-                dayInSelectionRangeContainerColor = Color.White,
-                dayInSelectionRangeContentColor = Color.White,
-                dividerColor = Color.White,
+                containerColor = containerColor,
+                titleContentColor = containerColor,
+                headlineContentColor = containerColor,
+                weekdayContentColor = containerColor,
+                subheadContentColor = containerColor,
+                navigationContentColor = containerColor,
+                yearContentColor = containerColor,
+                disabledYearContentColor = containerColor,
+                currentYearContentColor = containerColor,
+                selectedYearContentColor = containerColor,
+                disabledSelectedYearContentColor = containerColor,
+                selectedYearContainerColor = containerColor,
+                disabledSelectedYearContainerColor = containerColor,
+                dayContentColor = containerColor,
+                disabledDayContentColor = containerColor,
+                selectedDayContentColor = containerColor,
+                disabledSelectedDayContentColor = containerColor,
+                selectedDayContainerColor = containerColor,
+                disabledSelectedDayContainerColor = containerColor,
+                todayContentColor =containerColor,
+                todayDateBorderColor = containerColor,
+                dayInSelectionRangeContainerColor = containerColor,
+                dayInSelectionRangeContentColor = containerColor,
+                dividerColor = containerColor,
+
+
                 dateTextFieldColors = TextFieldColors(
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black,
-                    disabledTextColor = Color.Black,
-                    errorTextColor = Color.Black,
-                    focusedContainerColor = Color.Black,
-                    unfocusedContainerColor = Color.Black,
-                    disabledContainerColor = Color.Black,
-                    errorContainerColor = Color.Black,
-                    cursorColor = Color.Black,
-                    errorCursorColor = Color.Black,
+                    focusedTextColor = Color.Transparent,
+                    unfocusedTextColor = Color.Transparent,
+                    disabledTextColor = Color.Transparent,
+                    errorTextColor = optionTextColor,
+                    focusedContainerColor = containerColor,
+                    unfocusedContainerColor = containerColor,
+                    disabledContainerColor = containerColor,
+                    errorContainerColor = optionTextColor,
+                    cursorColor = optionTextColor,
+                    errorCursorColor = optionTextColor,
                     textSelectionColors = TextSelectionColors(
-                        handleColor = Color.Black,
-                        backgroundColor = Color.Black
+                        handleColor = optionTextColor,
+                        backgroundColor = optionTextColor
                     ),
-                    focusedIndicatorColor = Color.Black,
-                    unfocusedIndicatorColor = Color.Black,
-                    disabledIndicatorColor =Color.Black,
-                    errorIndicatorColor = Color.Black,
-                    focusedLeadingIconColor = Color.Black,
-                    unfocusedLeadingIconColor = Color.Black,
-                    disabledLeadingIconColor = Color.Black,
-                    errorLeadingIconColor = Color.Black,
-                    focusedTrailingIconColor = Color.Black,
-                    unfocusedTrailingIconColor = Color.Black,
-                    disabledTrailingIconColor = Color.Black,
-                    errorTrailingIconColor = Color.Black,
-                    focusedLabelColor = Color.Black,
-                    unfocusedLabelColor = Color.Black,
-                    disabledLabelColor = Color.Black,
-                    errorLabelColor = Color.Black,
-                    focusedPlaceholderColor = Color.Black,
-                    unfocusedPlaceholderColor = Color.Black,
-                    disabledPlaceholderColor = Color.Black,
-                    errorPlaceholderColor = Color.Black,
-                    focusedSupportingTextColor =Color.Black,
-                    unfocusedSupportingTextColor = Color.Black,
-                    disabledSupportingTextColor = Color.Black,
-                    errorSupportingTextColor = Color.Black,
-                    focusedPrefixColor = Color.Black,
-                    unfocusedPrefixColor = Color.Black,
-                    disabledPrefixColor = Color.Black,
-                    errorPrefixColor = Color.Black,
-                    focusedSuffixColor = Color.Black,
-                    unfocusedSuffixColor = Color.Black,
-                    disabledSuffixColor = Color.Black,
-                    errorSuffixColor = Color.Black
+                    focusedIndicatorColor = optionTextColor,
+                    unfocusedIndicatorColor = optionTextColor,
+                    disabledIndicatorColor =optionTextColor,
+                    errorIndicatorColor = optionTextColor,
+                    focusedLeadingIconColor = optionTextColor,
+                    unfocusedLeadingIconColor = optionTextColor,
+                    disabledLeadingIconColor = optionTextColor,
+                    errorLeadingIconColor = optionTextColor,
+                    focusedTrailingIconColor = optionTextColor,
+                    unfocusedTrailingIconColor = optionTextColor,
+                    disabledTrailingIconColor = optionTextColor,
+                    errorTrailingIconColor = optionTextColor,
+                    focusedLabelColor = optionTextColor,
+                    unfocusedLabelColor = optionTextColor,
+                    disabledLabelColor = optionTextColor,
+                    errorLabelColor = optionTextColor,
+                    focusedPlaceholderColor = optionTextColor,
+                    unfocusedPlaceholderColor = optionTextColor,
+                    disabledPlaceholderColor = optionTextColor,
+                    errorPlaceholderColor = optionTextColor,
+                    focusedSupportingTextColor =optionTextColor,
+                    unfocusedSupportingTextColor = optionTextColor,
+                    disabledSupportingTextColor = optionTextColor,
+                    errorSupportingTextColor = optionTextColor,
+                    focusedPrefixColor = optionTextColor,
+                    unfocusedPrefixColor = optionTextColor,
+                    disabledPrefixColor = optionTextColor,
+                    errorPrefixColor = optionTextColor,
+                    focusedSuffixColor = optionTextColor,
+                    unfocusedSuffixColor = optionTextColor,
+                    disabledSuffixColor = optionTextColor,
+                    errorSuffixColor = optionTextColor
                 )
             ),
             confirmButton = {
-                Button(modifier = Modifier.border(0.dp, Color.Transparent, RectangleShape),
+                Button(
+                    modifier = Modifier.
+                                background(if(!mostrarSeleccionarButton.value) Color.LightGray else if (!isSystemInDarkTheme()) Color.Black else Color.Transparent).
+                                border(1.dp, if (!isSystemInDarkTheme()) Color.Transparent else Color.LightGray),
                     enabled = mostrarSeleccionarButton.value,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black
+                        containerColor = Color.Transparent,
+                        disabledContentColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent
                     ),
                     onClick = {
                         val milisegundos = datePickerState.selectedDateMillis
@@ -231,7 +251,7 @@ fun DatePicker(showDialog: Boolean, ondismiss: () -> Unit, fecha: (String) -> Un
                         }
                         showDatePickerState.value = false
                     }) {
-                    Text("SELECCIONAR")
+                    Text("SELECCIONAR", color = optionTextColor, fontFamily = montserratFamily)
                 }
             })
         {

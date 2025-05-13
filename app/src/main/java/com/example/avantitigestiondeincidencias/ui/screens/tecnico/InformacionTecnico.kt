@@ -25,14 +25,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.modeloButton
+import com.example.avantitigestiondeincidencias.obtenerUsuariobyEmpleadoID
 import io.ktor.util.toUpperCasePreservingASCIIRules
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InformacionTecnico(tecnico: Tecnico)
 {
-
-    val scrollState = rememberScrollState()
 
     Column(modifier = Modifier)
     {
@@ -49,6 +48,7 @@ fun InformacionTecnico(tecnico: Tecnico)
         )
         Spacer(modifier = Modifier.padding(5.dp))
 
+        //Informacion personal del empleado
         informacionPersonalEmpleado(tecnico.empleado)
 
         Text(text = "ÁREA: ", fontSize = fuenteLetraTicketDesplegado)

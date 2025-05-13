@@ -22,6 +22,7 @@ import com.example.avantitigestiondeincidencias.AVANTI.Empleado
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.Supabase.EmpleadoRequest
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import io.ktor.http.ContentType.Application.Json
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -96,7 +97,7 @@ fun PantallaPruebas(navController: NavController)
                     navController.navigate("principalAdministrador" + "/${jsonState.value}")
                 }) {
 
-                    Text(text = "ADMINISTRADOR")
+                    Text(text = "ADMINISTRADOR", fontFamily = montserratFamily)
 
                 }
 
@@ -106,7 +107,7 @@ fun PantallaPruebas(navController: NavController)
                     navController.navigate("principalCliente" + "/${jsonState.value}")
                 }) {
 
-                    Text(text = "CLIENTE (3)")
+                    Text(text = "CLIENTE (3)", fontFamily = montserratFamily)
 
                 }
 
@@ -117,7 +118,7 @@ fun PantallaPruebas(navController: NavController)
 
                 }) {
 
-                    Text(text = "TECNICO (2)")
+                    Text(text = "TECNICO (2)", fontFamily = montserratFamily)
 
                 }
 

@@ -14,7 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
+import com.example.avantitigestiondeincidencias.Supabase.EmpleadoRequest
 import com.example.avantitigestiondeincidencias.Supabase.UsuarioRequest
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonPersonalizado
+import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,7 +42,7 @@ fun BorrarUsuarioPrueba()
     //Se obtienen los datos del usuario
     LaunchedEffect(Unit) {
         CoroutineScope(Dispatchers.IO).launch {
-            tecnico.value = UsuarioRequest().seleccionarTecnicoById(6)
+            tecnico.value = EmpleadoRequest().seleccionarTecnicoById(6)
         }
     }
 
@@ -47,13 +50,12 @@ fun BorrarUsuarioPrueba()
 
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.SpaceEvenly)
     {
-
-        Button(onClick = {
-
-            borrarUsuarioState.value = true
-
-        }) {
-            Text("BORRAR USUARIO")
+        BotonPersonalizado(
+            onClick = {
+                borrarUsuarioState.value = true
+            }
+        ) {
+            Text("BORRAR USUARIO", fontFamily = montserratFamily)
         }
 
     }

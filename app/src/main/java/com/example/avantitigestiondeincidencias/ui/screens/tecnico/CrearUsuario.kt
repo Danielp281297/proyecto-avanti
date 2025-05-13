@@ -1,7 +1,10 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -55,27 +58,33 @@ import com.example.avantitigestiondeincidencias.AVANTI.GrupoAtencion
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.TelefonoEmpleado
 import com.example.avantitigestiondeincidencias.AVANTI.Usuario
+import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.EmpleadoRequest
 import com.example.avantitigestiondeincidencias.Supabase.TelefonoRequest
 import com.example.avantitigestiondeincidencias.Supabase.UsuarioRequest
 import com.example.avantitigestiondeincidencias.espacioSpacer
-import com.example.avantitigestiondeincidencias.modeloButton
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonCargaPersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.OutlinedTextFieldPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.SHA512
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.Spinner
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import io.ktor.util.toLowerCasePreservingASCIIRules
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CrearUsuario(navController: NavController)
+fun CrearUsuario(
+    navController: NavController,
+    context: Context,
+    containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919))
 {
-
-    val context = LocalContext.current
 
     val limiteCedula = 31000000
 
@@ -208,7 +217,13 @@ fun CrearUsuario(navController: NavController)
         mutableStateOf("")
     }
 
+    var cargarPantalla = remember {
+        mutableStateOf(true)
+    }
+
     val scope = rememberCoroutineScope()
+
+    Network.networkCallback(navController, context)
 
     // Se obtienen los datos para los Spinners
     LaunchedEffect(Unit) {
@@ -233,21 +248,21 @@ fun CrearUsuario(navController: NavController)
                 nombreDepartamentoList.add(it.nombre)
             }
 
+            cargarPantalla.value = false
+
         }
 
     }
 
-    Scaffold(
-        containerColor = Color.White,
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(Color.White),
-                title = {
-                    Text("Crear usuario", modifier = Modifier.fillMaxWidth().padding(0.dp), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                }
-            )
-        }
-    ) {
+    if (cargarPantalla.value)
+    {
+        PantallaCarga()
+    }
+    else
+    ScaffoldSimplePersonalizado(
+        tituloPantalla = "Crear usuario",
+        containerColor = containerColor
+    ){
 
             Column(modifier = Modifier.fillMaxSize().padding(25.dp).verticalScroll(state = verticalScrollState, enabled = true))
             {
@@ -285,6 +300,7 @@ fun CrearUsuario(navController: NavController)
                         Spinner(
                             modifier = Modifier,
                             itemList = tipoUsuarioList,
+                            posicionInicial = 0,
                             onItemSelected = {
                                 idTipoUsuarioState.value = tipoUsuarioList.indexOf(it)
                             }
@@ -294,37 +310,18 @@ fun CrearUsuario(navController: NavController)
                     Column(modifier = Modifier.weight(1F))
                     {
                         Text("Cédula", fontWeight = FontWeight.Bold)
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                        OutlinedTextFieldPersonalizado(
+                            modifier = Modifier
+                                .fillMaxWidth(),
                             value = cedulaState.value,
                             onValueChange = { number ->
 
-                                if(number.length <= 8)
+                                if (number.length <= 8)
                                     cedulaState.value = number
 
                             },
                             label = { Text("Número de cédula", fontSize = 13.sp) },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedLabelColor = Color.Black,
-                                focusedBorderColor = Color.Black
-                            ),
-                            supportingText = {
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Spacer(modifier = Modifier.padding(0.dp))
-
-                                    Text(
-                                        text = if (false) "Número de cédula fuera de rango" else "",
-                                        color = if (false) Color.Red else Color.LightGray,
-                                        modifier = Modifier
-                                    )
-                                }
-                            }
-                            , keyboardOptions = KeyboardOptions().copy(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Next)
+                            number = true
                         )
 
                     }
@@ -337,74 +334,36 @@ fun CrearUsuario(navController: NavController)
 
                     Column(modifier = Modifier.weight(1F))
                     {
-
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                        OutlinedTextFieldPersonalizado(
+                            modifier = Modifier.fillMaxWidth(),
                             value = primerNombreState.value,
                             onValueChange = { newText ->
                                 // Si el texto es menor a 50 caracteres, se almacena en newText
-                                if (newText.all{it.isLetter()} && newText.length <= 20)
+                                if (newText.all { it.isLetter() } && newText.length <= 20)
                                     primerNombreState.value = newText
                             },
                             label = { Text("Primer nombre", fontSize = 13.sp) },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedLabelColor = Color.Black,
-                                focusedBorderColor = Color.Black
-                            ),
-                            supportingText = {
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Spacer(modifier = Modifier.padding(0.dp))
-
-                                    Text(
-                                        text = "${primerNombreState.value.length}/20",
-                                        color = if (primerNombreState.value.length < 15) Color.LightGray else Color.Red,
-                                        modifier = Modifier
-                                    )
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions().copy(imeAction = ImeAction.Next)
+                            supportingText = true,
+                            maximoCaracteres = 20,
+                            minimoCaracteres = 3,
                         )
 
                     }
                     Spacer(modifier = Modifier.padding(5.dp))
                     Column(modifier = Modifier.weight(1F))
                     {
-
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                        OutlinedTextFieldPersonalizado(
+                            modifier = Modifier.fillMaxWidth(),
                             value = segundoNombreState.value,
                             onValueChange = { newText ->
                                 // Si el texto es menor a 50 caracteres, se almacena en newText
-                                if (newText.all{it.isLetter()} && newText.length <= 20)
+                                if (newText.all { it.isLetter() } && newText.length <= 20)
                                     segundoNombreState.value = newText
                             },
                             label = { Text("Segundo nombre", fontSize = 13.sp) },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedLabelColor = Color.Black,
-                                focusedBorderColor = Color.Black
-                            ),
-                            supportingText = {
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Spacer(modifier = Modifier.padding(0.dp))
-
-                                    Text(
-                                        text = "${segundoNombreState.value.length}/20",
-                                        color = if (segundoNombreState.value.length < 15) Color.LightGray else Color.Red,
-                                        modifier = Modifier
-                                    )
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions().copy(imeAction = ImeAction.Next)
+                            supportingText = true,
+                            maximoCaracteres = 20,
+                            minimoCaracteres = 3
                         )
 
                     }
@@ -416,37 +375,18 @@ fun CrearUsuario(navController: NavController)
 
                     Column(modifier = Modifier.weight(1F))
                     {
-
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                        OutlinedTextFieldPersonalizado(
+                            modifier = Modifier.fillMaxWidth(),
                             value = primerApellidoState.value,
                             onValueChange = { newText ->
                                 // Si el texto es menor a 50 caracteres, se almacena en newText
-                                if (newText.all{it.isLetter()} && newText.length <= 20)
+                                if (newText.all { it.isLetter() } && newText.length <= 20)
                                     primerApellidoState.value = newText
                             },
                             label = { Text("Primer apellido", fontSize = 13.sp) },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedLabelColor = Color.Black,
-                                focusedBorderColor = Color.Black
-                            ),
-                            supportingText = {
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Spacer(modifier = Modifier.padding(0.dp))
-
-                                    Text(
-                                        text = "${primerApellidoState.value.length}/20",
-                                        color = if (primerApellidoState.value.length < 15) Color.LightGray else Color.Red,
-                                        modifier = Modifier
-                                    )
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions().copy(imeAction = ImeAction.Next)
+                            supportingText = true,
+                            maximoCaracteres = 20,
+                            minimoCaracteres = 3,
                         )
 
                     }
@@ -454,36 +394,18 @@ fun CrearUsuario(navController: NavController)
                     Column(modifier = Modifier.weight(1F))
                     {
 
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                        OutlinedTextFieldPersonalizado(
+                            modifier = Modifier.fillMaxWidth(),
                             value = segundoApellidoState.value,
                             onValueChange = { newText ->
                                 // Si el texto es menor a 50 caracteres, se almacena en newText
-                                if (newText.all{it.isLetter()} && newText.length <= 20)
+                                if (newText.all { it.isLetter() } && newText.length <= 20)
                                     segundoApellidoState.value = newText
                             },
-                            label = { Text("Segundo apellido", fontSize = 13.sp) },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedLabelColor = Color.Black,
-                                focusedBorderColor = Color.Black
-                            ),
-                            supportingText = {
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Spacer(modifier = Modifier.padding(0.dp))
-
-                                    Text(
-                                        text = "${segundoApellidoState.value.length}/20",
-                                        color = if (segundoApellidoState.value.length < 15) Color.LightGray else Color.Red,
-                                        modifier = Modifier
-                                    )
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions().copy(imeAction = ImeAction.Next)
+                            label = { Text("Segundo Apellido", fontSize = 13.sp) },
+                            supportingText = true,
+                            maximoCaracteres = 20,
+                            minimoCaracteres = 3,
                         )
 
                     }
@@ -496,8 +418,8 @@ fun CrearUsuario(navController: NavController)
                     Column(modifier = Modifier.weight(1F))
                     {
 
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                        OutlinedTextFieldPersonalizado(
+                            modifier = Modifier.fillMaxWidth(),
                             value = correoElectronicoState.value,
                             onValueChange = { newText ->
                                 // Si el texto no contiene espacios y es menor a 50 caracteres, se almacena en newText
@@ -505,27 +427,10 @@ fun CrearUsuario(navController: NavController)
                                     correoElectronicoState.value = newText
                             },
                             label = { Text("Correo electrónico", fontSize = 13.sp) },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedLabelColor = Color.Black,
-                                focusedBorderColor = Color.Black
-                            ),
-                            supportingText = {
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Spacer(modifier = Modifier.padding(0.dp))
-
-                                    Text(
-                                        text = "${correoElectronicoState.value.length}/255",
-                                        color = if (correoElectronicoState.value.length < 250) Color.LightGray else Color.Red,
-                                        modifier = Modifier
-                                    )
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions().copy(imeAction = ImeAction.Next)
+                            supportingText = true,
+                            email = true,
+                            maximoCaracteres = 255,
+                            minimoCaracteres = 3,
                         )
 
                     }
@@ -548,51 +453,25 @@ fun CrearUsuario(navController: NavController)
                         }
 
                     }
+
                     Spacer(modifier = Modifier.padding(5.dp))
                     Column(modifier = Modifier.weight(1F))
                     {
                         Text("Número", fontWeight = FontWeight.Bold)
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                        OutlinedTextFieldPersonalizado(
+                            modifier = Modifier
+                                .fillMaxWidth(),
                             value = numeroTelefonoState.value,
                             onValueChange = { number ->
 
                                 // Cuando se deja la entrada en blanco, colapsa el programa. Por eso puse esta excepcion...
-                                if(number.length <= 7)
-                                {
-                                    try {
-
-                                        numeroTelefonoState.value = number.replace(Regex("[^0-9]"), "")
-                                    } catch (e: Exception) {
-                                    } finally {
-                                        numeroTelefonoState.value = number
-                                    }
+                                if (number.all { it.isDigit() && !it.isWhitespace() } && number.length <= 7) {
+                                    numeroTelefonoState.value = number
                                 }
 
                             },
                             label = { Text("Número", fontSize = 13.sp) },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedLabelColor = Color.Black,
-                                focusedBorderColor = Color.Black
-                            ),
-                            supportingText = {
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Spacer(modifier = Modifier.padding(0.dp))
-
-                                    Text(
-                                        text = "${numeroTelefonoState.value.length}/7",
-                                        color = Color.LightGray,
-                                        modifier = Modifier
-                                    )
-                                }
-                            }
-                            , keyboardOptions = KeyboardOptions().copy(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Next)
-
+                            number = true,
                         )
 
                     }
@@ -615,6 +494,7 @@ fun CrearUsuario(navController: NavController)
                             Spinner(
                                 modifier = Modifier,
                                 itemList = nombreDepartamentoList,
+                                posicionInicial = 0,
                                 onItemSelected = {
 
                                     idDepartamento.value = nombreDepartamentoList.indexOf(it)
@@ -627,34 +507,16 @@ fun CrearUsuario(navController: NavController)
                         Column(modifier = Modifier.weight(1F))
                         {
                             Text("Sede", fontWeight = FontWeight.Bold)
-                            OutlinedTextField(
-                                readOnly = true,
-                                modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                            OutlinedTextFieldPersonalizado(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
                                 value = nombreSede.value,
-                                onValueChange = {},
-                                label = { Text("Sede", fontSize = 13.sp) },
-                                singleLine = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedLabelColor = Color.Black,
-                                    focusedBorderColor = Color.Black
-                                ),
-                                supportingText = {
+                                readOnly = true,
+                                singleLine = false,
+                                onValueChange = {
 
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Spacer(modifier = Modifier.padding(0.dp))
-
-                                        Text(
-                                            text = "${segundoNombreState.value.length}/7",
-                                            color = Color.LightGray,
-                                            modifier = Modifier
-                                        )
-                                    }
                                 },
-                                keyboardOptions = KeyboardOptions().copy(imeAction = ImeAction.Next)
-
+                                label = { Text("Sede", fontSize = 13.sp) }
                             )
 
                         }
@@ -668,6 +530,7 @@ fun CrearUsuario(navController: NavController)
                         Spacer(modifier = Modifier.padding(2.dp))
                         Spinner(
                             modifier = Modifier.fillMaxWidth(),
+                            posicionInicial = 0,
                             itemList = cargoEmpleadoList
                         ) {
                             idCargoEmpleadoState.value = cargoEmpleadoList.indexOf(it)
@@ -685,7 +548,8 @@ fun CrearUsuario(navController: NavController)
                             Text("Grupo de atención", fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.padding(2.dp))
                             Spinner(
-                                modifier = Modifier,
+                                modifier = Modifier.fillMaxWidth(),
+                                posicionInicial = 0,
                                 itemList = grupoAtencionList
                             ) {
                                 idGrupoAtencionState.value = grupoAtencionList.indexOf(it)
@@ -708,8 +572,8 @@ fun CrearUsuario(navController: NavController)
                     Column(modifier = Modifier.weight(1F))
                     {
                         Text("Nombre de usuario", fontWeight = FontWeight.Bold)
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                        OutlinedTextFieldPersonalizado(
+                            modifier = Modifier.fillMaxWidth(),
                             value = nombreUsuarioState.value,
                             onValueChange = { newText ->
                                 // Si el texto es menor a 50 caracteres, se almacena en newText
@@ -717,27 +581,9 @@ fun CrearUsuario(navController: NavController)
                                     nombreUsuarioState.value = newText
                             },
                             label = { Text("Nombre de usuario", fontSize = 13.sp) },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedLabelColor = Color.Black,
-                                focusedBorderColor = Color.Black
-                            ),
-                            supportingText = {
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Spacer(modifier = Modifier.padding(0.dp))
-
-                                    Text(
-                                        text = "${nombreUsuarioState.value.length}/20",
-                                        color = if (nombreUsuarioState.value.length < 15) Color.LightGray else Color.Red,
-                                        modifier = Modifier
-                                    )
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions().copy(imeAction = ImeAction.Next)
+                            supportingText = true,
+                            maximoCaracteres = 20,
+                            minimoCaracteres = 3,
                         )
 
                     }
@@ -747,58 +593,20 @@ fun CrearUsuario(navController: NavController)
                     Column(modifier = Modifier.weight(1F))
                     {
                         Text("Contraseña", fontWeight = FontWeight.Bold)
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                        OutlinedTextFieldPersonalizado(
+                            modifier = Modifier.fillMaxWidth(),
                             value = contrasenaState.value,
-                            onValueChange = { newText ->
-                                // Si el texto es menor a 50 caracteres, se almacena en newText
+                            password = true,
+                            onValueChange = {newText ->
+
                                 if (newText.all { !it.isWhitespace() } && newText.length <= 20)
                                     contrasenaState.value = newText
                             },
                             label = { Text("Contraseña", fontSize = 13.sp) },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedLabelColor = Color.Black,
-                                focusedBorderColor = Color.Black
-                            ),
-                            supportingText = {
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Spacer(modifier = Modifier.padding(0.dp))
-
-                                    Text(
-                                        text = "${contrasenaState.value.length}/20",
-                                        color = if (contrasenaState.value.length < 15) Color.LightGray else Color.Red,
-                                        modifier = Modifier
-                                    )
-                                }
-                            },
-                            trailingIcon = {
-                                val image = if (contrasenaVisibleState.value == true)
-                                {
-                                    R.drawable.visible_icono
-                                }else
-                                    R.drawable.no_visible_icono
-
-                                IconButton(onClick = {
-
-                                    if (contrasenaVisibleState.value)
-                                    {
-                                        contrasenaVisibleState.value = false
-                                    }else
-                                        contrasenaVisibleState.value = true
-
-                                }) {
-                                    Icon(painter = painterResource(image), contentDescription = "", modifier = Modifier.size(25.dp))
-                                }
-
-
-                            },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                            visualTransformation = if(contrasenaVisibleState.value) VisualTransformation.None else PasswordVisualTransformation()
+                            empezarMayusculas = false,
+                            supportingText = true,
+                            maximoCaracteres = 20,
+                            minimoCaracteres = 6,
                         )
 
                     }
@@ -808,58 +616,21 @@ fun CrearUsuario(navController: NavController)
                     Column(modifier = Modifier.weight(1F))
                     {
                         Text("Confirmar contraseña", fontWeight = FontWeight.Bold)
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                        OutlinedTextFieldPersonalizado(
+                            modifier = Modifier.fillMaxWidth(),
                             value = confirmarContrasenaState.value,
-                            onValueChange = { newText ->
-                                // Si el texto es menor a 50 caracteres, se almacena en newText
+                            password = true,
+                            onValueChange = {newText ->
+
                                 if (newText.all { !it.isWhitespace() } && newText.length <= 20)
                                     confirmarContrasenaState.value = newText
                             },
-                            label = { Text("Confirmar contraseña", fontSize = 13.sp) },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedLabelColor = Color.Black,
-                                focusedBorderColor = Color.Black
-                            ),
-                            supportingText = {
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Spacer(modifier = Modifier.padding(0.dp))
-
-                                    Text(
-                                        text = "${confirmarContrasenaState.value.length}/20",
-                                        color = if (confirmarContrasenaState.value.length < 15) Color.LightGray else Color.Red,
-                                        modifier = Modifier
-                                    )
-                                }
-                            },
-                            trailingIcon = {
-                                val image = if (contrasenaVisibleState.value == true)
-                                {
-                                    R.drawable.visible_icono
-                                }else
-                                    R.drawable.no_visible_icono
-
-                                IconButton(onClick = {
-
-                                    if (contrasenaVisibleState.value)
-                                    {
-                                        contrasenaVisibleState.value = false
-                                    }else
-                                        contrasenaVisibleState.value = true
-
-                                }) {
-                                    Icon(painter = painterResource(image), contentDescription = "", modifier = Modifier.size(25.dp))
-                                }
-
-
-                            },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                            visualTransformation = if(contrasenaVisibleState.value) VisualTransformation.None else PasswordVisualTransformation()
+                            label = { Text("Contraseña", fontSize = 13.sp) },
+                            empezarMayusculas = false,
+                            imeActionNext = false,
+                            supportingText = true,
+                            maximoCaracteres = 20,
+                            minimoCaracteres = 6,
                         )
 
                     }
@@ -867,27 +638,19 @@ fun CrearUsuario(navController: NavController)
 
                 Spacer(modifier = espacioSpacer)
 
-                Button(modifier = modeloButton,
-
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black
-                    ),
-                    shape = RectangleShape,
+                BotonCargaPersonalizado(
                     onClick = {
+                        {
 
-                        //Primero, se verifica que el nombre de usuario, la cedula y el correo electronico no este repetidos en la tabla
-                        ingresarbuttonState.value = true
-                        validaciones.value = true
+                            //Primero, se verifica que el nombre de usuario, la cedula y el correo electronico no esten repetidos en la tabla
+                            ingresarbuttonState.value = true
+                            validaciones.value = true
 
-                    }
-
-                )
-                {
-                    if (ingresarbuttonState.value)
-                    {
-                        iconoCarga(Modifier)
-                    }else
-                    Text(text = "CREAR USUARIO", color = Color.White)
+                        }
+                    },
+                    isLoading = ingresarbuttonState.value
+                ) {
+                    Text(text = "CREAR USUARIO", color = Color.White, fontFamily = montserratFamily)
                 }
                 Spacer(modifier = Modifier.padding(40.dp))
 
@@ -952,7 +715,7 @@ fun CrearUsuario(navController: NavController)
                 )
 
                 val telefonoEmpleado = TelefonoEmpleado(
-                    idCodigoExtensionTelefono = idCodigoOperadoraTelefonoState.value,
+                    idCodigoOperadoraTelefono = idCodigoOperadoraTelefonoState.value,
                     extension = numeroTelefonoState.value
                 )
 
@@ -1019,7 +782,7 @@ fun CrearUsuario(navController: NavController)
         scope.launch {
             validarDatosUnicosRepetidos(nombreUsuarioState.value, correoElectronicoState.value, cedulaState.value,
                 TelefonoEmpleado(
-                    idCodigoExtensionTelefono = idCodigoOperadoraTelefonoState.value,
+                    idCodigoOperadoraTelefono = idCodigoOperadoraTelefonoState.value,
                     extension = numeroTelefonoState.value
                 )) {
 
@@ -1071,11 +834,12 @@ fun CrearUsuario(navController: NavController)
 
 }
 
-suspend fun validarDatosUnicosRepetidos(nombreUsuario: String,
-                                correoElectronico: String,
-                                cedula: String,
-                                numeroTelefono: TelefonoEmpleado,
-                                repetido: (Int) -> Unit) {
+suspend fun validarDatosUnicosRepetidos(
+    nombreUsuario: String,
+    correoElectronico: String,
+    cedula: String,
+    numeroTelefono: TelefonoEmpleado,
+    repetido: (Int) -> Unit) {
 
     var repetido = 0
 
@@ -1118,7 +882,8 @@ suspend fun validarDatosUnicosRepetidos(nombreUsuario: String,
 fun CrearUsuarioPreview() {
 
     val navController = rememberNavController()
+    val context = LocalContext.current
     AVANTITIGestionDeIncidenciasTheme {
-        CrearUsuario(navController)
+        CrearUsuario(navController, context)
     }
 }

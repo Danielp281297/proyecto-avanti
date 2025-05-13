@@ -1,5 +1,6 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
+import android.content.Context
 import android.util.Log
 import android.widget.Space
 import android.widget.Toast
@@ -54,6 +55,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Accion
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
+import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.AccionRequest
 import com.example.avantitigestiondeincidencias.Supabase.TecnicoRequest
@@ -70,22 +72,26 @@ import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TicketDesplegadoAdministrador(navController: NavController, ticket: Ticket)
+fun TicketDesplegadoAdministrador(navController: NavController, context: Context, ticket: Ticket)
 {
-
-    val context = LocalContext.current
 
     val fuenteLetraTicketDesplegado = 15.sp
 
+    val prioridadTicket = listOf<String>("Seleccione --", "BAJA", "MEDIA", "ALTA", "URGENTE")
+
+    var prioridadState = remember {
+        mutableStateOf(ticket.idPrioridadTicket)
+    }
+
     var tecnicosListState = remember {
-        mutableStateOf(0)
+        mutableStateOf(ticket.idTecnico)
     }
 
     var tecnicosList = remember {
         mutableListOf<String>("-- Seleccione")
     }
 
-    var actualizarTicetState = remember{
+    var actualizarTicketState = remember{
         mutableStateOf(false)
     }
 
@@ -97,6 +103,12 @@ fun TicketDesplegadoAdministrador(navController: NavController, ticket: Ticket)
         mutableStateOf(false)
     }
 
+    var cargandoContenidoSpinners = remember{
+        mutableStateOf(true)
+    }
+
+    Network.networkCallback(navController, context)
+
     LaunchedEffect(Unit)
     {
         withContext(Dispatchers.IO)
@@ -107,6 +119,7 @@ fun TicketDesplegadoAdministrador(navController: NavController, ticket: Ticket)
 
                     tecnicosList.add("${item.empleado.primerNombre} ${item.empleado.primerApellido} - ${item.grupoAtencion.grupoAtencion}")
                     mostrarSpinnerState.value = true
+                    cargandoContenidoSpinners.value = false
 
                 }
 
@@ -114,20 +127,36 @@ fun TicketDesplegadoAdministrador(navController: NavController, ticket: Ticket)
         }
     }
 
-        ContenidoTicketDesplegado(navController, ticket) {
-
+    if(cargandoContenidoSpinners.value)
+    {
+        PantallaCarga()
+    }
+    else
+        ContenidoTicketDesplegado(navController, context, ticket) {
+            
             if (ticket.idEstadoTicket < 4) {
-                //if(mostrarSpinnerState.value) {
+                Column(modifier = Modifier)
+                {
+                    Text("PRIORIDAD")
+                    Spinner(modifier = Modifier.fillMaxWidth(),
+                        itemList = prioridadTicket,
+                        posicionInicial = prioridadState.value,
+                        onItemSelected = { option ->
+                            prioridadState.value = prioridadTicket.indexOf(option) + 1
+                        })
+                }
+                Spacer(modifier = Modifier.padding(5.dp))
+
                 Text("TÉCNICO : ", fontSize = fuenteLetraTicketDesplegado)
                 Spinner(
-                    modifier = Modifier,
+                    modifier = Modifier.fillMaxWidth(),
                     itemList = tecnicosList,
+                    posicionInicial = tecnicosListState.value,
                     onItemSelected = { option ->
 
                         tecnicosListState.value = tecnicosList.indexOf(option) + 1
 
                     })
-                //}
 
                 Spacer(modifier = Modifier.padding(15.dp))
                 Button(
@@ -140,16 +169,16 @@ fun TicketDesplegadoAdministrador(navController: NavController, ticket: Ticket)
                     onClick = {
 
                         // Si tecnicoListState es mayor a 1, se crea la consulta
-                        if (tecnicosListState.value > 1) {
+                        if ((tecnicosListState.value > 1) && (prioridadState.value > 0 && prioridadState.value < 6)) {
                             Log.d("RESULTADO", "ADMITIDO")
 
                             //Se regresa a la pantalla anterior
-                            actualizarTicetState.value = true
+                            actualizarTicketState.value = true
                             Toast.makeText(context, "Técnico encargado con éxito.", Toast.LENGTH_SHORT).show()
 
                         } else {
                             Log.e("RESULTADO", "NO ADMITIDO")
-                            Toast.makeText(context, "Por favor, indique el técnico encargado.", Toast.LENGTH_SHORT)
+                            Toast.makeText(context, "Por favor, complete los campos correspondientes.", Toast.LENGTH_SHORT)
                                 .show()
                         }
 
@@ -159,85 +188,46 @@ fun TicketDesplegadoAdministrador(navController: NavController, ticket: Ticket)
                     androidx.compose.material3.Text(text = "ASIGNAR TICKET", color = Color.White)
                 }
                 Spacer(modifier = Modifier.padding(5.dp))
-                Button(
-                    modifier = modeloButton,
 
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black
-                    ),
-                    shape = RectangleShape,
-                    onClick = {
 
-                        borrarTicketState.value = true
+                if(ticket.idEstadoTicket < 4) {
+                    Button(
+                        modifier = modeloButton,
 
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black
+                        ),
+                        shape = RectangleShape,
+                        onClick = {
+
+                            borrarTicketState.value = true
+
+                        }
+                    )
+                    {
+                        androidx.compose.material3.Text(text = "CANCELAR TICKET", color = Color.White)
                     }
-                )
-                {
-                    androidx.compose.material3.Text(text = "BORRAR TICKET", color = Color.White)
                 }
 
             }
-            else // En caso contrario, se muestra las acciones de la misma
-            {
-                val accion = remember {
-                    mutableStateOf<Accion>(Accion())
-                }
-                accionesTicket(ticket){
-                    accion.value = it
-                }
 
-                Text(text = "ACCIÓN EJECUTADA: ", fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado)
-                Text(
-                    text = "${accion.value.descripcionAccion.descripcion} \n",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado
-                )
-
-                Text(text = "FECHA Y HORA DE LA ACCIÓN: ", fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado)
-                Text(
-                    text = "${accion.value.fecha} - ${accion.value.hora}  \n",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado
-                )
-
-                Text(text = "TÉCNICO ENCARGADO: ", fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado)
-                Text(
-                    text = "${ticket.tecnico.empleado.primerNombre} ${ticket.tecnico.empleado.segundoNombre} ${ticket.tecnico.empleado.primerApellido} ${ticket.tecnico.empleado.segundoApellido}\n",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado
-                )
-
-                Text(text = "GRUPO DE ATENCIÓN : ", fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado)
-                Text(
-                    text = "${ticket.tecnico.grupoAtencion.grupoAtencion} \n",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado
-                )
-
-                Text(text = "OBSERVACIONES: ", fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado)
-                Text(
-                    text = "${ticket.observaciones} \n",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = com.example.avantitigestiondeincidencias.ui.screens.tecnico.fuenteLetraTicketDesplegado
-                )
-
-            }
     }
 
-    if (actualizarTicetState.value == true)
+    if (actualizarTicketState.value == true)
     {
+
 
         LaunchedEffect(Unit) {
 
             CoroutineScope(Dispatchers.IO).launch{
 
-                TicketRequests().updateTicketEnProcesoTecnicoEstadoById(ticket.id, tecnicosListState.value)
+                TicketRequests().updateTicketEnProcesoTecnicoEstadoById(ticket.id, prioridadState.value, tecnicosListState.value)
 
             }
 
             //Se devuelve a la pantalla anterior
             navController.popBackStack()
-            actualizarTicetState.value = false
+            actualizarTicketState.value = false
         }
 
     }
@@ -249,16 +239,20 @@ fun TicketDesplegadoAdministrador(navController: NavController, ticket: Ticket)
         val scope = rememberCoroutineScope()
         var borrarTicketBandera = remember { mutableStateOf(false) }
         AlertDialogPersonalizado(
-            titulo = "Borrar Ticket",
-            contenido = "¿Deseas borrar el ticket?",
-            onDismissRequest = {
-                borrarTicketState.value = false
-            },
+            titulo = "Cancelar Ticket",
+            contenido = "¿Deseas cancelar el ticket?",
+            onDismissRequest = { borrarTicketState.value = false },
             aceptarAccion = {
                 borrarTicketBandera.value = true
             },
             cancelarAccion = {
-                borrarTicketState.value = false
+
+                Text("CANCELAR", color = Color.Black, modifier = Modifier.clickable {
+
+                    borrarTicketState.value = false
+
+                })
+
             }
         )
 
@@ -267,11 +261,19 @@ fun TicketDesplegadoAdministrador(navController: NavController, ticket: Ticket)
             LaunchedEffect(Unit) {
 
                 scope.launch {
-                    TicketRequests().borrarTicket(ticket)
+                    TicketRequests().cancelarTicket(ticket){
+
+                        if(it != null)
+                        {
+                            Toast.makeText(context, "Ticket cancelado con éxito.", Toast.LENGTH_SHORT).show()
+                        }
+                        else
+                            Toast.makeText(context, "Error al cancelar el ticket. Intente de nuevo", Toast.LENGTH_SHORT).show()
+
+                    }
 
                 }
             }
-            Toast.makeText(context, "Ticket borrado con éxito.", Toast.LENGTH_SHORT).show()
             borrarTicketBandera.value = false
             borrarTicketState.value = false
             navController.popBackStack()
@@ -281,31 +283,16 @@ fun TicketDesplegadoAdministrador(navController: NavController, ticket: Ticket)
 
 }
 
-@Composable
-fun accionesTicket(ticket: Ticket, accion: (Accion) -> Unit)
-{
-
-    LaunchedEffect(Unit) {
-        CoroutineScope(Dispatchers.IO).launch {
-            AccionRequest().seleccionarAccionbyTicketId(ticket.id){
-
-                accion(it)
-
-            }
-        }
-    }
-
-}
-
 @Preview(showBackground = true)
 @Composable
 fun TicketDesplegadoAdministradorPreview() {
 
     val navController = rememberNavController()
+    val context = LocalContext.current
 
     AVANTITIGestionDeIncidenciasTheme {
 
-        TicketDesplegadoAdministrador(navController, Ticket())
+        TicketDesplegadoAdministrador(navController, context, Ticket())
 
     }
 }
