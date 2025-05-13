@@ -1,4 +1,4 @@
-package com.example.avantitigestiondeincidencias.ui.screens.tecnico
+package com.example.avantitigestiondeincidencias.ui.screens.administrador
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -8,13 +8,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -23,9 +18,7 @@ import androidx.compose.material3.NavigationBarItemColors
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -42,6 +35,8 @@ import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldConMenuLateral
+import com.example.avantitigestiondeincidencias.ui.screens.ticket.BusquedaTicket
+import com.example.avantitigestiondeincidencias.ui.screens.perfil.MenuLateralContenido
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -81,14 +76,14 @@ fun HorizontalPagerBottomBarAdministrador(
         titulo = "",
         containerColor =  containerColor,
         contenidoMenu = {
-        MenuLateralContenido(navController, context, administrador.empleado, perfil =  {
+            MenuLateralContenido(navController, context, administrador.empleado, perfil = {
 
-            // Se covierte el objeto en json para enviarlo a la pantalla
-            val json = Json { ignoreUnknownKeys = true }.encodeToString(administrador)
+                // Se covierte el objeto en json para enviarlo a la pantalla
+                val json = Json { ignoreUnknownKeys = true }.encodeToString(administrador)
 
-            navController.navigate("informacionPerfilTecnico" + "/${json}")
+                navController.navigate("informacionPerfilTecnico" + "/${json}")
 
-        }, manualUsuarioEvento = {})
+            }, manualUsuarioEvento = {})
     })
     {
         Scaffold(
@@ -133,10 +128,10 @@ fun HorizontalPagerBottomBarAdministrador(
                     when (page) {
                         0 -> InicioAdministrador(navController, containerColor)
                         1 -> BusquedaTicket(navController, context, administrador, clickAccion = { json ->
-                            
+
                             //LaunchedEffect(Unit) {
 
-                                //
+                            //
                             navController.navigate("ticketDesplegadoAdministrador" + "/${json}")
 
                             //}

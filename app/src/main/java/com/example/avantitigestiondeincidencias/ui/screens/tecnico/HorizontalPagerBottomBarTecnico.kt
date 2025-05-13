@@ -30,7 +30,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -39,7 +38,10 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.Network.Network
+import com.example.avantitigestiondeincidencias.ui.screens.administrador.NavItem
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldConMenuLateral
+import com.example.avantitigestiondeincidencias.ui.screens.perfil.MenuLateralContenido
+import com.example.avantitigestiondeincidencias.ui.screens.ticket.BusquedaTicket
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -79,14 +81,14 @@ fun HorizontalPagerBottomBarTecnico(
         titulo = "",
         containerColor = containerColor,
         contenidoMenu = {
-        MenuLateralContenido(navController, context, tecnico.empleado, perfil = {
+            MenuLateralContenido(navController, context, tecnico.empleado, perfil = {
 
-            // Se covierte el objeto en json para enviarlo a la pantalla
-            val json = Json { ignoreUnknownKeys = true }.encodeToString(tecnico)
+                // Se covierte el objeto en json para enviarlo a la pantalla
+                val json = Json { ignoreUnknownKeys = true }.encodeToString(tecnico)
 
-            navController.navigate("informacionPerfilTecnico" + "/${json}")
+                navController.navigate("informacionPerfilTecnico" + "/${json}")
 
-        }, manualUsuarioEvento =  {})
+            }, manualUsuarioEvento = {})
     })
     {
         Scaffold(

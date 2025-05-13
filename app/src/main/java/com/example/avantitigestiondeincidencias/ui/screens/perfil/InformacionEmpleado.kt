@@ -1,4 +1,4 @@
-package com.example.avantitigestiondeincidencias.ui.screens.tecnico
+package com.example.avantitigestiondeincidencias.ui.screens.perfil
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.avantitigestiondeincidencias.AVANTI.Empleado
+import com.example.avantitigestiondeincidencias.ui.screens.ticket.fuenteLetraTicketDesplegado
 import io.ktor.util.toUpperCasePreservingASCIIRules
 
 @Composable

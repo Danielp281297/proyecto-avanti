@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
-import com.example.avantitigestiondeincidencias.ui.screens.tecnico.iconoCarga
+import com.example.avantitigestiondeincidencias.ui.screens.usuario.iconoCarga
 
 @RequiresApi(Build.VERSION_CODES.P)
 @Composable

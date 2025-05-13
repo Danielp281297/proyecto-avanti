@@ -1,18 +1,12 @@
 package com.example.avantitigestiondeincidencias.ui.screens.tecnico
 
 import android.annotation.SuppressLint
-import android.app.DatePickerDialog
-import android.content.Context
 import android.os.Environment
 import android.util.Log
-import android.widget.DatePicker
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,26 +15,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -54,36 +39,26 @@ import com.example.avantitigestiondeincidencias.AVANTI.Accion
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.Notification.Notification
 import com.example.avantitigestiondeincidencias.Supabase.AccionRequest
-import com.example.avantitigestiondeincidencias.modeloButton
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
-import com.example.avantitigestiondeincidencias.ui.screens.componentes.shimmerEffect
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.apache.poi.ss.usermodel.BorderStyle
 import org.apache.poi.ss.usermodel.FillPatternType
 import org.apache.poi.ss.usermodel.HorizontalAlignment
 import org.apache.poi.ss.usermodel.IndexedColors
 import org.apache.poi.ss.usermodel.VerticalAlignment
-import org.apache.poi.ss.util.CellRangeAddress
-import org.apache.poi.xddf.usermodel.chart.ChartTypes
-import org.apache.poi.xddf.usermodel.chart.XDDFDataSourcesFactory
-import org.apache.poi.xssf.usermodel.XSSFChart
-import org.apache.poi.xssf.usermodel.XSSFDrawing
 import org.apache.poi.xssf.usermodel.XSSFSheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Calendar
 import java.time.LocalDate
-import java.util.Date
 
 val weightColumnas = 1F
 
@@ -289,24 +264,21 @@ fun InformeTecnico(
         var datePickerInput = ""
 
 
-        DatePicker(
+        com.example.avantitigestiondeincidencias.ui.screens.componentes.DatePicker(
             showDialog = showDatePickerState.value,
             containerColor = containerColor,
             ondismiss = { showDatePickerState.value = false },
             fecha = {
-            datePickerInput = it
+                datePickerInput = it
 
-            if(banderaState.value == 1)
-            {
-                fechaInicioState.value = datePickerInput
-            }
-            else if (banderaState.value == 2)
-            {
-                fechaFinalState.value = datePickerInput
-            }
+                if (banderaState.value == 1) {
+                    fechaInicioState.value = datePickerInput
+                } else if (banderaState.value == 2) {
+                    fechaFinalState.value = datePickerInput
+                }
 
-            showDatePickerState.value = false
-        })
+                showDatePickerState.value = false
+            })
 
     }
 

@@ -1,4 +1,4 @@
-package com.example.avantitigestiondeincidencias.ui.screens.tecnico
+package com.example.avantitigestiondeincidencias.ui.screens.administrador
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -58,6 +58,7 @@ import com.example.avantitigestiondeincidencias.ui.screens.componentes.OutlinedT
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.Spinner
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.TicketLoading
+import com.example.avantitigestiondeincidencias.ui.screens.ticket.fuenteLetraTicketDesplegado
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import kotlinx.coroutines.CoroutineScope

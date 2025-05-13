@@ -1,12 +1,10 @@
-package com.example.avantitigestiondeincidencias.ui.screens.tecnico
+package com.example.avantitigestiondeincidencias.ui.screens.administrador
 
 import java.time.Duration
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,14 +14,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
@@ -33,7 +26,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -50,9 +42,8 @@ import com.example.avantitigestiondeincidencias.Notification.Notification
 import com.example.avantitigestiondeincidencias.Supabase.AccionRequest
 import com.example.avantitigestiondeincidencias.Supabase.TecnicoRequest
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
-import com.example.avantitigestiondeincidencias.modeloButton
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonCargaPersonalizado
-import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonPersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.DatePicker
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ValoresPieChartsAdministrador
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.colorControlCambio
@@ -73,11 +64,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.apache.poi.xddf.usermodel.chart.ChartTypes
 import org.apache.poi.xddf.usermodel.chart.LegendPosition
-import org.apache.poi.xddf.usermodel.chart.XDDFChart
-import org.apache.poi.xddf.usermodel.chart.XDDFChartAxis
-import org.apache.poi.xddf.usermodel.chart.XDDFChartData
 import org.apache.poi.xddf.usermodel.chart.XDDFDataSourcesFactory
-import org.apache.poi.xddf.usermodel.chart.XDDFPieChartData
 import org.apache.poi.xssf.usermodel.XSSFDrawing
 import org.apache.poi.xssf.usermodel.XSSFSheet
 import java.time.LocalDateTime
@@ -431,19 +418,16 @@ fun IndicadoresAdministrador(
             containerColor = containerColor,
             ondismiss = { showDatePickerState.value = false },
             fecha = {
-            datePickerInput = it
+                datePickerInput = it
 
-            if(banderaState.value == 1)
-            {
-                fechaInicioState.value = datePickerInput
-            }
-            else if (banderaState.value == 2)
-            {
-                fechaFinalState.value = datePickerInput
-            }
+                if (banderaState.value == 1) {
+                    fechaInicioState.value = datePickerInput
+                } else if (banderaState.value == 2) {
+                    fechaFinalState.value = datePickerInput
+                }
 
-            showDatePickerState.value = false
-        })
+                showDatePickerState.value = false
+            })
 
     }
 
@@ -491,7 +475,7 @@ fun generarInformeIndicadores(
             i++
         }
 
-        generalInformeExcel(
+        _root_ide_package_.com.example.avantitigestiondeincidencias.ui.screens.tecnico.generalInformeExcel(
             acciones = acciones,
             fechaInicio = fechaInicio,
             fechaFin = fechaFin,
@@ -504,16 +488,16 @@ fun generarInformeIndicadores(
                     columnaComienzo = 2,
                     filaFin = cantidad + 15,
                     columnaFin = 5,
-                    tituloPieChart = "Tickets resueltos \n Desde $fechaInicio " + if(fechaFin.isNotEmpty()) " hasta $fechaFin" else "",
+                    tituloPieChart = "Tickets resueltos \n Desde $fechaInicio " + if (fechaFin.isNotEmpty()) " hasta $fechaFin" else "",
                     categorias = nombresTecnicosYTickets.toTypedArray(),
                     valores = numeroTicketsPorTecnico.toTypedArray()
                 )
 
                 val tipoTicktes = listOf(
-                    acciones.count{ it.ticket.tipo.id == 1},
-                    acciones.count{ it.ticket.tipo.id == 2},
-                    acciones.count{ it.ticket.tipo.id == 3},
-                    acciones.count{ it.ticket.tipo.id == 4},
+                    acciones.count { it.ticket.tipo.id == 1 },
+                    acciones.count { it.ticket.tipo.id == 2 },
+                    acciones.count { it.ticket.tipo.id == 3 },
+                    acciones.count { it.ticket.tipo.id == 4 },
                 )
 
                 generarPieChart(
@@ -522,8 +506,13 @@ fun generarInformeIndicadores(
                     columnaComienzo = 6,
                     filaFin = cantidad + 15,
                     columnaFin = 9,
-                    tituloPieChart = "Tickets por tipo \n Desde $fechaInicio " + if(fechaFin.isNotEmpty()) " hasta $fechaFin" else "",
-                    categorias = arrayOf("Incidencia:\n ${tipoTicktes[0]} tickets", "Solicitud:\n ${tipoTicktes[1]} tickets", "Mantenimiento:\n ${tipoTicktes[2]} tickets", "Control de cambio:\n ${tipoTicktes[3]} tickets"),
+                    tituloPieChart = "Tickets por tipo \n Desde $fechaInicio " + if (fechaFin.isNotEmpty()) " hasta $fechaFin" else "",
+                    categorias = arrayOf(
+                        "Incidencia:\n ${tipoTicktes[0]} tickets",
+                        "Solicitud:\n ${tipoTicktes[1]} tickets",
+                        "Mantenimiento:\n ${tipoTicktes[2]} tickets",
+                        "Control de cambio:\n ${tipoTicktes[3]} tickets"
+                    ),
                     valores = tipoTicktes.toTypedArray()
                 )
 

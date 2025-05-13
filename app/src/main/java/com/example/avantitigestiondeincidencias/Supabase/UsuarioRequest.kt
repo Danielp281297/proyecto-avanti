@@ -9,11 +9,8 @@ import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.TelefonoEmpleado
 import com.example.avantitigestiondeincidencias.AVANTI.Usuario
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.SHA512
-import com.example.avantitigestiondeincidencias.ui.screens.tecnico.Login
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
-import io.github.jan.supabase.postgrest.query.Order
-import io.ktor.sse.COLON
 
 class UsuarioRequest(): SupabaseClient() {
 

@@ -1,4 +1,4 @@
-package com.example.avantitigestiondeincidencias.ui.screens.tecnico
+package com.example.avantitigestiondeincidencias.ui.screens.ticket
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -35,9 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -47,8 +45,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
-import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.DatePicker
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.LoadingShimmerEffectScreen
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.TicketLoading
@@ -240,19 +238,16 @@ fun BusquedaTicket(
             containerColor = containerColor,
             ondismiss = { showDatePickerState.value = false },
             fecha = {
-            datePickerInput = it
+                datePickerInput = it
 
-            if(banderaState.value == 1)
-            {
-                fechaInicioState.value = datePickerInput
-            }
-            else if (banderaState.value == 2)
-            {
-                fechaFinalState.value = datePickerInput
-            }
+                if (banderaState.value == 1) {
+                    fechaInicioState.value = datePickerInput
+                } else if (banderaState.value == 2) {
+                    fechaFinalState.value = datePickerInput
+                }
 
-            showDatePickerState.value = false
-        })
+                showDatePickerState.value = false
+            })
 
     }
 
@@ -368,7 +363,7 @@ fun TicketDesplegadoBusqueda(navController: NavController, context: Context, tic
 {
     ContenidoTicketDesplegado(navController, context, ticket)
     {
-        
+
     }
 }
 

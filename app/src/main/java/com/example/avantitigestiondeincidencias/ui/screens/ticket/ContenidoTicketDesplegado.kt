@@ -1,4 +1,4 @@
-package com.example.avantitigestiondeincidencias.ui.screens.tecnico
+package com.example.avantitigestiondeincidencias.ui.screens.ticket
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -47,6 +47,7 @@ import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.AccionRequest
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDialogPersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.PantallaCarga
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import kotlinx.coroutines.CoroutineScope

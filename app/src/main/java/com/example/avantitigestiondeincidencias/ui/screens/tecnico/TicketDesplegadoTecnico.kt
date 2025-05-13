@@ -5,43 +5,22 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,20 +31,16 @@ import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.AccionRequest
-import com.example.avantitigestiondeincidencias.Supabase.TecnicoRequest
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
-import com.example.avantitigestiondeincidencias.modeloButton
+import com.example.avantitigestiondeincidencias.ui.screens.PantallaCarga
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.AutocompleteTextField
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonCargaPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.OutlinedTextFieldPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
-import com.example.avantitigestiondeincidencias.ui.screens.componentes.Spinner
+import com.example.avantitigestiondeincidencias.ui.screens.ticket.ContenidoTicketDesplegado
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "SuspiciousIndentation")
@@ -141,7 +116,7 @@ fun TicketDesplegadoTecnico(
                 context = context,
                 ticket = ticket,
 
-            ) {
+                ) {
 
                 Text("ACCIÓN EJECUTADA: ", fontSize = fuenteLetraTicketDesplegado)
                 AutocompleteTextField(
@@ -157,7 +132,7 @@ fun TicketDesplegadoTecnico(
                 OutlinedTextFieldPersonalizado(
                     modifier = Modifier.fillMaxWidth(),
                     value = observacionesState.value,
-                    onValueChange = {newText ->
+                    onValueChange = { newText ->
                         // Si el texto es menor a 50 caracteres, se almacena en newText
                         if (newText.length <= 100)
                             observacionesState.value = newText
@@ -174,18 +149,17 @@ fun TicketDesplegadoTecnico(
                         ingresarbuttonState.value = true
 
                         // Si la accion ejecutada o la descripcion no estan vacios, se crea la accion y se actualiza el ticket en la base de datos
-                        if (descripcionAccionState.value.isNotEmpty() && observacionesState.value.isNotEmpty())
-                        {
+                        if (descripcionAccionState.value.isNotEmpty() && observacionesState.value.isNotEmpty()) {
                             Log.d("RESULTADO", "ADMITIDO")
 
                             //Se regresa a la pantalla anterior
                             cancelarTicketState.value = true
 
 
-                        }
-                        else {
+                        } else {
                             Log.e("RESULTADO", "NO ADMITIDO")
-                            Toast.makeText(context, "Por favor, llene los campos correspondientes.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Por favor, llene los campos correspondientes.", Toast.LENGTH_SHORT)
+                                .show()
                             ingresarbuttonState.value = false
                         }
                     },

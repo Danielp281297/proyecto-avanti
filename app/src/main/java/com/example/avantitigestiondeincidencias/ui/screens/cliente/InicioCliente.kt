@@ -1,4 +1,4 @@
-package com.example.avantitigestiondeincidencias.ui.screens.tecnico
+package com.example.avantitigestiondeincidencias.ui.screens.cliente
 
 import android.content.Context
 import android.util.Log
@@ -63,6 +63,8 @@ import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDial
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.LoadingShimmerEffectScreen
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldConMenuLateral
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.TicketLoading
+import com.example.avantitigestiondeincidencias.ui.screens.ticket.ContenidoTicketDesplegado
+import com.example.avantitigestiondeincidencias.ui.screens.perfil.MenuLateralContenido
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -357,32 +359,12 @@ fun TicketDesplegadoCliente(navController: NavController, ticket:Ticket)
         mutableStateOf(false)
     }
 
-        ContenidoTicketDesplegado(navController, context, ticket) {
+    ContenidoTicketDesplegado(navController, context, ticket) {
 
-            if (ticket.idEstadoTicket >= 4)
-            {
+        if (ticket.idEstadoTicket >= 4) {
 
-                if (ticket.idEstadoTicket == 4) {
+            if (ticket.idEstadoTicket == 4) {
 
-                    Button(
-                        modifier = modeloButton,
-
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Black
-                        ),
-                        shape = RectangleShape,
-                        onClick = {
-
-                            cerrarTicketState.value = true
-
-                        }
-                    )
-                    {
-                        Text(text = "CERRAR TICKET", color = Color.White)
-                    }
-                }
-
-            } else if(ticket.idEstadoTicket < 3) {
                 Button(
                     modifier = modeloButton,
 
@@ -392,16 +374,35 @@ fun TicketDesplegadoCliente(navController: NavController, ticket:Ticket)
                     shape = RectangleShape,
                     onClick = {
 
-                        cancelarTicketState.value = true
+                        cerrarTicketState.value = true
 
                     }
                 )
                 {
-                    Text(text = "CANCELAR TICKET", color = Color.White)
+                    Text(text = "CERRAR TICKET", color = Color.White)
                 }
             }
 
+        } else if (ticket.idEstadoTicket < 3) {
+            Button(
+                modifier = modeloButton,
+
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Black
+                ),
+                shape = RectangleShape,
+                onClick = {
+
+                    cancelarTicketState.value = true
+
+                }
+            )
+            {
+                Text(text = "CANCELAR TICKET", color = Color.White)
+            }
         }
+
+    }
 
     if (cerrarTicketState.value){
 

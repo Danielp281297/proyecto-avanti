@@ -1,25 +1,17 @@
 package com.example.avantitigestiondeincidencias.Supabase
 
 import android.util.Log
-import androidx.compose.foundation.layout.Column
 import com.example.avantitigestiondeincidencias.AVANTI.CargoEmpleado
 import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
 import com.example.avantitigestiondeincidencias.AVANTI.Departamento
 import com.example.avantitigestiondeincidencias.AVANTI.Empleado
 import com.example.avantitigestiondeincidencias.AVANTI.GrupoAtencion
-import com.example.avantitigestiondeincidencias.AVANTI.Sede
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Usuario
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.SHA512
-import com.example.avantitigestiondeincidencias.ui.screens.tecnico.Login
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
-import io.github.jan.supabase.postgrest.query.filter.FilterOperator
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 class EmpleadoRequest(): SupabaseClient() {
 
