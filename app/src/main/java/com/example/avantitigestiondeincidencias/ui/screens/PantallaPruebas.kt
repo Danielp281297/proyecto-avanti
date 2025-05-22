@@ -32,7 +32,6 @@ import kotlinx.serialization.json.Json
 fun PantallaPruebas(navController: NavController)
 {
 
-
     var tecnico = remember {
         mutableStateOf<Tecnico>(Tecnico())
     }
@@ -54,11 +53,6 @@ fun PantallaPruebas(navController: NavController)
     var empleado = remember {
         mutableStateOf<Empleado>(Empleado())
     }
-
-    var pantallaCargaState = remember {
-        mutableStateOf(false)
-    }
-
 
     LaunchedEffect(Unit)
     {

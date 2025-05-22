@@ -1,11 +1,9 @@
 package com.example.avantitigestiondeincidencias.Supabase
 
-import android.util.Log
+import com.example.avantitigestiondeincidencias.AVANTI.GrupoAtencion
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
-import io.github.jan.supabase.postgrest.query.Order
-import kotlinx.coroutines.delay
 
 
 class TecnicoRequest: SupabaseClient() {
@@ -48,5 +46,22 @@ class TecnicoRequest: SupabaseClient() {
 
     }
 
+    suspend fun seleccionarGrupoAtencion(): List<GrupoAtencion> {
+
+        return getSupabaseClient().from("grupo_atención").select().decodeList<GrupoAtencion>()
+
+    }
+
+    suspend fun seleccionarTecnicoByGrupoEmpleado(idGrupoAtencion: Int, resultado: (List<Tecnico>) -> Unit)
+    {
+        val resultado = getSupabaseClient().from("técnico").select(columnasSpinnerTecnicos){
+            filter {
+                eq(column = "id_grupo_atención", idGrupoAtencion)
+            }
+        }.decodeList<Tecnico>()
+
+        resultado(resultado)
+
+    }
 
 }

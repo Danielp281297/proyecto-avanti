@@ -88,7 +88,11 @@ fun HorizontalPagerBottomBarTecnico(
 
                 navController.navigate("informacionPerfilTecnico" + "/${json}")
 
-            }, manualUsuarioEvento = {})
+            }, manualUsuarioEvento = {
+
+                navController.navigate("ManualTécnico")
+
+            })
     })
     {
         Scaffold(

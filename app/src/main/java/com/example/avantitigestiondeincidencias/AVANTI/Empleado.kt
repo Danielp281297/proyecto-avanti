@@ -17,6 +17,8 @@ data class Empleado(
     val primerApellido: String = " ",
     @SerialName("segundo_apellido_empleado")
     val segundoApellido: String = " ",
+    @SerialName("nacionalidad_empleado")
+    val nacionalidad: Char = ' ',
     @SerialName("correo_electrónico_empleado")
     val correoElectronico: String = " ",
     @SerialName("id_teléfono_empleado")

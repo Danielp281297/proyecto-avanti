@@ -20,7 +20,7 @@ fun informacionPersonalEmpleado(empleado: Empleado)
 
         Text(text = "CÉDULA: ", fontSize = fuenteLetraTicketDesplegado)
         Text(
-            text = "${empleado.cedula}",
+            text = "${empleado.nacionalidad} ${empleado.cedula}",
             fontWeight = FontWeight.Bold,
             fontSize = fuenteLetraTicketDesplegado
         )

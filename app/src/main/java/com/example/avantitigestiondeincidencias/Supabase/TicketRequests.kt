@@ -55,6 +55,7 @@ class TicketRequests(): SupabaseClient() {
                     segundo_nombre_empleado,
                     primer_apellido_empleado,
                     segundo_apellido_empleado,
+                    nacionalidad_empleado,
                     correo_electrónico_empleado,
                     teléfono_empleado(
                         extensión_teléfono,

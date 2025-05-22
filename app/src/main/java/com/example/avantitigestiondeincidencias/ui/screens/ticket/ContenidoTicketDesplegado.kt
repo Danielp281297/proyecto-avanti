@@ -32,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -206,6 +207,20 @@ fun ContenidoTicketDesplegado(navController: NavController, context: Context, ti
                     fontWeight = FontWeight.Bold,
                     fontSize = fuenteLetraTicketDesplegado
                 )
+
+                Text(text = "TÉCNICO ENCARGADO: ", fontSize = fuenteLetraTicketDesplegado)
+                Text(
+                    text = "${ticket.tecnico.empleado.primerNombre} ${ticket.tecnico.empleado.segundoNombre} ${ticket.tecnico.empleado.primerApellido} ${ticket.tecnico.empleado.segundoApellido}\n",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = fuenteLetraTicketDesplegado
+                )
+
+                Text(text = "GRUPO DE ATENCIÓN : ", fontSize = fuenteLetraTicketDesplegado)
+                Text(
+                    text = "${ticket.tecnico.grupoAtencion.grupoAtencion} \n",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = fuenteLetraTicketDesplegado
+                )
             }
 
             //Si el ticket esta cerrado, se muestran los datos de la accion
@@ -222,20 +237,6 @@ fun ContenidoTicketDesplegado(navController: NavController, context: Context, ti
                 Text(text = "FECHA Y HORA DE LA ACCIÓN: ", fontSize = fuenteLetraTicketDesplegado)
                 Text(
                     text = "${accion.value!!.fecha} - ${accion.value!!.hora}  \n",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = fuenteLetraTicketDesplegado
-                )
-
-                Text(text = "TÉCNICO ENCARGADO: ", fontSize = fuenteLetraTicketDesplegado)
-                Text(
-                    text = "${ticket.tecnico.empleado.primerNombre} ${ticket.tecnico.empleado.segundoNombre} ${ticket.tecnico.empleado.primerApellido} ${ticket.tecnico.empleado.segundoApellido}\n",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = fuenteLetraTicketDesplegado
-                )
-
-                Text(text = "GRUPO DE ATENCIÓN : ", fontSize = fuenteLetraTicketDesplegado)
-                Text(
-                    text = "${ticket.tecnico.grupoAtencion.grupoAtencion} \n",
                     fontWeight = FontWeight.Bold,
                     fontSize = fuenteLetraTicketDesplegado
                 )

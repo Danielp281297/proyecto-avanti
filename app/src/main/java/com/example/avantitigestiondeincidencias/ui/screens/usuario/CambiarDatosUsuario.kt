@@ -1,4 +1,4 @@
-package com.example.avantitigestiondeincidencias.ui.screens.perfil
+package com.example.avantitigestiondeincidencias.ui.screens.usuario
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -73,6 +73,10 @@ fun CambiarDatosUsuario(navController: NavController,
 
     val image = R.drawable.editar_usuario_icon
 
+    val nacionalidadList = remember {
+        mutableListOf('V', 'E')
+    }
+
     var codigoExtensionTelefonoList = remember{
         mutableListOf<String>("-- Seleccione")
     }
@@ -93,6 +97,9 @@ fun CambiarDatosUsuario(navController: NavController,
         mutableListOf<String>("-- Seleccione")
     }
 
+    var nacionalidad = remember{
+        mutableStateOf(empleado.nacionalidad)
+    }
 
     var idCodigoOperadoraTelefonoState = remember {
         mutableStateOf(0)
@@ -148,10 +155,6 @@ fun CambiarDatosUsuario(navController: NavController,
 
     var actualizarUsuarioState = remember{
         mutableStateOf(false)
-    }
-
-    val focusRequester = remember{
-        FocusRequester()
     }
 
     val verticalScrollState = rememberScrollState()
@@ -277,6 +280,21 @@ fun CambiarDatosUsuario(navController: NavController,
             Row(modifier = Modifier)
             {
 
+                Column(modifier = Modifier.weight(1F)) {
+
+                    Text("Nacionalidad", fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.padding(2.dp))
+                    Spinner(
+                        modifier = Modifier,
+                        itemList = nacionalidadList.map { it.toString() },
+                        posicionInicial = nacionalidadList.indexOf(nacionalidad.value),
+                        onItemSelected = {
+                            nacionalidad.value = it[0]
+                        }
+                    )
+
+                }
+                Spacer(modifier = Modifier.padding(5.dp))
                 Column(modifier = Modifier.weight(1F))
                 {
                     Text("Cédula", fontWeight = FontWeight.Bold)
@@ -600,7 +618,8 @@ fun CambiarDatosUsuario(navController: NavController,
 
         // Se crea el objeto
         val usuarioEmpleado = Usuario(
-            nombre = nombreUsuarioState.value
+            nombre = nombreUsuarioState.value,
+            habilitado = true
         )
 
         val telefonoEmpleado = TelefonoEmpleado(
@@ -616,6 +635,7 @@ fun CambiarDatosUsuario(navController: NavController,
             segundoNombre = segundoNombreState.value,
             primerApellido = primerApellidoState.value,
             segundoApellido = segundoApellidoState.value,
+            nacionalidad = nacionalidad.value,
             correoElectronico = correoElectronicoState.value.toLowerCasePreservingASCIIRules(),  //Se convierte la cadena de texto en minusculas
             telefonoEmpleado = telefonoEmpleado,
             usuario = usuarioEmpleado,

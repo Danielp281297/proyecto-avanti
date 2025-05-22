@@ -24,6 +24,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 
 @Composable
 fun AutocompleteTextField(
@@ -47,6 +48,7 @@ fun AutocompleteTextField(
         FocusRequester()
     }
 
+    val view = LocalView.current
 
     Column(modifier = modifier) {
 
@@ -77,7 +79,11 @@ fun AutocompleteTextField(
                 items(filteredSuggestions.size) { suggestion ->
                     Text(
                         text = filteredSuggestions[suggestion],
-                        modifier = Modifier.focusRequester(focusRequester)
+                        fontFamily = montserratFamily,
+                        modifier = Modifier.focusRequester(focusRequester).clickable{
+                            focusRequester.requestFocus()
+                            //view.requestFocus(100)
+                        }
                             .padding(4.dp)
                             .clickable {
                                 textState.value = TextFieldValue(filteredSuggestions[suggestion])
@@ -93,5 +99,7 @@ fun AutocompleteTextField(
 
 
     }
+
+
 
 }

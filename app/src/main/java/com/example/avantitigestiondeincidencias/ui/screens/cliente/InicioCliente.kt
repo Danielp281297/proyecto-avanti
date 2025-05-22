@@ -3,6 +3,7 @@ package com.example.avantitigestiondeincidencias.ui.screens.cliente
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -54,10 +55,12 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
+import com.example.avantitigestiondeincidencias.AVANTI.Usuario
 import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.Notification.Notification
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
+import com.example.avantitigestiondeincidencias.Supabase.UsuarioRequest
 import com.example.avantitigestiondeincidencias.modeloButton
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDialogPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.LoadingShimmerEffectScreen
@@ -65,6 +68,8 @@ import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldC
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.TicketLoading
 import com.example.avantitigestiondeincidencias.ui.screens.ticket.ContenidoTicketDesplegado
 import com.example.avantitigestiondeincidencias.ui.screens.perfil.MenuLateralContenido
+import com.example.avantitigestiondeincidencias.ui.screens.usuario.usuarioDeshabilitado
+import com.example.avantitigestiondeincidencias.ui.screens.usuario.validarUsuarioInhabilitado
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -103,6 +108,10 @@ fun InicioCliente(
 
     Network.networkCallback(navController, context)
 
+    // Se compureba que el usuario no fue inhabilitado
+    usuarioDeshabilitado(navController, clienteInterno.empleado.usuario)
+
+
     TiempoHabilitarClienteInterno(containerColor)
     {
 
@@ -127,7 +136,7 @@ fun InicioCliente(
                         navController.navigate("informacionPerfilCliente" + "/${json}")
                     },
                     manualUsuarioEvento = {
-
+                        navController.navigate("ManualClienteInterno")
                     },
                 )
         }, fondoPantalla =  {
@@ -231,6 +240,8 @@ fun InicioCliente(
 
     }
 
+    validarUsuarioInhabilitado(navController, clienteInterno.empleado.usuario)
+
     // Se muestra los datos actualizados cuando la tabla ticket sufre algun cambio
     LaunchedEffect(Unit)
     {
@@ -277,7 +288,7 @@ fun ticketsEstadosNotificaciones(context: Context, ticket: Ticket)
     {
 
         Notification().mostrarNotificacion(context, "${ticket.tipo.tipoTicket} - ${ticket.descripcion}"
-            , "Su ${ticket.tipo.tipoTicket} fue resuelta por ${ticket.tecnico.empleado.primerNombre} ${ticket.tecnico.empleado.primerApellido}. Por favor, cierre el ticket para terminar con la gestión.")
+            , "Su ${ticket.tipo.tipoTicket} fue resuelta por ${ticket.tecnico.empleado.primerNombre} ${ticket.tecnico.empleado.primerApellido}. Cierre el ticket para terminar la gestión.")
 
     }
 }
@@ -533,7 +544,7 @@ fun TicketDesplegadoCliente(navController: NavController, ticket:Ticket)
             aceptarAccion = { cancelarTicketBandera.value = true },
             cancelarAccion = {
 
-                Text("Cancelar", color = Color.Black, modifier = Modifier.clickable {
+                Text("CANCELAR", color = Color.Black, modifier = Modifier.clickable {
 
                     cancelarTicketState.value = false
 
@@ -574,7 +585,7 @@ fun TiempoHabilitarClienteInterno(
 
     val horaPeriodoInicio = LocalTime.of(8, 0)
     val horaPeriodoFin = LocalTime.of(17, 30)
-
+/*
     LaunchedEffect(Unit) {
         CoroutineScope(Dispatchers.IO).launch {
 
@@ -611,9 +622,9 @@ fun TiempoHabilitarClienteInterno(
 
     }
     else
-    {
+    {*/
         casoContrario()
-    }
+    //}
 
 }
 

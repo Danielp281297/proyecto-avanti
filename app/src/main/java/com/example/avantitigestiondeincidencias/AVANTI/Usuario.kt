@@ -13,6 +13,8 @@ data class Usuario(
     var password: String = " ",
     @SerialName("id_tipo_usuario")
     val idTipoUsuario: Int = 0,
+    @SerialName("usuario_habilitado")
+    val habilitado: Boolean = true,
     @SerialName("tipo_usuario")
     val tipoUsuario: TipoUsuario = TipoUsuario()
 )

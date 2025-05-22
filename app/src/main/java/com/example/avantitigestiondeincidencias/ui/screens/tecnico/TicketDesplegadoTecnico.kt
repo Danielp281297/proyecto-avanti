@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -53,9 +54,7 @@ fun TicketDesplegadoTecnico(
     containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919))
 {
 
-    val image = R.drawable.ticket_solid
 
-    val scrollState = rememberScrollState()
 
     val focusRequester = remember{
         FocusRequester()
@@ -124,7 +123,9 @@ fun TicketDesplegadoTecnico(
                     label = "Indique aqui",
                     suggestions = descripcionAccionList.map { it.descripcion },
                     onClearResults = {},
-                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                    modifier = Modifier.focusRequester(focusRequester).fillMaxWidth().clickable{
+                        focusRequester.requestFocus()
+                    },
                 ) { descripcionAccionState.value = it.text }
 
                 Spacer(modifier = Modifier.padding(15.dp))
@@ -171,13 +172,6 @@ fun TicketDesplegadoTecnico(
 
             }
             Spacer(modifier = Modifier.padding(30.dp))
-
-        val view = LocalView.current
-
-        LaunchedEffect(Unit) {
-            focusRequester.requestFocus()
-            view.bringToFront()
-        }
 
     }
 

@@ -51,6 +51,9 @@ dependencies {
     implementation ("androidx.compose.foundation:foundation:1.7.6")
     implementation ("com.google.accompanist:accompanist-pager-indicators:0.30.1")
 
+    // ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0")
+
     // APACHE POI para el excel
     implementation ("org.apache.poi:poi:5.4.0")
     implementation ("org.apache.poi:poi-ooxml:5.4.0")

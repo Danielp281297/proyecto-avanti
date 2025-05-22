@@ -19,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -33,20 +34,23 @@ import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.AVANTI.Usuario
 import com.example.avantitigestiondeincidencias.Supabase.UsuarioRequest
+import com.example.avantitigestiondeincidencias.ui.screens.PantallaPruebas
 import com.example.avantitigestiondeincidencias.ui.screens.PedirPermiso
 import com.example.avantitigestiondeincidencias.ui.screens.perfil.CambiarContrasena
-import com.example.avantitigestiondeincidencias.ui.screens.perfil.CambiarDatosUsuario
+import com.example.avantitigestiondeincidencias.ui.screens.usuario.CambiarDatosUsuario
 import com.example.avantitigestiondeincidencias.ui.screens.administrador.CrearUsuario
 import com.example.avantitigestiondeincidencias.ui.screens.administrador.HorizontalPagerBottomBarAdministrador
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.HorizontalPagerBottomBarTecnico
 import com.example.avantitigestiondeincidencias.ui.screens.cliente.InicioCliente
 import com.example.avantitigestiondeincidencias.ui.screens.usuario.Login
-import com.example.avantitigestiondeincidencias.ui.screens.PantallaPruebas
 import com.example.avantitigestiondeincidencias.ui.screens.perfil.PerfilClienteInterno
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.PerfilTecnico
 import com.example.avantitigestiondeincidencias.ui.screens.administrador.TicketDesplegadoAdministrador
 import com.example.avantitigestiondeincidencias.ui.screens.ticket.TicketDesplegadoBusqueda
 import com.example.avantitigestiondeincidencias.ui.screens.cliente.TicketDesplegadoCliente
+import com.example.avantitigestiondeincidencias.ui.screens.manuales.Administrador.ManualAdministrador
+import com.example.avantitigestiondeincidencias.ui.screens.manuales.ClienteInterno.ManualClienteInterno
+import com.example.avantitigestiondeincidencias.ui.screens.manuales.Tecnico.ManualTecnico
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.TicketDesplegadoTecnico
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import kotlinx.coroutines.CoroutineScope
@@ -94,7 +98,7 @@ fun destination(context: Context)
 
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = "pantallaPruebas")//"pantallaPruebas")
+    NavHost(navController = navController, startDestination = "pantallaPruebas")
     {
 
 
@@ -128,10 +132,12 @@ fun destination(context: Context)
             //InicioCliente(navController)
             //nuevoTicketFormulario(3) { }
             //HorizontalPagerBottomBarAdministrador(Empleado(), navController = navController)
-            //TicketDesplegadoAdministrador(navController, Ticket())
+            //TicketDesplegadoAdministrador(navController, context, Ticket())
             //TicketDesplegadoTecnico(navController, Ticket())
             //CambiarContrasena(navController, Usuario())
-            //ManualClienteInterno()
+            //ManualClienteInterno(Color.Black)
+            //ManualAdministrador(Color.Black)
+            //ManualTecnico(Color.Black)
 
         }
 
@@ -334,6 +340,21 @@ fun destination(context: Context)
             }
 
             //Pantalla para los manuales
+            composable(route = "ManualClienteInterno") {
+
+                ManualClienteInterno()
+
+            }
+            composable(route = "ManualTécnico") {
+
+                ManualTecnico()
+
+            }
+            composable(route = "ManualAdministrador") {
+
+                ManualAdministrador()
+
+            }
 
     }
 

@@ -19,16 +19,12 @@ class EmpleadoRequest(): SupabaseClient() {
         
         id_usuario,
         nombre_usuario,
-        id_tipo_usuario
+        id_tipo_usuario,
+        usuario_habilitado
             
     """.trimIndent())
 
-    val columnasTecnico = Columns.raw("""
-        id_técnico,
-        grupo_atención(
-            id_grupo_atención,
-            nombre_grupo_atención
-        ),
+    private val columnaEmpleado = Columns.raw("""
         empleado!inner (
             id_empleado,
             cédula_empleado,
@@ -37,6 +33,7 @@ class EmpleadoRequest(): SupabaseClient() {
             primer_apellido_empleado,
             segundo_apellido_empleado,
             correo_electrónico_empleado,
+            nacionalidad_empleado,
             id_usuario,
             id_teléfono_empleado,
             id_departamento,
@@ -60,42 +57,20 @@ class EmpleadoRequest(): SupabaseClient() {
                 tipo_cargo_empleado
             )
         )
-            
+    """.trimIndent())
+
+    val columnasTecnico = Columns.raw("""
+        id_técnico,
+        grupo_atención(
+            id_grupo_atención,
+            nombre_grupo_atención
+        ), 
+        ${columnaEmpleado.value}
         """.trimIndent())
 
     val columnasClienteInterno = Columns.raw("""
         id_cliente_interno,
-        empleado!inner (
-            id_empleado,
-            cédula_empleado,
-            primer_nombre_empleado,
-            segundo_nombre_empleado,
-            primer_apellido_empleado,
-            segundo_apellido_empleado,
-            correo_electrónico_empleado,
-            id_usuario,
-            id_teléfono_empleado,
-            id_departamento,
-            id_cargo_empleado,
-            teléfono_empleado(
-                extensión_teléfono,
-                id_código_operadora_teléfono,
-                código_operadora_teléfono(
-                    operadora_teléfono
-                )
-            ),
-            departamento(
-                nombre_departamento,
-                piso_departamento,
-                sede(
-                    nombre_sede
-                )
-            ),
-            cargo_empleado(
-                tipo_cargo_empleado
-            )
-        )
-            
+        ${columnaEmpleado.value}
         """.trimIndent())
 
     val columnasDepartamento = Columns.raw("""
@@ -459,16 +434,17 @@ class EmpleadoRequest(): SupabaseClient() {
 
         getSupabaseClient().from("empleado").update(update = {
 
+            if(anterior.nacionalidad != nuevo.nacionalidad)
+                set("nacionalidad_empleado", nuevo.nacionalidad)
+
             if (anterior.cedula != nuevo.cedula)
                 set("cédula_empleado", nuevo.cedula)
-
 
             if (anterior.primerNombre != nuevo.primerNombre)
                 set("primer_nombre_empleado", nuevo.primerNombre)
 
             if (anterior.segundoNombre != nuevo.segundoNombre)
                 set("segundo_nombre_empleado", nuevo.segundoNombre)
-
 
             if (anterior.primerApellido != nuevo.primerApellido)
                 set("primer_apellido_empleado", nuevo.primerApellido)
@@ -497,9 +473,10 @@ class EmpleadoRequest(): SupabaseClient() {
         getSupabaseClient().from("usuario").update({
 
             if(anterior.usuario.nombre != nuevo.usuario.nombre)
-            {
                 set("nombre_usuario", nuevo.usuario.nombre)
-            }
+
+            if(anterior.usuario.habilitado != nuevo.usuario.habilitado)
+                set("usuario_habilitado", nuevo.usuario.habilitado)
 
         }){filter {
             eq("id_usuario", anterior.idUsuario)

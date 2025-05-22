@@ -72,12 +72,17 @@ fun CrearUsuario(
     containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919))
 {
 
-    val limiteCedula = 31000000
+    val limiteInferiorCedula = 3000000
+    val limiteSuperiorCedula = 31000000
 
     val image = R.drawable.nuevo_usuario_logo
 
     val tipoUsuarioList = remember {
         mutableListOf<String>("-- Seleccione", "Técnico", "Cliente Interno")
+    }
+
+    val nacionalidadList = remember {
+        mutableListOf('V', 'E')
     }
 
     var codigoExtensionTelefonoList = remember{
@@ -98,6 +103,10 @@ fun CrearUsuario(
 
     var nombreDepartamentoList = remember{
         mutableListOf<String>("-- Seleccione")
+    }
+
+    var nacionalidad = remember{
+        mutableStateOf('V')
     }
 
     var idTipoUsuarioState = remember {
@@ -279,6 +288,7 @@ fun CrearUsuario(
                     fontWeight = FontWeight.Bold)
                 Row(modifier = Modifier)
                 {
+
                     Column(modifier = Modifier.weight(1F))
                     {
                         Text("Tipo de usuario", fontWeight = FontWeight.Bold)
@@ -293,26 +303,43 @@ fun CrearUsuario(
                         )
                     }
                     Spacer(modifier = Modifier.padding(5.dp))
-                    Column(modifier = Modifier.weight(1F))
-                    {
-                        Text("Cédula", fontWeight = FontWeight.Bold)
-                        OutlinedTextFieldPersonalizado(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            value = cedulaState.value,
-                            onValueChange = { number ->
+                    Column(modifier = Modifier.weight(1F)) {
 
-                                if (number.length <= 8)
-                                    cedulaState.value = number
-
-                            },
-                            label = { Text("Número de cédula", fontSize = 13.sp) },
-                            number = true
+                        Text("Nacionalidad", fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.padding(2.dp))
+                        Spinner(
+                            modifier = Modifier,
+                            itemList = nacionalidadList.map { it.toString() },
+                            posicionInicial = 0,
+                            onItemSelected = {
+                                nacionalidad.value = it[0]
+                            }
                         )
 
                     }
 
                 }
+
+                Spacer(modifier = Modifier.padding(5.dp))
+                Column(modifier = Modifier.fillMaxWidth())
+                {
+                    Text("Cédula", fontWeight = FontWeight.Bold)
+                    OutlinedTextFieldPersonalizado(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        value = cedulaState.value,
+                        onValueChange = { number ->
+
+                            if (number.length <= 8)
+                                cedulaState.value = number
+
+                        },
+                        label = { Text("Número de cédula", fontSize = 13.sp) },
+                        number = true
+                    )
+
+                }
+
                 // Nombre y apellido
                 Text("Nombre completo", fontWeight = FontWeight.Bold)
                 Row()
@@ -661,7 +688,7 @@ fun CrearUsuario(
             {
                 mensajeValidacion.value = "Por favor, ingrese un numero de teléfono valido."
             }
-            else if (cedulaState.value.toInt() < 0 || cedulaState.value.toInt() > limiteCedula) //Si la cedula es no es compatible, se muestra el aviso
+            else if (cedulaState.value.toInt() < limiteInferiorCedula || cedulaState.value.toInt() > limiteSuperiorCedula) //Si la cedula es no es compatible, se muestra el aviso
             {
                 mensajeValidacion.value = "Por favor, ingrese un número de cédula valido."
 
@@ -711,6 +738,7 @@ fun CrearUsuario(
                     segundoNombre = segundoNombreState.value,
                     primerApellido = primerApellidoState.value,
                     segundoApellido = segundoApellidoState.value,
+                    nacionalidad = nacionalidad.value,
                     correoElectronico = correoElectronicoState.value.toLowerCasePreservingASCIIRules(),  //Se convierte la cadena de texto en minusculas
                     telefonoEmpleado = telefonoEmpleado,
                     usuario = usuarioEmpleado,

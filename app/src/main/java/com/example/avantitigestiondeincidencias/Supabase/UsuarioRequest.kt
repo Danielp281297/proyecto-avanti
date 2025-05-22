@@ -7,10 +7,18 @@ import com.example.avantitigestiondeincidencias.AVANTI.InsertarEmpleado
 import com.example.avantitigestiondeincidencias.AVANTI.InsertarTecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.TelefonoEmpleado
+import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.AVANTI.Usuario
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.SHA512
+import io.github.jan.supabase.annotations.SupabaseExperimental
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.realtime.PostgresAction
+import io.github.jan.supabase.realtime.channel
+import io.github.jan.supabase.realtime.postgresChangeFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 class UsuarioRequest(): SupabaseClient() {
 
@@ -20,6 +28,7 @@ class UsuarioRequest(): SupabaseClient() {
         id_usuario,
         nombre_usuario,
         id_tipo_usuario,
+        usuario_habilitado,
         tipo_usuario(
             tipo_usuario
         )
@@ -81,8 +90,6 @@ class UsuarioRequest(): SupabaseClient() {
         val nuevoTelefono = getSupabaseClient().from("teléfono_empleado").insert(tecnico.empleado.telefonoEmpleado){
             select()
         }.decodeSingle<TelefonoEmpleado>()
-
-        //Log.d("NUEVO TELEFONO EMPLEADO", nuevoTelefono.toString())
 
         // ... los datos del empleado
 
@@ -245,7 +252,7 @@ class UsuarioRequest(): SupabaseClient() {
         usuario(resultados)
     }
 
-    suspend fun borrarUsuarioById(id: Int)
+    suspend fun deshabilitarUsuarioById(id: Int)
     {
         // Se obtiene los datos del usuario
         val usuario = getSupabaseClient().from("usuario").select(){
@@ -259,12 +266,45 @@ class UsuarioRequest(): SupabaseClient() {
 
             set("nombre_usuario", SHA512(SHA512(usuario.nombre)).subSequence(0, 20).toString())
             set("contraseña_usuario", SHA512(usuario.password))
+            set("usuario_habilitado", false)
 
         }){
             filter {
                 eq("id_usuario", id)
             }
         }
+    }
+
+    suspend fun comprobarUsuarioInhabilitado(usuario: Usuario): Boolean
+    {
+        val resultado = getSupabaseClient().from("usuario").select {
+            filter {
+                eq("id_usuario", usuario.id)
+            }
+        }.decodeSingle<Usuario>()
+
+        return resultado.habilitado
+    }
+
+    @OptIn(SupabaseExperimental::class)
+    suspend fun realTimeUsuarioInhabiitado(scope: CoroutineScope, usuario: Usuario, resultado: (Boolean) -> Unit)
+    {
+
+        val channel = getSupabaseClient().channel(channelId = "ChannelTicket")
+
+        val channelFlow = channel.postgresChangeFlow<PostgresAction>(schema = "public"){
+            table = "usuario"
+        }
+
+        channelFlow.onEach {
+
+            // Se comprueba que el usuario no haya sido inhabilitado
+            resultado(comprobarUsuarioInhabilitado(usuario))
+
+        }.launchIn(scope)
+
+        channel.subscribe()
+
     }
 
 }

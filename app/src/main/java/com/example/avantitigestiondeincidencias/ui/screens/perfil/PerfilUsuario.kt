@@ -70,7 +70,7 @@ fun PerfilUsuario(navController: NavController,
         mutableStateOf(false)
     }
 
-    var borrarCuentaState = remember {
+    var deshabilitarUsuarioState = remember {
        mutableStateOf(false)
     }
 
@@ -133,26 +133,7 @@ fun PerfilUsuario(navController: NavController,
                     Text(text = "EDITAR PERFIL", color = Color.White)
 
                 }
-                Spacer(modifier = Modifier.padding(5.dp))
-                Button(
-                    modifier = modeloButton,
-
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black
-                    ),
-                    shape = RectangleShape,
-                    onClick = {
-
-                        cambiarContrasenaState.value = true
-
-                    }
-                )
-                {
-
-                    Text(text = "CAMBIAR CONTRASEÑA", color = Color.White)
-
-                }
-                if (empleado.usuario.id > 1) {
+                if (empleado.usuario.habilitado) {
                     Spacer(modifier = Modifier.padding(5.dp))
                     Button(
                         modifier = modeloButton,
@@ -163,13 +144,35 @@ fun PerfilUsuario(navController: NavController,
                         shape = RectangleShape,
                         onClick = {
 
-                            borrarCuentaState.value = true
+                            cambiarContrasenaState.value = true
 
                         }
                     )
                     {
 
-                        Text(text = "BORRAR USUARIO", color = Color.White)
+                        Text(text = "CAMBIAR CONTRASEÑA", color = Color.White)
+
+                    }
+                    if (empleado.usuario.id > 1) {
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Button(
+                            modifier = modeloButton,
+
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Black
+                            ),
+                            shape = RectangleShape,
+                            onClick = {
+
+                                deshabilitarUsuarioState.value = true
+
+                            }
+                        )
+                        {
+
+                            Text(text = "DESHABILITAR USUARIO", color = Color.White)
+
+                        }
 
                     }
                 }
@@ -198,20 +201,20 @@ fun PerfilUsuario(navController: NavController,
         cambiarContrasenaState.value = false
     }
 
-    if (borrarCuentaState.value)
+    if (deshabilitarUsuarioState.value)
     {
 
         val scope = rememberCoroutineScope()
         AlertDialogPersonalizado(
-            titulo = "Borrar Usuario",
-            contenido = "¿Deseas borrar el usuario?",
+            titulo = "Deshabilitar Usuario",
+            contenido = "¿Deseas deshabilitar el usuario?",
             onDismissRequest = {
-                borrarCuentaState.value = false
+                deshabilitarUsuarioState.value = false
             },
             aceptarAccion = {
 
-                    borrarUsuario(empleado.idUsuario)
-                    borrarCuentaState.value = false
+                    deshabilitarUsuario(empleado.idUsuario)
+                    deshabilitarUsuarioState.value = false
                     navController.popBackStack()
 
             },
@@ -219,7 +222,7 @@ fun PerfilUsuario(navController: NavController,
 
                 androidx.compose.material.Text("CANCELAR", color = Color.Black, modifier = Modifier.clickable {
 
-                    borrarCuentaState.value = false
+                    deshabilitarUsuarioState.value = false
                 })
 
             }
@@ -230,11 +233,11 @@ fun PerfilUsuario(navController: NavController,
 }
 
 
-fun borrarUsuario(idUsuario: Int)
+fun deshabilitarUsuario(idUsuario: Int)
 {
         CoroutineScope(Dispatchers.IO).launch {
 
-            UsuarioRequest().borrarUsuarioById(idUsuario)
+            UsuarioRequest().deshabilitarUsuarioById(idUsuario)
 
         }
 }

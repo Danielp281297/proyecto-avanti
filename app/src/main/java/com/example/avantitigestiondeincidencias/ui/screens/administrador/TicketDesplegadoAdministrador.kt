@@ -14,6 +14,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -21,13 +22,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.avantitigestiondeincidencias.AVANTI.GrupoAtencion
+import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.Network.Network
+import com.example.avantitigestiondeincidencias.Supabase.EmpleadoRequest
 import com.example.avantitigestiondeincidencias.Supabase.TecnicoRequest
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
 import com.example.avantitigestiondeincidencias.modeloButton
@@ -55,7 +60,7 @@ fun TicketDesplegadoAdministrador(navController: NavController, context: Context
     }
 
     var tecnicosListState = remember {
-        mutableStateOf(ticket.idTecnico)
+        mutableStateOf(0)
     }
 
     var tecnicosList = remember {
@@ -84,10 +89,10 @@ fun TicketDesplegadoAdministrador(navController: NavController, context: Context
     {
         withContext(Dispatchers.IO)
         {
+
             TecnicoRequest().seleccionarTecnicos { tecnicos ->
 
                 tecnicos.forEach { item ->
-
                     tecnicosList.add("${item.empleado.primerNombre} ${item.empleado.primerApellido} - ${item.grupoAtencion.grupoAtencion}")
                     mostrarSpinnerState.value = true
                     cargandoContenidoSpinners.value = false
@@ -95,6 +100,7 @@ fun TicketDesplegadoAdministrador(navController: NavController, context: Context
                 }
 
             }
+
         }
     }
 
@@ -108,7 +114,7 @@ fun TicketDesplegadoAdministrador(navController: NavController, context: Context
             if (ticket.idEstadoTicket < 4) {
                 Column(modifier = Modifier)
                 {
-                    Text("PRIORIDAD")
+                    Text("PRIORIDAD:")
                     Spinner(
                         modifier = Modifier.fillMaxWidth(),
                         itemList = prioridadTicket,
@@ -118,19 +124,19 @@ fun TicketDesplegadoAdministrador(navController: NavController, context: Context
                         })
                 }
                 Spacer(modifier = Modifier.padding(5.dp))
+                    Text("TÉCNICO: ", fontSize = fuenteLetraTicketDesplegado)
+                    Spinner(
+                        modifier = Modifier.fillMaxWidth(),
+                        itemList = tecnicosList,
+                        posicionInicial = tecnicosListState.value,
+                        onItemSelected = { option ->
 
-                Text("TÉCNICO : ", fontSize = fuenteLetraTicketDesplegado)
-                Spinner(
-                    modifier = Modifier.fillMaxWidth(),
-                    itemList = tecnicosList,
-                    posicionInicial = tecnicosListState.value,
-                    onItemSelected = { option ->
+                            tecnicosListState.value = tecnicosList.indexOf(option) + 1
 
-                        tecnicosListState.value = tecnicosList.indexOf(option) + 1
+                        })
+                    Spacer(modifier = Modifier.padding(15.dp))
 
-                    })
 
-                Spacer(modifier = Modifier.padding(15.dp))
                 Button(
                     modifier = modeloButton,
 

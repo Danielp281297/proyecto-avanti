@@ -53,7 +53,7 @@ fun BorrarUsuarioPrueba()
                 borrarUsuarioState.value = true
             }
         ) {
-            Text("BORRAR USUARIO", fontFamily = montserratFamily)
+            Text("DESHABILITAR USUARIO", fontFamily = montserratFamily)
         }
 
     }
