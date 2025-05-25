@@ -2,10 +2,10 @@ package com.example.avantitigestiondeincidencias.ui.screens.administrador
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,13 +47,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.text.isDigitsOnly
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.R
-import com.example.avantitigestiondeincidencias.Supabase.EmpleadoRequest
-import com.example.avantitigestiondeincidencias.Supabase.UsuarioRequest
+import com.example.avantitigestiondeincidencias.ViewModel.BusquedaUsuarioViewModel
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.LoadingShimmerEffectScreen
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.OutlinedTextFieldPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
@@ -72,35 +73,24 @@ import kotlinx.serialization.json.Json
 fun BusquedaUsuarios(
     navController: NavController,
     context: Context,
-    containerColor: Color = Color.Transparent)
+    containerColor: Color = Color.Transparent,
+    viewModel: BusquedaUsuarioViewModel = viewModel(),
+    borderColorBottonText: Color = if(!isSystemInDarkTheme()) Color.Black else Color.LightGray
+)
 {
+    val entradaBusqueda = viewModel.entradaBusqueda.collectAsState()
+    val listaTecnicos = viewModel.listaTecnicos.collectAsState()
+    val listaClientesInternos = viewModel.listaClientesInterno.collectAsState()
+    val filtroBusqueda = viewModel.filtroBusqueda.collectAsState()
+    val botonTecnicoState = viewModel.botonTecnico.collectAsState()
+    val botonClienteInternoState = viewModel.botonClienteInterno.collectAsState()
 
     var tituloState = remember {
         mutableStateOf("")
     }
 
-    var entradaBusquedaState = remember {
-        mutableStateOf("")
-    }
-
     var entradaTextoState = remember{
         mutableStateOf(false)
-    }
-
-    var botonTecnicoState = remember{
-        mutableStateOf(false)
-    }
-
-    var botonClienteInternoState = remember{
-        mutableStateOf(false)
-    }
-
-    var usuariosTecnicoLista = remember {
-        mutableStateListOf<Tecnico>()
-    }
-
-    var usuariosClientesInternos = remember{
-        mutableStateListOf<ClienteInterno>()
     }
 
     var buscarUsuarioState = remember{
@@ -111,27 +101,13 @@ fun BusquedaUsuarios(
         mutableStateOf(true)
     }
 
-    var filtroList = remember{
+    val filtroList = remember{
         mutableStateListOf("Nombre de Usuario", "Nombre del empleado", "Número de cédula")
     }
 
-    var filtroItemSelected = remember {
-        mutableStateOf(0)
-    }
-
-    var mostrarfiltroState = remember{
-        mutableStateOf(false)
-    }
-
-
-        seleccionarTecnicosConUsuarios(entradaBusquedaState.value) {
-            usuariosTecnicoLista.addAll(it)
-            busquedaInicialState.value = false
-        }
-        seleccionarClienteInternoConUsuarios(entradaBusquedaState.value) {
-            usuariosClientesInternos.addAll(it)
-            busquedaInicialState.value = false
-        }
+    // Datos iniciales
+    SeleccionarUsuariosTecnicos(viewModel) { busquedaInicialState.value = false }
+    SeleccionarUsuariosClientesInternos(viewModel) { busquedaInicialState.value = false }
 
     ScaffoldSimplePersonalizado(
         tituloPantalla = "Usuarios",
@@ -139,7 +115,6 @@ fun BusquedaUsuarios(
     )
     {
 
-        //Spacer(modifier = Modifier.padding(35.dp))
         Box(modifier = Modifier
             .fillMaxSize()
             .padding(25.dp))
@@ -160,11 +135,21 @@ fun BusquedaUsuarios(
                     .align(Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                     OutlinedTextFieldPersonalizado(
                         modifier = Modifier.weight(1F),
-                        value = entradaBusquedaState.value,
+                        value = entradaBusqueda.value,
                         onValueChange = {
-                            entradaBusquedaState.value = it
+                            viewModel.setEntradaBusqueda(it)
                         },
-                        label = {Text(" Usuario a buscar...")},
+                        label = {
+                            Text(if(botonTecnicoState.value  || botonClienteInternoState.value )
+                                when(filtroBusqueda.value){
+                                    0 -> "Usuario"
+                                    1 -> "Primer nombre"
+                                    2 -> "Cédula"
+                                    else -> ""
+                                } + " a buscar..."
+                                else
+                                " "
+                            )},
                         readOnly = !entradaTextoState.value,
                         imeActionNext = false,
                     )
@@ -181,62 +166,46 @@ fun BusquedaUsuarios(
                         Icon(imageVector = Icons.Default.Search, contentDescription = "Boton Busqueda", modifier = Modifier.size(45.dp))
                     }
                 }
-
-                // Si se toca este texto, se mostrará el spinner con los filtros
-                Text("Filtros de búsqueda",
-                    modifier = Modifier
-                        .fillMaxWidth().clickable{
-                            mostrarfiltroState.value = !mostrarfiltroState.value
-                        },
-                    fontWeight = FontWeight.Bold)
-
-                if (mostrarfiltroState.value)
-                {
-                    Spinner(
-                        modifier = Modifier.fillMaxWidth(),
-                        itemList = filtroList,
-                        onItemSelected = {
-                            filtroItemSelected.value = filtroList.indexOf(it)
-                            Log.d("ITEM FILTRO", filtroItemSelected.value.toString())
-                        }
-                    )
-                }
+                Text(text =if(!viewModel.validarBuscador()) "Indique el tipo de usuario para usar el buscador" else "",
+                    textAlign = TextAlign.Center,
+                    fontSize = 13.sp)
+                Spinner(
+                    modifier = Modifier.fillMaxWidth(),
+                    itemList = filtroList,
+                    onItemSelected = {
+                        viewModel.setFiltroBusqueda(filtroList.indexOf(it) )
+                    }
+                )
 
                 Spacer(modifier = Modifier.padding(5.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly)
                 {
                     Button(
-                        modifier = Modifier.border(width = 1.dp, color = Color.Black, shape = RectangleShape),
+                        modifier = Modifier.border(width = 1.dp, color = borderColorBottonText, shape = RectangleShape),
 
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color.Transparent
                         ),
                         shape = RectangleShape,
                         onClick = {
-                            botonTecnicoState.value = true
-                            botonClienteInternoState.value = false
+                            viewModel.setBotonTecnico()
                         })
                     {
-                        Text("Técnico", color = Color.Black, fontFamily = montserratFamily)
+                        Text("Técnico", color = borderColorBottonText, fontFamily = montserratFamily)
                     }
 
                     Button(
-                        modifier = Modifier.border(width = 1.dp, color = Color.Black, shape = RectangleShape),
+                        modifier = Modifier.border(width = 1.dp, color = borderColorBottonText, shape = RectangleShape),
 
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color.Transparent
                         ),
                         shape = RectangleShape,
                         onClick = {
-                            botonClienteInternoState.value = true
-                            botonTecnicoState.value = false
-                            usuariosClientesInternos.forEach {
-                                //Log.d("CLINTE INTERNO", it.toString())
-                            }
-
+                            viewModel.setBotonClienteInterno()
                         })
                     {
-                        Text("Cliente", color = Color.Black, fontFamily = montserratFamily)
+                        Text("Cliente", color = borderColorBottonText, fontFamily = montserratFamily)
                     }
                 }
                 Spacer(modifier = Modifier.padding(5.dp))
@@ -250,13 +219,13 @@ fun BusquedaUsuarios(
                 )
                 Spacer(modifier = Modifier.padding(5.dp))
 
-                if (botonClienteInternoState.value == true) {
+                if (botonClienteInternoState.value) {
 
                     tituloState.value = "CLIENTES INTERNOS"
 
                     LazyColumn(modifier = Modifier
                         .fillMaxWidth()
-                        .height(240.dp))
+                        .weight(1F))
                     {
 
                         if(busquedaInicialState.value)
@@ -276,8 +245,8 @@ fun BusquedaUsuarios(
                             }
                         }
                         else {
-                            items(usuariosClientesInternos.count()) { index ->
-                                TargetaUsuarioClienteInterno(usuariosClientesInternos[index], navController)
+                            items(listaClientesInternos.value.count()) { index ->
+                                TargetaUsuarioClienteInterno(listaClientesInternos.value[index], navController)
                             }
                         }
 
@@ -290,7 +259,7 @@ fun BusquedaUsuarios(
 
                     LazyColumn(modifier = Modifier
                         .fillMaxWidth()
-                        .height(240.dp))
+                        .weight(1F))
                     {
 
                         if(busquedaInicialState.value)
@@ -310,14 +279,15 @@ fun BusquedaUsuarios(
                             }
                         }
                         else {
-                            items(usuariosTecnicoLista.count()) { index ->
-                                TargetaUsuarioTecnico(usuariosTecnicoLista[index], navController)
+                            items(listaTecnicos.value.count()) { index ->
+                                TargetaUsuarioTecnico(listaTecnicos.value[index], navController)
                             }
                         }
 
                     }
 
                 }
+                Spacer(modifier = Modifier.padding(50.dp))
             }
 
             ExtendedFloatingActionButton(onClick = {
@@ -328,7 +298,7 @@ fun BusquedaUsuarios(
                 text = {
                     Icon(
                         painter = painterResource(R.drawable.nuevo_usuario_logo),
-                        contentDescription = "Crear Nuevo Ticket",
+                        contentDescription = "Crear Nuevo Usuario",
                         modifier = Modifier.size(25.dp)
                     )
                 },
@@ -347,7 +317,7 @@ fun BusquedaUsuarios(
 
     }
 
-    // Si una de los dos botones son presionados, se habilita la entrada de texto...
+    // Si uno de los dos botones son presionados, se habilita la entrada de texto...
     if(botonTecnicoState.value || botonClienteInternoState.value)
     {
         entradaTextoState.value = true
@@ -357,109 +327,141 @@ fun BusquedaUsuarios(
     {
         busquedaInicialState.value = true
 
+        // Tecnicos
         if(botonTecnicoState.value)
         {
-            usuariosTecnicoLista.clear()
-            if(entradaBusquedaState.value.isNotEmpty()) {
+            //usuariosTecnicoLista.clear()
+            if(entradaBusqueda.value.isNotEmpty()) {
                 //Se buscan los usuarios por la entrada y por el tipo de usuario tecnico
-                buscarTecnicoUsuarios(context, filtroItemSelected.value, entradaBusquedaState.value)
+                BuscarTecnicoUsuarios(viewModel, context)
                 {
-                    usuariosTecnicoLista.addAll(it)
                     busquedaInicialState.value = false
                     buscarUsuarioState.value = false
                 }
             }
             else
             {
-                seleccionarTecnicosConUsuarios(entradaBusquedaState.value){
-                    usuariosTecnicoLista.addAll(it)
+                SeleccionarUsuariosTecnicos(viewModel){
+
                     busquedaInicialState.value = false
                     buscarUsuarioState.value = false
                 }
             }
 
+
         }
+        // Clientes Internos
         else if (botonClienteInternoState.value)
         {
-            usuariosClientesInternos.clear()
-            if(entradaBusquedaState.value.isNotEmpty()) {
 
-                buscarClienteInternoUsuario(context, filtroItemSelected.value, entradaBusquedaState.value){
-                    usuariosClientesInternos.addAll(it)
+            if(entradaBusqueda.value.isNotEmpty()) {
+
+                BuscarClienteInternoUsuario(context, viewModel){
+
                     busquedaInicialState.value = false
                     buscarUsuarioState.value = false
                 }
 
             }else{
-                seleccionarClienteInternoConUsuarios(entradaBusquedaState.value) {
-                    usuariosClientesInternos.addAll(it)
+                SeleccionarUsuariosClientesInternos(viewModel) {
                     busquedaInicialState.value = false
                     buscarUsuarioState.value = false
                 }
             }
         }
 
-
     }
 
 }
 
 @Composable
-fun buscarClienteInternoUsuario(context: Context, filtro: Int, entrada: String, clienteInterno: (List<ClienteInterno>) -> Unit)
+fun SeleccionarUsuariosTecnicos(viewModel: BusquedaUsuarioViewModel, resultados: () -> Unit)
 {
-    when (filtro)
+    LaunchedEffect(Unit) {
+
+        CoroutineScope(Dispatchers.IO).launch {
+
+            viewModel.obtenerDatosTecnico()
+            resultados()
+
+        }
+
+    }
+}
+
+@Composable
+fun SeleccionarUsuariosClientesInternos(viewModel: BusquedaUsuarioViewModel, resultados: () -> Unit)
+{
+    LaunchedEffect(Unit) {
+
+        CoroutineScope(Dispatchers.IO).launch {
+
+            viewModel.obtenerDatosClienteInterno()
+            resultados()
+
+        }
+
+    }
+}
+
+@Composable
+fun BuscarClienteInternoUsuario(context: Context, viewModel: BusquedaUsuarioViewModel, resultados: () -> Unit)
+{
+    val filtro = viewModel.filtroBusqueda.collectAsState()
+    when (filtro.value)
     {
         // Nombre de usuario
-        0 -> buscarUsuariosClienteInternoPorNombre(entrada) {
-            clienteInterno(it)
+        0 -> BuscarUsuariosClienteInternoPorNombre(viewModel) {
+            resultados()
         }
         // Primer nombre del empleado
-        1 -> buscarUsuarioClienteInternoPorNombreEmpleado(entrada) {
-            clienteInterno(it)
+        1 -> BuscarUsuarioClienteInternoPorNombreEmpleado(viewModel) {
+            resultados()
         }
         // Número de cédula
-        2 -> buscarUsuarioClienteInternoPorCedulaEmpleado(context, entrada){
-            clienteInterno(it)
+        2 -> BuscarUsuarioClienteInternoPorCedulaEmpleado(context, viewModel){
+            resultados()
         }
 
     }
 }
 
 @Composable
-fun buscarTecnicoUsuarios(context: Context, filtro: Int, entrada: String, tecnicos: (List<Tecnico>) -> Unit)
+fun BuscarTecnicoUsuarios(viewModel: BusquedaUsuarioViewModel, context: Context, resultados: () -> Unit)
 {
-    when (filtro)
+    val filtro = viewModel.filtroBusqueda.collectAsState()
+    when (filtro.value)
     {
         // Nombre de usuario
-        0 -> buscarUsuariosTecnicosPorNombre(entrada) {
-            tecnicos(it)
-        }
+        0 -> BuscarUsuariosTecnicosPorNombre(viewModel) {
+                resultados()
+            }
+
         // Primer nombre del empleado
-        1 -> buscarUsuarioTecnicoPorNombreEmpleado(entrada){
-            tecnicos(it)
+        1 -> BuscarUsuarioTecnicoPorNombreEmpleado(viewModel){
+            resultados()
         }
         // Número de cédula
-        2 -> buscarUsuarioTecnicoPorCedulaEmpleado(context, entrada) {
-            tecnicos(it)
+        2 -> BuscarUsuarioTecnicoPorCedulaEmpleado(context, viewModel) {
+            resultados()
         }
+
 
     }
 }
 
 @Composable
-fun buscarUsuarioClienteInternoPorCedulaEmpleado(context: Context, entrada: String, tecnicos: (List<ClienteInterno>) -> Unit){
+fun BuscarUsuarioClienteInternoPorCedulaEmpleado(context: Context, viewModel: BusquedaUsuarioViewModel, resultados: () -> Unit){
 
     // Si es un dato conformado por numeros, de hace la consulta
-    if (entrada.isDigitsOnly())
+    val entrada = viewModel.entradaBusqueda.collectAsState()
+    if (entrada.value.isDigitsOnly())
     {
         LaunchedEffect(Unit) {
             CoroutineScope(Dispatchers.IO).launch{
 
-                EmpleadoRequest().seleccionarClienteInternoPorCedula(entrada){
-
-                    tecnicos(it)
-
-                }
+                viewModel.seleccionarUsuarioClienteInternoPorCedula()
+                resultados()
 
             }
         }
@@ -468,27 +470,25 @@ fun buscarUsuarioClienteInternoPorCedulaEmpleado(context: Context, entrada: Stri
     // En caso contrario se muestran los usuarios con mensaje de error
     {
         Toast.makeText(context, "Dato inválido, intente de nuevo", Toast.LENGTH_SHORT).show()
-        seleccionarClienteInternoConUsuarios("") {
-            tecnicos(it)
+        SeleccionarUsuariosClientesInternos(viewModel){
+            resultados()
         }
     }
 
 }
 
 @Composable
-fun buscarUsuarioTecnicoPorCedulaEmpleado(context: Context, entrada: String, tecnicos: (List<Tecnico>) -> Unit){
+fun BuscarUsuarioTecnicoPorCedulaEmpleado(context: Context, viewModel: BusquedaUsuarioViewModel, resultados: () -> Unit){
 
     // Si es un dato conformado por numeros, de hace la consulta
-    if (entrada.isDigitsOnly())
+    val entrada = viewModel.entradaBusqueda.collectAsState()
+    if (entrada.value.isDigitsOnly())
     {
         LaunchedEffect(Unit) {
             CoroutineScope(Dispatchers.IO).launch{
 
-                EmpleadoRequest().seleccionarTecnicoPorCedula(entrada){
-
-                    tecnicos(it)
-
-                }
+                viewModel.seleccionarUsuarioTecnicoPorCedula()
+                resultados()
 
             }
         }
@@ -497,156 +497,64 @@ fun buscarUsuarioTecnicoPorCedulaEmpleado(context: Context, entrada: String, tec
     // En caso contrario se muestran los usuarios con mensaje de error
     {
         Toast.makeText(context, "Dato inválido, intente de nuevo", Toast.LENGTH_SHORT).show()
-        seleccionarTecnicosConUsuarios("") {
-            tecnicos(it)
+        SeleccionarUsuariosTecnicos(viewModel){
+            resultados()
         }
+
     }
 
 }
 
 @Composable
-fun buscarUsuarioClienteInternoPorNombreEmpleado(entrada:String, clienteInterno: (List<ClienteInterno>) -> Unit)
+fun BuscarUsuarioClienteInternoPorNombreEmpleado(viewModel: BusquedaUsuarioViewModel, resultados: () -> Unit)
 {
     LaunchedEffect(Unit) {
         CoroutineScope(Dispatchers.IO).launch{
 
-            EmpleadoRequest().seleccionarClienteInternoPorNombreEmpleado(entrada){
-                clienteInterno(it)
-            }
-
+           viewModel.seleccionarUsuarioClienteInternoPorPrimerNombreEmpleado()
+            resultados()
         }
     }
 }
 
 @Composable
-fun buscarUsuarioTecnicoPorNombreEmpleado(entrada:String, tecnicos: (List<Tecnico>) -> Unit)
+fun BuscarUsuarioTecnicoPorNombreEmpleado(viewModel: BusquedaUsuarioViewModel, resultados: () -> Unit)
 {
     LaunchedEffect(Unit) {
         CoroutineScope(Dispatchers.IO).launch{
 
-            EmpleadoRequest().seleccionarTecnicoPorNombreEmpleado(entrada){
-                tecnicos(it)
-            }
+            viewModel.seleccionarUsuarioTecnicoPorPrimerNombre()
+            resultados()
 
         }
     }
 }
 
 @Composable
-fun buscarUsuariosClienteInternoPorNombre(entrada: String, clientes: (List<ClienteInterno>) -> Unit)
+fun BuscarUsuariosClienteInternoPorNombre(viewModel: BusquedaUsuarioViewModel, resultados: () -> Unit)
 {
     LaunchedEffect(Unit) {
         CoroutineScope(Dispatchers.IO).launch {
 
-            EmpleadoRequest().seleccionarUsuariosClientesInternoByNombre(entrada){
-                clientes(it)
-            }
+            viewModel.seleccionarUsuarioClienteInternoPorNombreUsuario()
+                resultados()
 
         }
     }
 }
 
 @Composable
-fun buscarUsuariosTecnicosPorNombre(entrada: String, usuarios: (List<Tecnico>) -> Unit)
+fun BuscarUsuariosTecnicosPorNombre(viewModel: BusquedaUsuarioViewModel, resultados: () -> Unit)
 {
 
     LaunchedEffect(Unit) {
         CoroutineScope(Dispatchers.IO).launch {
 
-            EmpleadoRequest().seleccionarUsuariosTecnicosByNombre(entrada){
-                usuarios(it)
-            }
+            viewModel.seleccionarUsuarioTecnicoPorNombre()
+            resultados()
 
         }
     }
-}
-
-
-@Composable
-fun seleccionarClienteInternoConUsuarios(entrada: String, clientes: (List<ClienteInterno>) -> Unit){
-
-    var dataset = remember{
-        mutableStateListOf<ClienteInterno>()
-    }
-
-    buscarClientesInternos(entrada) {
-
-        dataset.addAll(it)
-
-        CoroutineScope(Dispatchers.IO).launch{
-            dataset.forEach {tecnico ->
-                UsuarioRequest().seleccionarUsuarioById(tecnico.empleado.idUsuario){usuario ->
-                    tecnico.empleado.usuario = usuario
-                }
-            }
-
-            clientes(dataset)
-        }
-
-    }
-
-}
-
-@Composable
-fun seleccionarTecnicosConUsuarios(entrada: String, tecnicos: (List<Tecnico>) -> Unit){
-
-    var dataset = remember{
-        mutableStateListOf<Tecnico>()
-    }
-
-    buscarTecnicos(entrada)
-    {
-
-        dataset.addAll(it)
-
-        CoroutineScope(Dispatchers.IO).launch {
-            dataset.forEach { tecnico ->
-                UsuarioRequest().seleccionarUsuarioById(tecnico.empleado.idUsuario) { usuario ->
-                    tecnico.empleado.usuario = usuario
-                }
-            }
-            tecnicos(dataset)
-        }
-
-    }
-
-}
-
-@Composable
-fun buscarClientesInternos(nombreUsuario: String, clientes: (List<ClienteInterno>) -> Unit)
-{
-    LaunchedEffect(Unit) {
-        CoroutineScope(Dispatchers.IO).launch {
-
-            if (nombreUsuario.isNotEmpty()) {
-                EmpleadoRequest().buscarClienteByNombreUsuario(nombreUsuario) {
-                    clientes(it)
-                }
-            }
-            else{
-                EmpleadoRequest().seleccionarUsuariosClienteInterno {
-                    clientes(it)
-                }
-            }
-
-        }
-    }
-}
-
-@Composable
-fun buscarTecnicos(nombreUsuario: String, tecnicos: (List<Tecnico>) -> Unit)
-{
-    
-    LaunchedEffect(Unit) {
-        CoroutineScope(Dispatchers.IO).launch {
-
-            EmpleadoRequest().seleccionarUsuariosTecnico{
-                tecnicos(it)
-            }
-
-        }
-    }
-    
 }
 
 @Composable

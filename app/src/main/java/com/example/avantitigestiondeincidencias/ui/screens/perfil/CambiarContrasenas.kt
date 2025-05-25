@@ -21,6 +21,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -38,18 +40,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Usuario
 import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.UsuarioRequest
+import com.example.avantitigestiondeincidencias.ViewModel.CambiarContrasenaViewModel
+import com.example.avantitigestiondeincidencias.espacioSpacer
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDialogPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonCargaPersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.OutlinedTextFieldPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.SHA512
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.rojo
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.text.isWhitespace
 
@@ -61,8 +68,16 @@ fun CambiarContrasena(
     navController: NavController,
     context: Context,
     usuario: Usuario,
-    containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919))
+    containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919),
+    viewModel: CambiarContrasenaViewModel = viewModel()
+    )
 {
+
+    val mensajeError = viewModel.mensajeError.collectAsState()
+
+    val nombreUsuario = viewModel.nombreUsuario.collectAsState()
+    val contrasenaUsuario = viewModel.contrasenaUsuario.collectAsState()
+    val confirmarContrasena = viewModel.confirmarContrasenaUsuario.collectAsState()
 
     val scope = rememberCoroutineScope()
 
@@ -70,21 +85,7 @@ fun CambiarContrasena(
         mutableStateOf(false)
     }
 
-    var contrasenaState = remember {
-        mutableStateOf("")
-    }
-
-    var confirmarContrasenaState = remember {
-        mutableStateOf("")
-    }
-
-    var contrasenaVisibleState = remember{
-        mutableStateOf(false)
-    }
-
-    val focusRequester = remember{
-        FocusRequester()
-    }
+    viewModel.setNombreUsuario(usuario.nombre)
 
     Network.networkCallback(navController, context)
 
@@ -114,7 +115,7 @@ fun CambiarContrasena(
                     Text("Nombre de usuario", fontWeight = FontWeight.Bold)
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
-                        value = usuario.nombre,
+                        value = nombreUsuario.value,
                         onValueChange = { },
                         readOnly = true,
                         label = { Text("Nombre de usuario", fontSize = 13.sp) },
@@ -131,126 +132,41 @@ fun CambiarContrasena(
                 Column(modifier = Modifier)
                 {
                     Text("Contraseña", fontWeight = FontWeight.Bold)
-                    OutlinedTextField(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(focusRequester),
-                        value = contrasenaState.value,
-                        onValueChange = { newText ->
-                            // Si el texto es menor a 50 caracteres, se almacena en newText
+                    OutlinedTextFieldPersonalizado(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = contrasenaUsuario.value,
+                        password = true,
+                        onValueChange = {newText ->
                             if (newText.all { !it.isWhitespace() } && newText.length <= 20)
-                                contrasenaState.value = newText
+                                viewModel.setContrasenaUsuario(newText)
                         },
                         label = { Text("Contraseña", fontSize = 13.sp) },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedLabelColor = Color.Black,
-                            focusedBorderColor = Color.Black
-                        ),
-                        supportingText = {
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Spacer(modifier = Modifier.padding(0.dp))
-
-                                Text(
-                                    text = "${contrasenaState.value.length}/20",
-                                    color = if (contrasenaState.value.length > 6) Color.LightGray else rojo,
-                                    modifier = Modifier
-                                )
-                            }
-                        },
-                        trailingIcon = {
-                            val image = if (contrasenaVisibleState.value == true) {
-                                R.drawable.visible_icono
-                            } else
-                                R.drawable.no_visible_icono
-
-                            IconButton(onClick = {
-
-                                if (contrasenaVisibleState.value) {
-                                    contrasenaVisibleState.value = false
-                                } else
-                                    contrasenaVisibleState.value = true
-
-                            }) {
-                                Icon(
-                                    painter = painterResource(image),
-                                    contentDescription = "",
-                                    modifier = Modifier.size(25.dp)
-                                )
-                            }
-
-
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        visualTransformation = if (contrasenaVisibleState.value) VisualTransformation.None else PasswordVisualTransformation()
+                        empezarMayusculas = false,
+                        imeActionNext = false,
+                        supportingText = true,
+                        maximoCaracteres = 20,
+                        minimoCaracteres = 6
                     )
 
                 }
 
-
                 Column(modifier = Modifier)
                 {
                     Text("Confirmar contraseña", fontWeight = FontWeight.Bold)
-                    OutlinedTextField(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(focusRequester),
-                        value = confirmarContrasenaState.value,
-                        onValueChange = { newText ->
-                            // Si el texto es menor a 50 caracteres, se almacena en newText
+                    OutlinedTextFieldPersonalizado(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = confirmarContrasena.value,
+                        password = true,
+                        onValueChange = {newText ->
                             if (newText.all { !it.isWhitespace() } && newText.length <= 20)
-                                confirmarContrasenaState.value = newText
+                                viewModel.setConfirmarContrasenaUsuario(newText)
                         },
-                        label = { Text("Confirmar contraseña", fontSize = 13.sp) },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedLabelColor = Color.Black,
-                            focusedBorderColor = Color.Black
-                        ),
-                        supportingText = {
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Spacer(modifier = Modifier.padding(0.dp))
-
-                                Text(
-                                    text = "${confirmarContrasenaState.value.length}/20",
-                                    color = Color.LightGray,
-                                    modifier = Modifier
-                                )
-                            }
-                        },
-                        trailingIcon = {
-                            val image = if (contrasenaVisibleState.value == true) {
-                                R.drawable.visible_icono
-                            } else
-                                R.drawable.no_visible_icono
-
-                            IconButton(onClick = {
-
-                                if (contrasenaVisibleState.value) {
-                                    contrasenaVisibleState.value = false
-                                } else
-                                    contrasenaVisibleState.value = true
-
-                            }) {
-                                Icon(
-                                    painter = painterResource(image),
-                                    contentDescription = "",
-                                    modifier = Modifier.size(25.dp)
-                                )
-                            }
-
-
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        visualTransformation = if (contrasenaVisibleState.value) VisualTransformation.None else PasswordVisualTransformation()
+                        label = { Text("Contraseña", fontSize = 13.sp) },
+                        empezarMayusculas = false,
+                        imeActionNext = false,
+                        supportingText = true,
+                        maximoCaracteres = 20,
+                        minimoCaracteres = 6
                     )
                     }
 
@@ -258,11 +174,25 @@ fun CambiarContrasena(
 
             }
 
+            Column(modifier = Modifier.fillMaxWidth()){
+
+                Text("Especificaciones para la contraseña:", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                Text("Ser entre 6 y 20 caracteres\n" +
+                        "\n" +
+                        "Al menos 1 dígito de 0 a 9\n" +
+                        "\n" +
+                        "Al menos un símbolo especial ${'$'}%&/()!" +
+                        "\n")
+
+            }
+            Spacer(modifier = espacioSpacer)
+
             Column() {
 
                 BotonCargaPersonalizado(
                     onClick = {
                         //Se obtiene los datos del empleado, en base al usuario y contrasena
+                        viewModel.setCambiarContrasenaMensajeError()
                         ingresarbuttonState.value = true
                     },
                     isLoading = ingresarbuttonState.value
@@ -276,6 +206,44 @@ fun CambiarContrasena(
 
     if (ingresarbuttonState.value)
     {
+
+        if(mensajeError.value.isBlank())
+        {
+
+            AlertDialogPersonalizado(
+                titulo = "CAMBIO DE CONTRASEÑA",
+                contenido = "¿Desea cambiar su contraseña ahora?",
+                onDismissRequest = { ingresarbuttonState.value = false },
+                aceptarAccion = {
+
+                    scope.launch {
+
+                        viewModel.cambiarContrasenaUsuario { resultado ->
+                            Toast.makeText(context, resultado, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    // Se regresa a la pantalla anterior
+                    navController.popBackStack()
+                    ingresarbuttonState.value = false
+                },
+                cancelarAccion = {
+
+                    androidx.compose.material.Text("CANCELAR", color = Color.Black, modifier = Modifier.clickable {
+
+                        ingresarbuttonState.value = false
+                    })
+                }
+
+            )
+
+        }
+        else
+        {
+            Toast.makeText(context, mensajeError.value, Toast.LENGTH_SHORT).show()
+            ingresarbuttonState.value = false
+        }
+        /*
         if(contrasenaState.value != confirmarContrasenaState.value) //Si las contrasenas no coinciden, se muestra el aviso
         {
             // Mensaje de aviso
@@ -327,6 +295,7 @@ fun CambiarContrasena(
 
             )
         }
+        */
     }
 
 }
@@ -340,7 +309,7 @@ fun CambiarContrasenaPreview() {
 
     AVANTITIGestionDeIncidenciasTheme {
 
-        //CambiarContrasena(navController, context,  Usuario())
+        CambiarContrasena(navController, context,  Usuario())
 
     }
 }

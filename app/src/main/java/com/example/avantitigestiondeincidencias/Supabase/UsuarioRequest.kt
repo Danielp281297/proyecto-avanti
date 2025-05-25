@@ -128,8 +128,6 @@ class UsuarioRequest(): SupabaseClient() {
             select()
         }.decodeSingle<InsertarTecnico>()
 
-        //Log.d("NUEVO TECNICO", nuevoTecnico.toString())
-
     }
 
     suspend fun borrarUsuarioTecnico(tecnico: Tecnico)
@@ -246,8 +244,6 @@ class UsuarioRequest(): SupabaseClient() {
                 eq("nombre_usuario", nombre)
             }
         }.decodeSingleOrNull<Usuario>()
-
-        Log.d("RESULTADOS USUARIO", resultados.toString())
 
         usuario(resultados)
     }

@@ -1,9 +1,7 @@
 package com.example.avantitigestiondeincidencias.ui.screens.cliente
 
-import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,6 +34,7 @@ import androidx.compose.material3.SliderColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,16 +50,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
-import com.example.avantitigestiondeincidencias.AVANTI.Usuario
 import com.example.avantitigestiondeincidencias.Network.Network
-import com.example.avantitigestiondeincidencias.Notification.Notification
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
-import com.example.avantitigestiondeincidencias.Supabase.UsuarioRequest
+import com.example.avantitigestiondeincidencias.ViewModel.InicioClienteViewModel
 import com.example.avantitigestiondeincidencias.modeloButton
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDialogPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.LoadingShimmerEffectScreen
@@ -75,7 +73,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.time.LocalTime
 
@@ -84,6 +81,7 @@ import java.time.LocalTime
 fun InicioCliente(
     clienteInterno: ClienteInterno,
     navController: NavController,
+    viewModel: InicioClienteViewModel = viewModel(),
     containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919)
     )
 {
@@ -92,9 +90,13 @@ fun InicioCliente(
 
     // Se crea la variable de estado con la lista
     // Se comprueba si la lista esta vacia, de ser asi, se crea un aviso en el centro
+    val ticketsCliente = viewModel.clienteTickets.collectAsState()
+
+    /*
     var ticketsCliente = remember{
         mutableStateListOf<Ticket>()
     }
+    */
 
     var mostrarFormularioNuevoTicket = remember{
         mutableStateOf(false)
@@ -102,7 +104,8 @@ fun InicioCliente(
 
     val scope = rememberCoroutineScope()
 
-    var buscarTicketsCliente = remember {
+
+    var buscandoTicketsCliente = remember {
         mutableStateOf(true)
     }
 
@@ -115,13 +118,10 @@ fun InicioCliente(
     TiempoHabilitarClienteInterno(containerColor)
     {
 
-        // Corrutina para obtener los tickets
-        fetchTicketDataCliente(clienteInterno.empleado.id, { tickets ->
-
-            ticketsCliente.addAll(tickets)
-            buscarTicketsCliente.value = false
-
-        })
+        // Se obtienen los datos de la base de datos, y se muestra en la pantalla
+        fetchTicketDataCliente(viewModel, clienteInterno.empleado.id) {
+            buscandoTicketsCliente.value = false
+        }
 
         ScaffoldConMenuLateral(
             titulo = "Inicio - Cliente Interno",
@@ -166,7 +166,7 @@ fun InicioCliente(
                             .fillMaxHeight()
                             .fillMaxWidth(), content = {
 
-                            if (buscarTicketsCliente.value) {
+                            if (buscandoTicketsCliente.value) {
                                 items(10)
                                 {
 
@@ -181,9 +181,9 @@ fun InicioCliente(
                                     }
                                 }
                             } else {
-                                items(ticketsCliente.count()) { index ->
+                                items(ticketsCliente.value.count()) { index ->
 
-                                    TicketsCliente(navController, ticketsCliente[index])
+                                    TicketsCliente(navController, ticketsCliente.value[index])
 
                                 }
                             }
@@ -228,7 +228,7 @@ fun InicioCliente(
             content = {
 
                 // Se almacena los datos en un nuevo ticket
-                nuevoTicketFormulario(clienteInterno.id, containerColor, {
+                nuevoTicketFormulario(clienteInterno.id, containerColor, lambda = {
 
                     mostrarFormularioNuevoTicket.value = false
 
@@ -242,77 +242,33 @@ fun InicioCliente(
 
     validarUsuarioInhabilitado(navController, clienteInterno.empleado.usuario)
 
-    // Se muestra los datos actualizados cuando la tabla ticket sufre algun cambio
+    // Se esperan los cambios para mostrarlos en la tabla en tiempo real
     LaunchedEffect(Unit)
     {
-
-        withContext(Dispatchers.IO) {
-            TicketRequests().realtimeTicketRequestClienteInternoId(scope, clienteInterno.id) { tickets ->
-
-                ticketsCliente.clear()
-
-                tickets.forEach { item ->
-
-                    if (item.clienteInterno.id == clienteInterno.id)
-                        ticketsCliente.add(item)
-
-                }
-
-
-                ticketsCliente.reversed().forEach { item ->
-
-                    ticketsEstadosNotificaciones(context, item)
-
-                }
-
-            }
+        CoroutineScope(Dispatchers.IO).launch {
+            viewModel.realtimeClienteTickets(context, this, clienteInterno.id)
         }
     }
 
 }
 
-fun ticketsEstadosNotificaciones(context: Context, ticket: Ticket)
-{
-
-    // Se busca si el estado del ticket esta En Proceso
-
-    if(ticket.idEstadoTicket == 2)
-    {
-
-        Notification().mostrarNotificacion(context, "${ticket.tipo.tipoTicket} - ${ticket.descripcion}"
-            , "Su ${ticket.tipo.tipoTicket} está siendo atendida por ${ticket.tecnico.empleado.primerNombre} ${ticket.tecnico.empleado.primerApellido}")
-
-    }
-
-    if(ticket.idEstadoTicket == 4)
-    {
-
-        Notification().mostrarNotificacion(context, "${ticket.tipo.tipoTicket} - ${ticket.descripcion}"
-            , "Su ${ticket.tipo.tipoTicket} fue resuelta por ${ticket.tecnico.empleado.primerNombre} ${ticket.tecnico.empleado.primerApellido}. Cierre el ticket para terminar la gestión.")
-
-    }
-}
-
-
-
 @Composable
-fun fetchTicketDataCliente(id: Int, lambda: (tickets: List<Ticket>) -> Unit) {
+fun fetchTicketDataCliente(viewModel: InicioClienteViewModel, id: Int, lambda: () -> Unit) {
 
     LaunchedEffect(Unit) {
 
-        withContext(Dispatchers.IO) {
+        CoroutineScope(Dispatchers.IO).launch {
 
-            TicketRequests().buscarTicketByClienteInternoId(id) { tickets ->
-
-                lambda(tickets)
-            }
+            viewModel.obtenerClienteTickets(id)
+            delay(100)
+            lambda()
 
         }
 
     }
 
-}
 
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -353,225 +309,7 @@ fun TicketsCliente(navController: NavController, ticket: Ticket)
 
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TicketDesplegadoCliente(navController: NavController, ticket:Ticket)
-{
 
-    val context = LocalContext.current
-
-    val scope = rememberCoroutineScope()
-
-    var cancelarTicketState = remember {
-        mutableStateOf(false)
-    }
-
-    var cerrarTicketState = remember{
-        mutableStateOf(false)
-    }
-
-    ContenidoTicketDesplegado(navController, context, ticket) {
-
-        if (ticket.idEstadoTicket >= 4) {
-
-            if (ticket.idEstadoTicket == 4) {
-
-                Button(
-                    modifier = modeloButton,
-
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black
-                    ),
-                    shape = RectangleShape,
-                    onClick = {
-
-                        cerrarTicketState.value = true
-
-                    }
-                )
-                {
-                    Text(text = "CERRAR TICKET", color = Color.White)
-                }
-            }
-
-        } else if (ticket.idEstadoTicket < 3) {
-            Button(
-                modifier = modeloButton,
-
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black
-                ),
-                shape = RectangleShape,
-                onClick = {
-
-                    cancelarTicketState.value = true
-
-                }
-            )
-            {
-                Text(text = "CANCELAR TICKET", color = Color.White)
-            }
-        }
-
-    }
-
-    if (cerrarTicketState.value){
-
-        var calificarState = remember{
-            mutableStateOf(false)
-        }
-
-        var calificacionValue = remember {
-            mutableStateOf(0f)
-        }
-
-        // Se obtiene la calificación de la incidencia
-        AlertDialog(
-            shape = RectangleShape,
-            containerColor = Color.White,
-            onDismissRequest = {
-
-            },
-            confirmButton = {
-
-                Text("CALIFICAR", color = Color.Black, modifier = Modifier.clickable {
-
-                    calificarState.value = true
-
-                })
-
-            },
-            dismissButton = {
-
-                Text("CANCELAR", color = Color.Black, modifier = Modifier.clickable {
-
-                    cerrarTicketState.value = false
-
-                })
-
-            },
-            title = {
-                Text("Cerrar Ticket", textAlign = TextAlign.Center)
-            },
-            text = {
-
-                var iconosEstrellas = remember {
-                    mutableStateListOf(R.drawable.una_estrella, R.drawable.dos_estrellas, R.drawable.tres_estrellas, R.drawable.cuatro_estrellas, R.drawable.cinco_estrellas)
-                }
-
-                Column (verticalArrangement = Arrangement.SpaceEvenly){
-
-                    Text("Por favor, califique la gestión de la incidencia", textAlign = TextAlign.Center)
-                    Spacer(modifier = Modifier.padding(5.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        iconosEstrellas.forEach {
-
-                            Column(modifier = Modifier.wrapContentWidth()) {
-                                Icon(
-                                    painter = painterResource(it),
-                                    contentDescription = "Estrella",
-                                    modifier = Modifier.size(40.dp)
-                                )
-                                Text("    ${iconosEstrellas.indexOf(it) + 1}",textAlign = TextAlign.Center)
-                            }
-
-                        }
-
-                    }
-
-                    Slider(value = calificacionValue.value
-                        , onValueChange = {
-
-                            calificacionValue.value = it
-
-                            Log.d("CALIFICACION", (calificacionValue.value).toString())
-
-                        },
-                        enabled = true,
-                        steps = 3,
-                        valueRange = 1f..5f,
-                        modifier = Modifier.padding(start = 9.dp, end = 9.dp),
-                        colors = SliderColors(
-                            thumbColor = Color.Black,
-                            activeTrackColor = Color.Black,
-                            activeTickColor = Color.Black,
-                            inactiveTrackColor = Color.Transparent,
-                            inactiveTickColor = Color.Black,
-                            disabledThumbColor = Color.LightGray,
-                            disabledActiveTrackColor = Color.LightGray,
-                            disabledActiveTickColor = Color.LightGray,
-                            disabledInactiveTrackColor = Color.LightGray,
-                            disabledInactiveTickColor = Color.LightGray
-                        )
-
-                    )
-
-                }
-            }
-        )
-
-        if(calificarState.value)
-        {
-
-            LaunchedEffect(Unit) {
-
-                scope.launch {
-
-                    TicketRequests().cerrarTicket(ticket, calificacionValue.value.toInt()){
-                        Toast.makeText(context, "Ticket cerrado con éxito.", Toast.LENGTH_SHORT).show()
-                    }
-
-                }
-            }
-
-            navController.popBackStack()
-            calificarState.value = false
-        }
-
-    }
-
-    if (cancelarTicketState.value)
-    {
-
-        var cancelarTicketBandera = remember { mutableStateOf(false) }
-
-        AlertDialogPersonalizado(
-            titulo = "Cancelar Ticket",
-            contenido = "¿Deseas cancelar el ticket?",
-            onDismissRequest = {
-                cancelarTicketState.value = false
-            },
-            aceptarAccion = { cancelarTicketBandera.value = true },
-            cancelarAccion = {
-
-                Text("CANCELAR", color = Color.Black, modifier = Modifier.clickable {
-
-                    cancelarTicketState.value = false
-
-                })
-
-            },
-        )
-
-        if (cancelarTicketBandera.value) {
-
-            LaunchedEffect(Unit) {
-
-                scope.launch {
-                    TicketRequests().cancelarTicket(ticket){
-                            Toast.makeText(context, "Ticket cancelado con éxito.", Toast.LENGTH_SHORT).show()
-                    }
-
-                }
-            }
-            cancelarTicketBandera.value = false
-            cancelarTicketState.value = false
-            navController.popBackStack()
-        }
-
-    }
-
-}
 
 @Composable
 fun TiempoHabilitarClienteInterno(
@@ -585,7 +323,7 @@ fun TiempoHabilitarClienteInterno(
 
     val horaPeriodoInicio = LocalTime.of(8, 0)
     val horaPeriodoFin = LocalTime.of(17, 30)
-/*
+
     LaunchedEffect(Unit) {
         CoroutineScope(Dispatchers.IO).launch {
 
@@ -622,9 +360,9 @@ fun TiempoHabilitarClienteInterno(
 
     }
     else
-    {*/
+    {
         casoContrario()
-    //}
+    }
 
 }
 

@@ -2,7 +2,6 @@ package com.example.avantitigestiondeincidencias.ui.screens.administrador
 
 
 import android.annotation.SuppressLint
-import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,18 +24,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
+import com.example.avantitigestiondeincidencias.ViewModel.InicioAdministradorViewModel
 import com.example.avantitigestiondeincidencias.espacioSpacer
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.LoadingShimmerEffectScreen
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.TicketLoading
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
@@ -44,47 +48,20 @@ import kotlinx.serialization.json.Json
 @Composable
 fun InicioAdministrador(/*empleado: Empleado, */
                         navController: NavController,
-                        containerColor: Color = Color.Transparent)
+                        containerColor: Color = Color.Transparent,
+                        viewModel: InicioAdministradorViewModel = viewModel())
 {
 
-    val scope = rememberCoroutineScope()
 
-    var dataset = remember {
-        mutableStateListOf<Ticket>()
-    }
 
-    var urgentesTicketsContador = remember {
-        mutableStateOf<Int>(0)
-    }
-
-    var cerradosTicketsContador = remember {
-        mutableStateOf<Int>(0)
-    }
-
-    var pendientesTicketsContador = remember {
-        mutableStateOf<Int>(0)
-    }
+    val ticketsAbiertos = viewModel.ticketAbiertos.collectAsState()
 
     var buscarTicketsAbiertos = remember {
         mutableStateOf(true)
     }
 
-    // Corrutina para obtener los tickets
-    LaunchedEffect(Unit)
-    {
-
-        withContext(Dispatchers.IO) {
-            //pantallaCargaState.value = true
-            TicketRequests().seleccionarTicketsAbiertos { tickets ->
-
-                dataset.addAll(tickets)
-                buscarTicketsAbiertos.value = false
-
-            }
-            //pantallaCargaState.value = false
-
-        }
-
+    obtenerTicketsAbiertos(viewModel) {
+        buscarTicketsAbiertos.value = false
     }
     ScaffoldSimplePersonalizado(
         tituloPantalla = "Inicio",
@@ -124,10 +101,10 @@ fun InicioAdministrador(/*empleado: Empleado, */
                         }
                     }
                     else {
-                        items(dataset.count()) { index ->
+                        items(ticketsAbiertos.value.count()) { index ->
 
                             //Si el ticket no es abierto, se muestra en los ultimos tickets
-                            ultimosTicketsLazyColumnContent(dataset[index], false, navController)
+                            ultimosTicketsLazyColumnContent(ticketsAbiertos.value[index], false, navController)
 
                         }
                     }
@@ -137,26 +114,37 @@ fun InicioAdministrador(/*empleado: Empleado, */
 
     }
 
-    //Corrutinas para mostrar los cambios en tiempo real
+    //Mostrar los cambios en tiempo real
+    RealtimeTicketsAbiertos(viewModel)
+
+}
+
+@Composable
+fun RealtimeTicketsAbiertos(viewModel: InicioAdministradorViewModel){
+
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(Unit)
     {
-
         delay(1000)
+        CoroutineScope(Dispatchers.IO).launch {
+            viewModel.realtimeTicketAbiertos(scope)
+        }
+    }
+}
 
-        withContext(Dispatchers.IO) {
+@Composable
+fun obtenerTicketsAbiertos(viewModel: InicioAdministradorViewModel, resultado: () -> Unit){
 
-            TicketRequests().realtimeTicketsAbiertosRequest (scope) { tickets ->
+    LaunchedEffect(Unit) {
 
-                dataset.clear()
-                dataset.addAll(tickets)
-
-            }
-
+        CoroutineScope(Dispatchers.IO).launch{
+            viewModel.obtenerTicketsAbiertos()
+            delay(100)
+            resultado()
         }
 
     }
-
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class, DelicateCoroutinesApi::class)
@@ -227,18 +215,6 @@ fun ultimosTicketsLazyColumnContent(ticket: Ticket, mostrarPrioridad: Boolean, n
 
     }
     Spacer(modifier = Modifier.padding(5.dp))
-
-}
-
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES,
-        showBackground = true,
-        )
-@Composable
-fun darkModeScreen()
-{
-    AVANTITIGestionDeIncidenciasTheme {
-        //InicioAdministrador()
-    }
 
 }
 

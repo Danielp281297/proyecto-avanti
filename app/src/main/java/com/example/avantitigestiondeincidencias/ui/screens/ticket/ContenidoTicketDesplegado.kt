@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -61,7 +61,12 @@ val fuenteLetraTicketDesplegado = 15.sp
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ContenidoTicketDesplegado(navController: NavController, context: Context, ticket: Ticket, function: @Composable () -> Unit)
+fun ContenidoTicketDesplegado(
+    navController: NavController,
+    context: Context,
+    ticket: Ticket,
+    containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919),
+    function: @Composable () -> Unit)
 {
     
     val iconos = listOf(R.drawable.incidencia_icon, R.drawable.clipboard_question_solid, R.drawable.screwdriver_wrench_solid, R.drawable.gears_solid)
@@ -95,7 +100,7 @@ fun ContenidoTicketDesplegado(navController: NavController, context: Context, ti
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    Color.White
+                    containerColor
                 ),
                 title = {
                     androidx.compose.material3.Text(

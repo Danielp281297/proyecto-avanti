@@ -68,7 +68,7 @@ fun HorizontalPagerBottomBarAdministrador(
         mutableStateOf(navItemList.count())
     }
 
-    val state = rememberPagerState(initialPage = 0, pageCount = { numPantalla.value })
+    val state = rememberPagerState(initialPage = 3, pageCount = { numPantalla.value })
 
     Network.networkCallback(navController, context)
 
@@ -131,13 +131,7 @@ fun HorizontalPagerBottomBarAdministrador(
                         0 -> InicioAdministrador(navController, containerColor)
                         1 -> BusquedaTicket(navController, context, administrador, clickAccion = { json ->
 
-                            //LaunchedEffect(Unit) {
-
-                            //
                             navController.navigate("ticketDesplegadoAdministrador" + "/${json}")
-
-                            //}
-
 
                         }, containerColor)
                         2 -> IndicadoresAdministrador(navController, context, administrador, containerColor)

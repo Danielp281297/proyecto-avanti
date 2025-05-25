@@ -28,6 +28,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,13 +42,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
+import com.example.avantitigestiondeincidencias.ViewModel.BusquedaTicketViewModel
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.DatePicker
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.LoadingShimmerEffectScreen
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.OutlinedTextFieldPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.TicketLoading
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
@@ -64,16 +68,15 @@ fun BusquedaTicket(
     context: Context,
     tecnico: Tecnico,
     clickAccion: (String) -> Unit,
-    containerColor: Color = Color.Transparent)
+    containerColor: Color = Color.Transparent,
+    viewModel: BusquedaTicketViewModel = viewModel()
+    )
 {
 
-    var entradaBusquedaState = remember {
-        mutableStateOf("")
-    }
-
-    var dataset = remember{
-        mutableStateListOf<Ticket>()
-    }
+    val listaTicket = viewModel.listaTickets.collectAsState()
+    val descripcion = viewModel.descripcion.collectAsState()
+    val fechaInicial = viewModel.fechaInicial.collectAsState()
+    val fechaFinal = viewModel.fechaFinal.collectAsState()
 
     var showDatePickerState = remember {
         mutableStateOf(false)
@@ -85,14 +88,6 @@ fun BusquedaTicket(
 
     var banderaState = remember {
         mutableStateOf(0)
-    }
-
-    var fechaInicioState = remember {
-        mutableStateOf("")
-    }
-
-    var fechaFinalState = remember {
-        mutableStateOf("")
     }
 
     // Se obtiene los ultimos 50 tickets
@@ -107,18 +102,12 @@ fun BusquedaTicket(
         {
             Spacer(modifier = Modifier.padding(45.dp))
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = entradaBusquedaState.value,
+                OutlinedTextFieldPersonalizado(
+                    value = descripcion.value,
                     onValueChange = {
-                        entradaBusquedaState.value = it
+                        viewModel.setDescripcion(it)
                     },
-                    label = {
-                        Text(" Contenido del ticket...")
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedLabelColor = Color.Black,
-                        focusedBorderColor = Color.Black
-                    ),
+                    label = { Text(" Contenido del ticket...") },
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.padding(5.dp))
@@ -154,7 +143,7 @@ fun BusquedaTicket(
 
                             Spacer(modifier = Modifier.padding(5.dp))
                             Text(
-                                text = fechaInicioState.value,
+                                text = fechaInicial.value,
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.Center,
                                 fontSize = 18.sp
@@ -176,7 +165,7 @@ fun BusquedaTicket(
                         {
                             Spacer(modifier = Modifier.padding(5.dp))
                             Text(
-                                text = fechaFinalState.value,
+                                text = fechaFinal.value,
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.Center,
                                 fontSize = 18.sp
@@ -214,9 +203,9 @@ fun BusquedaTicket(
                     {
 
 
-                        items(dataset.count()) { index ->
+                        items(listaTicket.value.count()) { index ->
 
-                            TicketBusqueda(dataset[index]){ clickAccion(it) }
+                            TicketBusqueda(listaTicket.value[index]){ clickAccion(it) }
 
                         }
 
@@ -232,7 +221,6 @@ fun BusquedaTicket(
     {
         var datePickerInput = ""
 
-
         DatePicker(
             showDialog = showDatePickerState.value,
             containerColor = containerColor,
@@ -241,9 +229,9 @@ fun BusquedaTicket(
                 datePickerInput = it
 
                 if (banderaState.value == 1) {
-                    fechaInicioState.value = datePickerInput
+                    viewModel.setFechaInicial(datePickerInput)
                 } else if (banderaState.value == 2) {
-                    fechaFinalState.value = datePickerInput
+                    viewModel.setFechaFinal(datePickerInput)
                 }
 
                 showDatePickerState.value = false
@@ -253,16 +241,10 @@ fun BusquedaTicket(
 
     if(buscarTicketsTecnico.value)
     {
-        buscarTicketsByTecnicoIDYFechas(
-            tecnicoId = tecnico.id,
-            fechaInicio = fechaInicioState.value,
-            fechaFin = fechaFinalState.value,
-            descripcion = entradaBusquedaState.value
-        ) { tickets ->
-
-            dataset.clear()
-            dataset.addAll(tickets)
-            // Se termina con la condicion en falso, para que funcione bien...
+        BuscarTicketsByTecnicoIDYFechas(
+            viewModel = viewModel,
+            idTecnico = tecnico.id
+        ) {
             buscarTicketsTecnico.value = false
         }
 
@@ -271,25 +253,16 @@ fun BusquedaTicket(
 }
 
 @Composable
-fun buscarTicketsByTecnicoIDYFechas(
-    tecnicoId: Int,
-    fechaInicio: String,
-    fechaFin: String,
-    descripcion: String,
-    resultados:(List<Ticket>) -> Unit)
+fun BuscarTicketsByTecnicoIDYFechas(
+    viewModel: BusquedaTicketViewModel,
+    idTecnico: Int,
+    resultados:() -> Unit)
 {
 
     LaunchedEffect(Unit) {
         CoroutineScope(Dispatchers.IO).launch {
-            TicketRequests().buscarTicketsByTecnicoIdYFechas(
-                id = tecnicoId,
-                fechaInicio = fechaInicio,
-                fechaFin = fechaFin,
-                descripcion = descripcion,
-                tickets = {
-                    resultados(it)
-                }
-            )
+            viewModel.obtenerTickets(idTecnico)
+            resultados()
 
         }
     }
@@ -354,8 +327,6 @@ fun TicketBusqueda(ticket: Ticket, clickAccion: (String) -> Unit)
         HorizontalDivider()
 
     }
-
-
 }
 
 @Composable

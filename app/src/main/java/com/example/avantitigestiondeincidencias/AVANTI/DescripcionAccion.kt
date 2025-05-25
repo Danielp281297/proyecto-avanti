@@ -8,5 +8,5 @@ data class DescripcionAccion(
     @SerialName("id_descripción_acción")
     val id: Int = 0,
     @SerialName("descripción_acción_ejecutada")
-    val descripcion: String = " "
+    var descripcion: String = " "
 )

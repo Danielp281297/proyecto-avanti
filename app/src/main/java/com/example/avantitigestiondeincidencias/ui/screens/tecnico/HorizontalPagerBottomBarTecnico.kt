@@ -161,7 +161,7 @@ fun HorizontalPagerBottomBarTecnico(
                     1 -> BusquedaTicket(navController, context, tecnico, { json ->
                         navController.navigate("ticketDesplegadoBusqueda" + "/${json}")
                     }, containerColor)
-                    2 -> InformeTecnico(tecnico, containerColor)
+                    2 -> InformeTecnico(tecnico, containerColor = containerColor)
                     else -> {}
                 }
 

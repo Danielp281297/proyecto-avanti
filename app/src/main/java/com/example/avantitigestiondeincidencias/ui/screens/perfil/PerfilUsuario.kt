@@ -42,6 +42,7 @@ import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.Supabase.UsuarioRequest
 import com.example.avantitigestiondeincidencias.modeloButton
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDialogPersonalizado
+import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonPersonalizado
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import kotlinx.coroutines.CoroutineScope
@@ -115,13 +116,7 @@ fun PerfilUsuario(navController: NavController,
             }
 
             Column() {
-                Button(
-                    modifier = modeloButton,
-
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black
-                    ),
-                    shape = RectangleShape,
+                BotonPersonalizado(
                     onClick = {
 
                         configurarPerfilState.value = true
@@ -135,13 +130,7 @@ fun PerfilUsuario(navController: NavController,
                 }
                 if (empleado.usuario.habilitado) {
                     Spacer(modifier = Modifier.padding(5.dp))
-                    Button(
-                        modifier = modeloButton,
-
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Black
-                        ),
-                        shape = RectangleShape,
+                    BotonPersonalizado(
                         onClick = {
 
                             cambiarContrasenaState.value = true
@@ -155,13 +144,7 @@ fun PerfilUsuario(navController: NavController,
                     }
                     if (empleado.usuario.id > 1) {
                         Spacer(modifier = Modifier.padding(5.dp))
-                        Button(
-                            modifier = modeloButton,
-
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.Black
-                            ),
-                            shape = RectangleShape,
+                        BotonPersonalizado (
                             onClick = {
 
                                 deshabilitarUsuarioState.value = true

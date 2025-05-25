@@ -1,7 +1,7 @@
 package com.example.avantitigestiondeincidencias.ui.screens.componentes
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,6 +47,7 @@ fun OutlinedTextFieldPersonalizado(
     email: Boolean = false,
     minimoCaracteres: Int = 0,
     maximoCaracteres: Int = 0,
+    borderLabelColor: Color = if (isSystemInDarkTheme()) Color.LightGray else Color.Black
 )
 {
 
@@ -70,8 +71,8 @@ fun OutlinedTextFieldPersonalizado(
         singleLine = singleLine,
         readOnly = readOnly,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedLabelColor = Color.Black,
-            focusedBorderColor = Color.Black
+            focusedLabelColor = borderLabelColor,
+            focusedBorderColor = borderLabelColor
         ),
         trailingIcon = {
             if (password)
@@ -107,7 +108,7 @@ fun OutlinedTextFieldPersonalizado(
 
                     Text(
                         text = "${value.length}/$maximoCaracteres",
-                        color = if (value.length < (maximoCaracteres * 0.75).toInt() && value.length >= minimoCaracteres) Color.LightGray else Color.Red,
+                        color = if (/*value.length < (maximoCaracteres * 0.75).toInt() && */value.length >= minimoCaracteres) Color.LightGray else Color.Red,
                         modifier = Modifier
                     )
                 }

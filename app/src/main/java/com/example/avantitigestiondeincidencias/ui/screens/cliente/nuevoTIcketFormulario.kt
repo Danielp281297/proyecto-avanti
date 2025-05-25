@@ -1,6 +1,8 @@
 package com.example.avantitigestiondeincidencias.ui.screens.cliente
 
 import android.content.Context
+import android.speech.tts.TextToSpeech
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -30,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
 import com.example.avantitigestiondeincidencias.espacioSpacer
@@ -39,7 +43,10 @@ import com.example.avantitigestiondeincidencias.ui.screens.componentes.Spinner
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import com.example.avantitigestiondeincidencias.R
+import com.example.avantitigestiondeincidencias.ViewModel.NuevoTicketFormularioViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.LocalTime
@@ -49,29 +56,19 @@ import java.time.LocalTime
 fun nuevoTicketFormulario(
     idClienteInterno: Int,
     containerColor: Color = Color.Transparent,
+    viewModel: NuevoTicketFormularioViewModel = viewModel(),
     lambda: () -> Unit)
 {
 
     val context = LocalContext.current
 
-
     val tipoEvento = listOf("Incidencia", "Solicitud", "Mantenimiento", "Control de cambio")
 
-    var descripcionState = remember{
-        mutableStateOf("")
-    }
-
-
-
-    var tipoTicketState = remember{
-        mutableStateOf(1)
-    }
+    val descripcion = viewModel.descripcion.collectAsState()
 
     var insertarTicketState = remember{
         mutableStateOf(false)
     }
-
-    var ticket = Ticket()
 
     Box(modifier = Modifier.wrapContentHeight().padding(0.dp).background(containerColor), contentAlignment = Alignment.Center)
     {
@@ -110,7 +107,7 @@ fun nuevoTicketFormulario(
                             itemList = tipoEvento,
                             posicionInicial = 0,
                             onItemSelected = { option ->
-                                tipoTicketState.value = tipoEvento.indexOf(option) + 1
+                                viewModel.getIdTipoTicket(tipoEvento.indexOf(option) + 1)
                             })
                     }
 
@@ -122,11 +119,11 @@ fun nuevoTicketFormulario(
                 Text(text = " Descripción:")
                 OutlinedTextFieldPersonalizado(
                     modifier = Modifier.fillMaxWidth(),
-                    value = descripcionState.value,
+                    value = descripcion.value,
                     onValueChange = {newText ->
                         // Si el texto es menor a 50 caracteres, se almacena en newText
                         if (newText.length <= 100)
-                            descripcionState.value = newText
+                            viewModel.getDescripcion(newText)
                     },
                     label = { Text("Indique aquí", fontSize = 13.sp) },
                     supportingText = true,
@@ -150,76 +147,20 @@ fun nuevoTicketFormulario(
 
     // Si se oprime el boton ABRIR TICKET, se guarda la informacion de la base de datos
     if (insertarTicketState.value) {
+        
+        LaunchedEffect(Unit) { 
+            if(viewModel.validarContenidoTicket(context))
+            {
+                CoroutineScope(Dispatchers.IO).launch{
 
-        //Se envia la consulta en una corrutina
-        LaunchedEffect(Unit)
-        {
-
-            if (validarContenidoTicket(
-                    context,
-                    tipoTicketState.value,
-                    descripcionState.value
-                )
-            ) {
-
-                withContext(Dispatchers.IO) {
-
-                    // Se envia la peticion
-
-
-                    ticket = Ticket(
-                        hora = LocalTime.now().toString(),
-                        fecha = LocalDate.now().toString(),
-                        descripcion = descripcionState.value,
-                        observaciones = "Sin observaciones",
-                        idPrioridadTicket = 1,
-                        idTipoTicket = tipoTicketState.value,
-                        idEstadoTicket = 1, // abierto
-                        idClienteInterno = idClienteInterno,
-                        idTecnico = 1
-
-                    )
-
-                    TicketRequests().insertarTicketByClienteInternoId(ticket/*, { tickets ->
-
-                        lambda(tickets)
-
-                    }*/)
-
+                    viewModel.abrirTicket(idClienteInterno)
                     lambda()
-
-                    insertarTicketState.value = false
-
-
                 }
-
             }
-
+            insertarTicketState.value = false
         }
-    }
-
-}
-
-fun validarContenidoTicket(context: Context, tipoEvento: Int, descripcion: String): Boolean
-{
-
-    var bandera = false
-
-    if(tipoEvento < 1 && tipoEvento > 4)
-    {
-
-        Toast.makeText(context, "Los campos no pueden quedar vacios.", Toast.LENGTH_SHORT).show()
-
-    }else
-    if(descripcion.isBlank()) // Se comprueba que la descripcion no este vacia, ni conformada por espacios
-    {
-
-        Toast.makeText(context, "Descripcion invalida. Intente de nuevo.", Toast.LENGTH_SHORT).show()
 
     }
-    else bandera = true
-
-    return bandera
 
 }
 

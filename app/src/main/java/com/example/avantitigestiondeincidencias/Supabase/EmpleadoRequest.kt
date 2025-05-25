@@ -61,6 +61,7 @@ class EmpleadoRequest(): SupabaseClient() {
 
     val columnasTecnico = Columns.raw("""
         id_técnico,
+        id_grupo_atención,
         grupo_atención(
             id_grupo_atención,
             nombre_grupo_atención
@@ -209,7 +210,7 @@ class EmpleadoRequest(): SupabaseClient() {
     }
 
     // Metodo para devolver los datos de los tecnicos de forma descendente
-    suspend fun seleccionarUsuariosTecnico(function: (List<Tecnico>) -> Unit) {
+    suspend fun seleccionarTecnicos(function: (List<Tecnico>) -> Unit) {
 
         val dataset = getSupabaseClient().from("técnico").select(columns = columnasTecnico){
 
@@ -219,6 +220,15 @@ class EmpleadoRequest(): SupabaseClient() {
             }
 
         }.decodeList<Tecnico>()
+
+        // Se obtienen los datos de los usuarios, y se integran en el objeto
+        dataset.forEach { tecnico ->
+
+            UsuarioRequest().seleccionarUsuarioById(tecnico.empleado.idUsuario){
+                tecnico.empleado.usuario = it
+            }
+
+        }
 
         function(dataset)
 
@@ -234,6 +244,14 @@ class EmpleadoRequest(): SupabaseClient() {
                 gt("id_cliente_interno", 1)
             }
         }.decodeList<ClienteInterno>()
+
+        dataset.forEach {  clienteInterno ->
+
+            UsuarioRequest().seleccionarUsuarioById(clienteInterno.empleado.idUsuario){
+                clienteInterno.empleado.usuario = it
+            }
+
+        }
 
         function(dataset)
 
@@ -324,7 +342,7 @@ class EmpleadoRequest(): SupabaseClient() {
         val resultados = getSupabaseClient().from("usuario").select(columnaUsuario){
             filter{
                 //and {
-                like("nombre_usuario", "%${nombre}%")
+                ilike("nombre_usuario", "%${nombre}%")
                 eq("id_tipo_usuario", 1)
                 //}
             }
@@ -352,10 +370,10 @@ class EmpleadoRequest(): SupabaseClient() {
     {
         val resultados = getSupabaseClient().from("usuario").select(columnaUsuario){
             filter{
-                //and {
-                like("nombre_usuario", "%${nombre}%")
+
+                ilike("nombre_usuario", "%${nombre}%")
                 eq("id_tipo_usuario", 2)
-                //}
+
             }
         }.decodeList<Usuario>()
 
@@ -429,9 +447,6 @@ class EmpleadoRequest(): SupabaseClient() {
     suspend fun actualizarDatosEmpleado(anterior: Empleado, nuevo: Empleado)
     {
 
-        Log.d("ANTERIOR", anterior.toString())
-        Log.d("NUEVO", nuevo.toString())
-
         getSupabaseClient().from("empleado").update(update = {
 
             if(anterior.nacionalidad != nuevo.nacionalidad)
@@ -466,7 +481,7 @@ class EmpleadoRequest(): SupabaseClient() {
 
         }){
             filter {
-                eq("id_empleado", nuevo.id)
+                eq("id_empleado", anterior.id)
             }
         }
 
@@ -527,7 +542,7 @@ class EmpleadoRequest(): SupabaseClient() {
         empleado(resultado)
     }
 
-    suspend fun seleccionarIdGrupoAtencionByEmpleadoId(id: Int, idDepartamento: (Int) -> Unit)
+    suspend fun seleccionarIdGrupoAtencionByEmpleadoId(id: Int /*, idDepartamento: (Int) -> Unit */): Int
     {
         val resultado = getSupabaseClient().from("técnico").select(){
             filter{
@@ -535,7 +550,8 @@ class EmpleadoRequest(): SupabaseClient() {
             }
         }.decodeSingle<Tecnico>()
 
-        idDepartamento(resultado.idGrupoAtencion)
+        //idDepartamento(resultado.idGrupoAtencion)
+        return resultado.idGrupoAtencion
 
     }
 

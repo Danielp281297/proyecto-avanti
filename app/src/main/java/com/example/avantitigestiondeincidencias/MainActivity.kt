@@ -19,7 +19,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,11 +33,12 @@ import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.AVANTI.Usuario
 import com.example.avantitigestiondeincidencias.Supabase.UsuarioRequest
+import com.example.avantitigestiondeincidencias.ui.screens.PantallaCarga
 import com.example.avantitigestiondeincidencias.ui.screens.PantallaPruebas
 import com.example.avantitigestiondeincidencias.ui.screens.PedirPermiso
 import com.example.avantitigestiondeincidencias.ui.screens.perfil.CambiarContrasena
 import com.example.avantitigestiondeincidencias.ui.screens.usuario.CambiarDatosUsuario
-import com.example.avantitigestiondeincidencias.ui.screens.administrador.CrearUsuario
+import com.example.avantitigestiondeincidencias.ui.screens.usuario.CrearUsuario
 import com.example.avantitigestiondeincidencias.ui.screens.administrador.HorizontalPagerBottomBarAdministrador
 import com.example.avantitigestiondeincidencias.ui.screens.tecnico.HorizontalPagerBottomBarTecnico
 import com.example.avantitigestiondeincidencias.ui.screens.cliente.InicioCliente
@@ -94,11 +94,11 @@ class MainActivity : ComponentActivity() {
 fun destination(context: Context)
 {
 
-    val context = LocalContext.current
+    //val context = LocalContext.current
 
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = "pantallaPruebas")
+    NavHost(navController = navController, startDestination = "PantallaPruebas")
     {
 
 
@@ -134,10 +134,12 @@ fun destination(context: Context)
             //HorizontalPagerBottomBarAdministrador(Empleado(), navController = navController)
             //TicketDesplegadoAdministrador(navController, context, Ticket())
             //TicketDesplegadoTecnico(navController, Ticket())
-            //CambiarContrasena(navController, Usuario())
+            //CambiarContrasena(navController, context, Usuario())
             //ManualClienteInterno(Color.Black)
             //ManualAdministrador(Color.Black)
             //ManualTecnico(Color.Black)
+            //PantallaCarga()
+            //CambiarDatosUsuario(navController, context, Empleado())
 
         }
 

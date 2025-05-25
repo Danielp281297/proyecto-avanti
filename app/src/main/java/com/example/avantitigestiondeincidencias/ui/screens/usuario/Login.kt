@@ -21,6 +21,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -37,6 +38,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Usuario
@@ -44,12 +47,15 @@ import com.example.avantitigestiondeincidencias.DataStore.DataStore
 import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.Supabase.EmpleadoRequest
+import com.example.avantitigestiondeincidencias.ViewModel.LoginVIewModel
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDialogPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonCargaPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.OutlinedTextFieldPersonalizado
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -61,19 +67,17 @@ fun Login(
     navController: NavController,
     context: Context,
     navigateToDos: (Int, String) -> Unit,
-    containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919))
+    containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919),
+    viewModel: LoginVIewModel = viewModel()
+)
 {
-    
-    var nombreUsuarioState = remember {
-        mutableStateOf("")
-    }
 
-    var contrasenaUsuarioState = remember {
-        mutableStateOf("")
-    }
-    
-    var contrasenaVisibleState = remember {
-        mutableStateOf(false)
+    val nombreUsuarioState = viewModel.nombreUsuario.collectAsState()
+    val contrasenaUsuarioState = viewModel.contrasena.collectAsState()
+
+    var usuario = remember{
+
+        mutableStateOf<Usuario?>(null)
     }
 
     var ingresarbuttonState = remember {
@@ -92,12 +96,10 @@ fun Login(
         mutableStateOf(false)
     }
 
-    var usuario = remember{
-        mutableStateOf<Usuario?>(null)
-    }
+
 
     var jsonState = remember {
-        mutableStateOf("")
+        mutableStateOf<String>("")
     }
 
     var mostrarLogin = remember {
@@ -107,7 +109,7 @@ fun Login(
     var scope = rememberCoroutineScope()
 
 
-
+    // Se obtienen los datos de un usuario
     LaunchedEffect(Unit) {
         scope.launch {
 
@@ -156,7 +158,7 @@ fun Login(
                     value = nombreUsuarioState.value,
                     onValueChange = {newText ->
                         if (newText.all { !it.isWhitespace() && it.isLetter() || it.isDigit() } && newText.length <= 20)
-                            nombreUsuarioState.value = newText
+                            viewModel.setNombreUsuario(newText)
                     },
                     label = { Text("Nombre de usuario", fontSize = 13.sp) },
                     supportingText = false
@@ -168,7 +170,7 @@ fun Login(
                     password = true,
                     onValueChange = {newText ->
                         if (newText.all { !it.isWhitespace() } && newText.length <= 20)
-                            contrasenaUsuarioState.value = newText
+                            viewModel.setContrasena(newText)
                     },
                     label = { Text("Contraseña", fontSize = 13.sp) },
                     empezarMayusculas = false,
@@ -206,30 +208,36 @@ fun Login(
             ingresarbuttonState.value = false
         }
         else {
+
             LaunchedEffect(Unit) {
-                withContext(Dispatchers.IO) {
+                withContext(Dispatchers.IO){
 
-                    usuario.value =
-                        EmpleadoRequest().obtenerDatosUsuario(nombreUsuarioState.value, contrasenaUsuarioState.value)
+                    usuario.value = viewModel.validarDatosUsuario()
 
-                    if (usuario.value != null) {
+                    if (usuario.value != null)
+                    {
+                        Log.d("RESULTADO", "USUARIO ENCONTRADO")
+                        viewModel.obtenerDatosEmpleado(usuario.value!!){ json ->
 
-                        Log.d("USUARIO", "Encontrado")
-                        enviarPantalla(usuario.value!!) { json ->
+                            Log.d("RESULTADOS", json)
                             jsonState.value = json
                             enviarPantallaState.value = true
 
                         }
-
-                    } else {
-                        Log.d("USUARIO", "No encontrado")
+                    }
+                    else
+                    {
+                        Log.d("RESULTADO", "USUARIO NO ENCONTRADO")
                         datosIncorrectosAlertDialogState.value = true
                     }
 
+
                 }
+
                 ingresarbuttonState.value = false
             }
         }
+
 
     }
 
@@ -250,8 +258,8 @@ fun Login(
     if (enviarPantallaState.value)
     {
         enviarPantallaState.value = false
+
         navController.popBackStack()
-        //pasarPantalla(usuario.value!!.idTipoUsuario, jsonState.value, navController)
         // Se guardan los datos de las variables necesarias
         LaunchedEffect(Unit) {
             scope.launch {
@@ -265,87 +273,9 @@ fun Login(
         }
         navigateToDos(usuario.value!!.idTipoUsuario, jsonState.value)
 
-    }
-
-}
-
-@Composable
-fun iconoCarga(modifier: Modifier)
-{
-    AndroidView(
-        modifier = modifier,
-        factory = { ctx ->
-            val imageView = ImageView(ctx)
-            val drawable = ctx.resources.getDrawable(R.drawable.cargando, null)
-            if (drawable is AnimatedImageDrawable) {
-                drawable.start()
-            }
-            imageView.setImageDrawable(drawable)
-            imageView
-        }
-    )
-}
-
-fun pasarPantalla(
-    tipoUsuario: Int,
-    json: String,
-    navController: NavController)
-{
-
-    when(tipoUsuario)
-    {
-        // Ingresar a la pantalla de Tecnico
-        1 -> navController.navigate("principalTécnico" + "/${json}")
-        2 -> navController.navigate("principalCliente" + "/${json}")
-        3 -> navController.navigate("principalAdministrador" + "/${json}")
 
     }
 
-}
-
-/*
-
-when(tipoUsuario)
-    {
-        // Ingresar a la pantalla de Tecnico
-        1 -> navController.navigate("principalTécnico" + "/${json}")
-
-        2 -> navController.navigate("principalCliente" + "/${json}")
-
-        3 -> navController.navigate("principalAdministrador" + "/${json}")
-
-    }
-
- */
-
-suspend fun enviarPantalla(usuario: Usuario, jsonFormato: (json: String) -> Unit)
-{
-
-    var json = " "
-
-    when(usuario.idTipoUsuario)
-    {
-
-        1 -> {
-            var tecnico = EmpleadoRequest().seleccionarTecnicobyUsuarioId(usuario.id)
-            // Se crea el objeto json
-            json = Json { ignoreUnknownKeys = true }.encodeToString(tecnico)
-            }
-
-        2 -> {
-            var clienteInterno = EmpleadoRequest().seleccionarClienteInternobyUsuarioId(usuario.id)
-
-            json = Json { ignoreUnknownKeys = true }.encodeToString(clienteInterno)
-        }
-        
-        3 ->{
-            var administrador = EmpleadoRequest().seleccionarTecnicobyUsuarioId(usuario.id)
-
-            json = Json { ignoreUnknownKeys = true }.encodeToString(administrador)
-        }
-    }
-
-    jsonFormato(json)
 }
 
 @Preview(showBackground = true)

@@ -27,6 +27,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Empleado
@@ -48,6 +50,7 @@ import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.Notification.Notification
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
+import com.example.avantitigestiondeincidencias.ViewModel.InicioTecnicoViewModel
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.LoadingShimmerEffectScreen
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.TicketLoading
@@ -69,13 +72,13 @@ import kotlinx.serialization.json.Json
 fun InicioTecnico(
     tecnico: Tecnico,
     navController: NavController,
-    containerColor: Color = Color.Transparent)
+    containerColor: Color = Color.Transparent,
+    viewModel: InicioTecnicoViewModel = viewModel()
+)
 {
     // Se crea la variable de estado con la lista
     // Se comprueba si la lista esta vacia, de ser asi, se crea un aviso en el centro
-    var ticketsTecnicoList = remember{
-        mutableStateListOf<Ticket>()
-    }
+    val ticketsAsignados = viewModel.ticketsAsignados.collectAsState()
 
     var buscarTicketsTecnico = remember {
         mutableStateOf(true)
@@ -83,10 +86,7 @@ fun InicioTecnico(
 
     val scope = rememberCoroutineScope()
 
-    buscarTicketTecnico(tecnico.id) {
-
-        ticketsTecnicoList.clear()
-        ticketsTecnicoList.addAll(it)
+    buscarTicketTecnico(viewModel, tecnico.id) {
         buscarTicketsTecnico.value = false
     }
 
@@ -128,9 +128,9 @@ fun InicioTecnico(
                         }
                     }else
                     {
-                        items(ticketsTecnicoList.count()) { index ->
+                        items(ticketsAsignados.value.count()) { index ->
 
-                            TicketsTecnico(ticketsTecnicoList[index], navController)
+                            TicketsTecnico(ticketsAsignados.value[index], navController)
 
                         }
                     }
@@ -145,29 +145,22 @@ fun InicioTecnico(
     {
         CoroutineScope(Dispatchers.IO).launch {
 
-            TicketRequests().realtimeTicketRequestTecnicoId(scope, tecnico.id) { tickets ->
-
-                ticketsTecnicoList.clear()
-                ticketsTecnicoList.addAll(tickets)
-
-            }
+            viewModel.realtimeTicketsAsignados(scope, tecnico.id)
         }
     }
 
 }
 
 @Composable
-fun buscarTicketTecnico(id: Int, resultados: (List<Ticket>) -> Unit)
+fun buscarTicketTecnico(viewModel: InicioTecnicoViewModel, id: Int, resultados: () -> Unit)
 {
     LaunchedEffect(Unit) {
 
         CoroutineScope(Dispatchers.IO).launch {
 
-            TicketRequests().buscarTicketByTecnicoId(id) { tickets ->
-
-                resultados(tickets)
-
-            }
+            viewModel.obtenerTicketsAsignados(id)
+            delay(100)
+            resultados()
 
         }
 

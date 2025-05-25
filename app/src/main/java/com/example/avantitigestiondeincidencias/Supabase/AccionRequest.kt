@@ -230,8 +230,6 @@ class AccionRequest: SupabaseClient() {
             }
         }.decodeSingleOrNull<Accion>()
 
-        Log.d("ACCION", resultado.toString())
-
         // Se formatea la fecha y la hora de la accion
         if (resultado != null)
         {

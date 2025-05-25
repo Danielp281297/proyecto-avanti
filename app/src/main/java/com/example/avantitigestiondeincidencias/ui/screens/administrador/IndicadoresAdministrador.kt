@@ -19,6 +19,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,16 +33,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Accion
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
+import com.example.avantitigestiondeincidencias.FormatoHoraFecha.Conversor
+import com.example.avantitigestiondeincidencias.FormatoHoraFecha.Conversor.Companion.duracionFechasMilisegundos
 import com.example.avantitigestiondeincidencias.FormatoHoraFecha.FormatoHoraFecha
 import com.example.avantitigestiondeincidencias.Notification.Notification
+import com.example.avantitigestiondeincidencias.POI.POI
 import com.example.avantitigestiondeincidencias.Supabase.AccionRequest
 import com.example.avantitigestiondeincidencias.Supabase.TecnicoRequest
 import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
+import com.example.avantitigestiondeincidencias.ViewModel.IndicadoresAdministradorViewModel
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonCargaPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.DatePicker
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.ScaffoldSimplePersonalizado
@@ -70,8 +76,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-data class Fecha(val fecha: String, val hora: String)
-data class RangoFecha(val fechaInicio: Fecha, val fechaFin: Fecha)
+
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,28 +85,18 @@ fun IndicadoresAdministrador(
     navController: NavController,
     context: Context,
     administrador: Tecnico,
-    containerColor: Color = Color.Transparent) {
+    containerColor: Color = Color.Transparent,
+    viewModel: IndicadoresAdministradorViewModel = viewModel()
+) {
 
     val scrollState = rememberScrollState()
 
-    var tecnicosList = remember {
-        mutableListOf<String>("TODOS")
-    }
-
-    var mostrarSpinnerState = remember {
-        mutableStateOf(false)
-    }
+    val fechaFinal = viewModel.fechaFinal.collectAsState()
+    val fechaInicial = viewModel.fechaInicial.collectAsState()
+    val listaTickets = viewModel.listaTickets.collectAsState()
 
     var showDatePickerState = remember {
         mutableStateOf(false)
-    }
-
-    var fechaInicioState = remember {
-        mutableStateOf<String>("")
-    }
-
-    var fechaFinalState = remember {
-        mutableStateOf<String>("")
     }
 
     var banderaState = remember {
@@ -120,66 +115,18 @@ fun IndicadoresAdministrador(
         mutableStateOf(false)
     }
 
-    var ticketsAbiertosContador = remember {
-        mutableStateOf(0)
-    }
+    val ticketsAbiertosContador = viewModel.ticketsAbiertosContador.collectAsState()
 
-    var ticketsPendientesContador = remember {
-        mutableStateOf(0)
-    }
+    val ticketsPendientesContador = viewModel.ticketsPendientesContador.collectAsState()
+    val ticketsCerradosContador = viewModel.ticketsCerradosContador.collectAsState()
+    val ticketsCanceladosContador = viewModel.ticketsCanceladosContador.collectAsState()
+    val ticketsIncidenciasContador = viewModel.ticketsIncidenciasContador.collectAsState()
+    val ticketsSolicitudesContador = viewModel.ticketsSolicitudesContador.collectAsState()
+    val ticketsMantenimientoContador = viewModel.ticketsMantenimientoContador.collectAsState()
+    val ticketsControlCambioContador = viewModel.ticketsControlCambioContador.collectAsState()
+    val promedioCalificacionTicket = viewModel.promedioCalificacionTicket.collectAsState()
 
-    var ticketsCerradosContador = remember {
-        mutableStateOf(0)
-    }
-
-    var ticketsCanceladosContador = remember {
-        mutableStateOf(0)
-    }
-
-    var ticketsIncidenciasContador = remember {
-        mutableStateOf(0)
-    }
-    var ticketsSolicitudesContador = remember {
-        mutableStateOf(0)
-    }
-    var ticketsMantenimientoContador = remember {
-        mutableStateOf(0)
-    }
-    var ticketsControlCambioContador = remember {
-        mutableStateOf(0)
-    }
-
-    var promedioCalificacionTicket = remember{
-        mutableStateOf(0F)
-    }
-
-    var primedioTiempoResolucion = remember{
-        mutableStateOf<Duration?>(Duration.ZERO)
-    }
-
-    var datasetTicket = remember {
-        mutableStateListOf<Ticket>()
-    }
-
-    var datasetAccion = remember {
-        mutableStateListOf<Accion>()
-    }
-
-    LaunchedEffect(Unit)
-    {
-        CoroutineScope(Dispatchers.IO).launch {
-            TecnicoRequest().seleccionarTecnicos { tecnicos ->
-
-                tecnicos.forEach { item ->
-
-                    tecnicosList.add("${item.empleado.primerNombre} ${item.empleado.primerApellido} - ${item.grupoAtencion.grupoAtencion}")
-                    mostrarSpinnerState.value = true
-
-                }
-
-            }
-        }
-    }
+    var promedioTiempoResolucion = viewModel.promedioTiempoResolucion.collectAsState()
 
     ScaffoldSimplePersonalizado(
         tituloPantalla = "Usuarios",
@@ -218,7 +165,7 @@ fun IndicadoresAdministrador(
 
                         Spacer(modifier = Modifier.padding(5.dp))
                         Text(
-                            text = fechaInicioState.value,
+                            text = fechaInicial.value,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
                             fontSize = 18.sp
@@ -239,7 +186,7 @@ fun IndicadoresAdministrador(
                     {
                         Spacer(modifier = Modifier.padding(5.dp))
                         Text(
-                            text = fechaFinalState.value,
+                            text = fechaFinal.value,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
                             fontSize = 18.sp
@@ -267,10 +214,10 @@ fun IndicadoresAdministrador(
 
             Spacer(modifier = Modifier.padding(5.dp))
 
-            if(datasetTicket.isNotEmpty()) {
+            if(listaTickets.value.isNotEmpty()) {
 
                 Spacer(modifier = Modifier.padding(5.dp))
-                Text("Total de tickets: \n ${datasetTicket.count()}", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                Text("Total de tickets: \n ${listaTickets.value.count()}", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
 
                 Spacer(modifier = Modifier.padding(5.dp))
                 Text("Estados de tickets", textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
@@ -339,7 +286,7 @@ fun IndicadoresAdministrador(
                     promedioTiempoPantalla(Modifier
                         .height(100.dp)
                         .weight(1F),
-                        primedioTiempoResolucion.value)
+                        promedioTiempoResolucion.value)
                     Spacer(modifier = Modifier.padding(5.dp))
                     promedioCalificacionPantalla(Modifier
                         .height(100.dp)
@@ -364,46 +311,15 @@ fun IndicadoresAdministrador(
 
     }
 
-    if(fechaInicioState.value.isNotEmpty() || fechaFinalState.value.isNotEmpty())
+    if(viewModel.validarFechas())
     {
+
         habilitarCargarDatosState.value = true
     }
 
     if (generarIndicadoresState.value) {
 
-        datasetTicket.clear()
-        //Se obtienen los datos y se actualiza los tickets para los indicadores
-        //buscarTicketByIdTecnicoyRangoFechas(tecnicosListState.value, fechaInicioState.value, fechaFinalState.value){ tickets ->
-        //    dataset.addAll(tickets)
-        //}
-        datosTicketsYAcciones(fechaInicioState.value, fechaFinalState.value, { tickets ->
-            datasetTicket.addAll(tickets)
-
-            // Se obtienen los datos de la tabla
-            ValoresPieChartsAdministrador(datasetTicket){ abiertos, pendientes, cerrados, cancelados, incidencias, solicitudes, mantenimiento, controlCambio ->
-
-                ticketsAbiertosContador.value   = abiertos
-                ticketsPendientesContador.value = pendientes
-                ticketsCerradosContador.value   = cerrados
-                ticketsCanceladosContador.value = cancelados
-
-                ticketsIncidenciasContador.value = incidencias
-                ticketsSolicitudesContador.value = solicitudes
-                ticketsMantenimientoContador.value = mantenimiento
-                ticketsControlCambioContador.value = controlCambio
-
-            }
-
-            promedioCalificacionTicket.value = promedioCalificacionTickets(datasetTicket)
-
-        },
-            { acciones ->
-                //Se obtiene el promedio de calificación de la gestion de incidencias
-                datasetAccion.clear()
-                datasetAccion.addAll(acciones)
-                primedioTiempoResolucion.value = promedioTiempoResolucion(datasetAccion)
-
-            })
+        ObtenerDatosTicketsYAcciones(viewModel)
         
         generarIndicadoresState.value = false
     }
@@ -421,9 +337,9 @@ fun IndicadoresAdministrador(
                 datePickerInput = it
 
                 if (banderaState.value == 1) {
-                    fechaInicioState.value = datePickerInput
+                    viewModel.setFechaInicial(datePickerInput)
                 } else if (banderaState.value == 2) {
-                    fechaFinalState.value = datePickerInput
+                    viewModel.setFechaFinal(datePickerInput)
                 }
 
                 showDatePickerState.value = false
@@ -433,147 +349,29 @@ fun IndicadoresAdministrador(
 
     if(generarInformeIndicadoresState.value)
     {
-
-        generarInformeIndicadores(
-            context,
-            fechaInicioState.value,
-            fechaFinalState.value,
-            //ticketsIncidenciasContador.value,
-            //ticketsSolicitudesContador.value,
-            //ticketsMantenimientoContador.value,
-            //ticketsControlCambioContador.value,
-            datasetAccion)
+        viewModel.generarInforme(context)
         generarInformeIndicadoresState.value = false
     }
 
 }
 
-fun generarInformeIndicadores(
-    context: Context,
-    fechaInicio: String,
-    fechaFin: String,
-    acciones: List<Accion>)
-{
+@Composable
+fun ObtenerDatosTicketsYAcciones(
+    viewModel: IndicadoresAdministradorViewModel
+){
 
-    if (acciones.isNotEmpty())
-    {
 
-        // Se obtienen los datos de los tecnicos en la lista de las acciones
-        val tecnicos = acciones.map { it.ticket.tecnico }.toSet().toList()
+    LaunchedEffect(Unit) {
+        CoroutineScope(Dispatchers.IO).launch {
 
-        var numeroTicketsPorTecnico = mutableListOf<Int>()
+            viewModel.obtenerTicketsResueltos()
+            delay(1000)
 
-        tecnicos.forEach { tecnico ->
-            numeroTicketsPorTecnico.add(acciones.count{ it.ticket.tecnico == tecnico })
         }
-
-        var nombresTecnicosYTickets = mutableListOf<String>()
-        var i = 0
-        tecnicos.forEach {tecnico ->
-
-            nombresTecnicosYTickets.add("${tecnico.empleado.primerNombre} ${tecnico.empleado.primerApellido}: \n ${numeroTicketsPorTecnico[i]} Tickets")
-            i++
-        }
-
-        _root_ide_package_.com.example.avantitigestiondeincidencias.ui.screens.tecnico.generalInformeExcel(
-            acciones = acciones,
-            fechaInicio = fechaInicio,
-            fechaFin = fechaFin,
-            adicional = { sheet, cantidad ->
-
-                // Se crea la grafica de tortas, en base a los tickets y los tecnicos
-                generarPieChart(
-                    sheet = sheet,
-                    filaComienzo = cantidad + 2,
-                    columnaComienzo = 2,
-                    filaFin = cantidad + 15,
-                    columnaFin = 5,
-                    tituloPieChart = "Tickets resueltos \n Desde $fechaInicio " + if (fechaFin.isNotEmpty()) " hasta $fechaFin" else "",
-                    categorias = nombresTecnicosYTickets.toTypedArray(),
-                    valores = numeroTicketsPorTecnico.toTypedArray()
-                )
-
-                val tipoTicktes = listOf(
-                    acciones.count { it.ticket.tipo.id == 1 },
-                    acciones.count { it.ticket.tipo.id == 2 },
-                    acciones.count { it.ticket.tipo.id == 3 },
-                    acciones.count { it.ticket.tipo.id == 4 },
-                )
-
-                generarPieChart(
-                    sheet = sheet,
-                    filaComienzo = cantidad + 2,
-                    columnaComienzo = 6,
-                    filaFin = cantidad + 15,
-                    columnaFin = 9,
-                    tituloPieChart = "Tickets por tipo \n Desde $fechaInicio " + if (fechaFin.isNotEmpty()) " hasta $fechaFin" else "",
-                    categorias = arrayOf(
-                        "Incidencia:\n ${tipoTicktes[0]} tickets",
-                        "Solicitud:\n ${tipoTicktes[1]} tickets",
-                        "Mantenimiento:\n ${tipoTicktes[2]} tickets",
-                        "Control de cambio:\n ${tipoTicktes[3]} tickets"
-                    ),
-                    valores = tipoTicktes.toTypedArray()
-                )
-
-            }
-        )
-        Notification().mostrarNotificacion(
-            context,
-            "AVANTI - Gestión de Incidencias: Informe",
-            "Se guardó el informe en la carpeta de Documentos."
-        )
-
     }
 
 }
-
-fun generarPieChart(
-    sheet: XSSFSheet?,
-    filaComienzo: Int,
-    columnaComienzo: Int,
-    filaFin: Int,
-    columnaFin: Int,
-    tituloPieChart: String,
-    categorias: Array<String>,
-    valores: Array<Int>,
-
-){
-    val drawing: XSSFDrawing = sheet!!.createDrawingPatriarch()
-    val anchor = drawing.
-    createAnchor(0,
-        0,
-        0,
-        0,
-        columnaComienzo,  // Columna donde comienza el grafico
-        filaComienzo, // Fila donde comienza el grafico
-        columnaFin,   // Cantidad de columnas que conforma el grafico
-        filaFin  // Cantidad de filas que conforma el grafico
-    )
-
-    val chart = drawing.createChart(anchor)
-    chart.setTitleText(tituloPieChart)
-    chart.titleOverlay = false
-
-    val legend = chart.orAddLegend
-    legend.position = LegendPosition.TOP_RIGHT
-
-
-    val categorias = XDDFDataSourcesFactory.
-    fromArray(categorias)
-
-    val valores = XDDFDataSourcesFactory.
-    fromArray(valores)
-
-    val data = chart.createData(ChartTypes.PIE, null, null)
-    data.setVaryColors(true)
-
-    val serie = data.addSeries(categorias, valores)
-    serie.setTitle(null, null)
-
-    chart.plot(data)
-}
-
+/*
 fun promedioCalificacionTickets(dataset: List<Ticket>): Float {
 
     var sumatoria = 0
@@ -588,6 +386,7 @@ fun promedioCalificacionTickets(dataset: List<Ticket>): Float {
     return promedio
 
 }
+*/
 
 @Composable
 fun promedioCalificacionPantalla(modifier: Modifier, promedio: Float)
@@ -648,85 +447,7 @@ fun promedioTiempoPantalla(modifier: Modifier, promedio: Duration?)
 
 }
 
-fun promedioTiempoResolucion(dataset: List<Accion>): Duration? {
-
-    var fechaHora = RangoFecha(
-        fechaInicio = Fecha(
-            fecha = "",
-            hora = ""
-        ),
-        fechaFin = Fecha(
-            fecha = "",
-            hora = ""
-        )
-    )
-
-    var sumatoria = Duration.ZERO
-
-    dataset.forEach { accion ->
-
-        fechaHora = RangoFecha(
-            fechaInicio = Fecha(
-                fecha = FormatoHoraFecha.formatoFecha(accion.ticket.fechaAsignacion).toString(),
-                hora = FormatoHoraFecha.formatoHora(accion.ticket.horaAsignacion)
-            ),
-            fechaFin = Fecha(
-                fecha = accion.fecha,
-                hora = FormatoHoraFecha.formatoHora(accion.hora)
-            )
-        )
-
-        Log.d("Fecha", fechaHora.toString())
-        sumatoria = sumatoria.plus(duracionFechasMilisegundos(fechaHora))
-
-    }
-
-    return sumatoria.dividedBy(dataset.count().toLong())
-
-}
-
-fun duracionFechasMilisegundos(rangoFecha: RangoFecha): Duration? {
-
-    val formato = "dd-MM-yyyy HH:mm:ss"
-    val formateador = DateTimeFormatter.ofPattern(formato)
-
-    val dateTime1 = LocalDateTime.parse("${rangoFecha.fechaInicio.fecha} ${rangoFecha.fechaInicio.hora}", formateador)
-    val dateTime2 = LocalDateTime.parse("${rangoFecha.fechaFin.fecha} ${rangoFecha.fechaFin.hora}", formateador)
-
-    val duracion = if (dateTime2.isAfter(dateTime1)) {
-        Duration.between(dateTime1, dateTime2)
-    } else {
-        Duration.between(dateTime2, dateTime1)
-    }
-
-    return duracion
-}
-
-@Composable
-fun datosTicketsYAcciones(fechaInicio: String, fechaFin: String, tickets: (List<Ticket>) -> Unit, acciones: (List<Accion>) -> Unit){
-
-    val scope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
-        CoroutineScope(Dispatchers.IO).launch {
-
-            TicketRequests().buscarTicketsByTecnicoIdYFechas(1, fechaInicio, fechaFin, "") {
-
-                tickets(it)
-
-            }
-            delay(1000)
-
-            AccionRequest().seleccionarAccionesbyRangoFechas(fechaInicio, fechaFin) {
-
-                acciones(it)
-
-            }
-
-        }
-    }
-
-}
-
+/*
 @Composable
 fun buscarTicketByIdTecnicoyRangoFechas(
     id: Int,
@@ -766,6 +487,7 @@ fun buscarTicketByIdTecnicoyRangoFechas(
     }
 
 }
+*/
 
 @Preview(showBackground = true)
 @Composable

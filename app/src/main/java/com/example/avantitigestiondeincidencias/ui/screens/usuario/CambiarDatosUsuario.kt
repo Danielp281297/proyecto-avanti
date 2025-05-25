@@ -21,11 +21,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -34,20 +34,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
-import com.example.avantitigestiondeincidencias.AVANTI.Departamento
 import com.example.avantitigestiondeincidencias.AVANTI.Empleado
-import com.example.avantitigestiondeincidencias.AVANTI.GrupoAtencion
-import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
-import com.example.avantitigestiondeincidencias.AVANTI.TelefonoEmpleado
-import com.example.avantitigestiondeincidencias.AVANTI.Usuario
 import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.R
-import com.example.avantitigestiondeincidencias.Supabase.EmpleadoRequest
-import com.example.avantitigestiondeincidencias.Supabase.TelefonoRequest
-import com.example.avantitigestiondeincidencias.Supabase.UsuarioRequest
+import com.example.avantitigestiondeincidencias.ViewModel.CambiarDatosUsuarioViewModel
 import com.example.avantitigestiondeincidencias.espacioSpacer
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonCargaPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.OutlinedTextFieldPersonalizado
@@ -56,7 +49,6 @@ import com.example.avantitigestiondeincidencias.ui.screens.componentes.Spinner
 import com.example.avantitigestiondeincidencias.ui.screens.PantallaCarga
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
-import io.ktor.util.toLowerCasePreservingASCIIRules
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -68,89 +60,39 @@ import kotlinx.coroutines.withContext
 fun CambiarDatosUsuario(navController: NavController,
                         context: Context,
                         empleado: Empleado,
-                        containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919))
+                        containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919),
+                        viewModel: CambiarDatosUsuarioViewModel = viewModel()
+)
 {
 
     val image = R.drawable.editar_usuario_icon
 
+    val mensajeError = viewModel.mensajeError.collectAsState()
+
+    val idTipoUsuario = viewModel.idTipoUsuario.collectAsState()
+    val nacionalidad = viewModel.nacionalidad.collectAsState()
+    val cedula = viewModel.cedula.collectAsState()
+    val primerNombre = viewModel.primerNombre.collectAsState()
+    val segundoNombre = viewModel.segundoNombre.collectAsState()
+    val primerApellido = viewModel.primerApellido.collectAsState()
+    val segundoApellido = viewModel.segundoApellido.collectAsState()
+    val correoElectronico = viewModel.correoElectronico.collectAsState()
+    val idCodigoOperadoraTelefono = viewModel.idCodigoOperadoraTelefono.collectAsState()
+    val extensionTelefono = viewModel.extensionTelefono.collectAsState()
+    val idDepartamento = viewModel.idDepartamento.collectAsState()
+    val nombreSede = viewModel.nombreSede.collectAsState()
+    val idCargo = viewModel.idCargo.collectAsState()
+    val idGrupoAtencion = viewModel.idGrupoAtencion.collectAsState()
+    val nombreUsuario = viewModel.nombreUsuario.collectAsState()
+
+    val listaOperadoraTelefono = viewModel.listaCodigoOperadoraTelefono.collectAsState()
+    val listaCargos = viewModel.listaCargos.collectAsState()
+    val listaDepartamentos = viewModel.listaDepartamentos.collectAsState()
+    val listaSedes = viewModel.listaSede.collectAsState()
+    val listaGrupoAtencion = viewModel.listaGrupoAtencion.collectAsState()
+
     val nacionalidadList = remember {
         mutableListOf('V', 'E')
-    }
-
-    var codigoExtensionTelefonoList = remember{
-        mutableListOf<String>("-- Seleccione")
-    }
-
-    var cargoEmpleadoList = remember {
-        mutableListOf<String>("-- Seleccione")
-    }
-
-    var grupoAtencionList = remember {
-        mutableListOf<String>("-- Seleccione")
-    }
-
-    var departamentosList = remember{
-        mutableListOf<Departamento>(Departamento())
-    }
-
-    var nombreDepartamentoList = remember{
-        mutableListOf<String>("-- Seleccione")
-    }
-
-    var nacionalidad = remember{
-        mutableStateOf(empleado.nacionalidad)
-    }
-
-    var idCodigoOperadoraTelefonoState = remember {
-        mutableStateOf(0)
-    }
-
-    var idCargoEmpleadoState = remember{
-        mutableStateOf(0)
-    }
-
-    var idGrupoAtencionState = remember {
-        mutableStateOf(0)
-    }
-
-    var idDepartamento = remember{
-        mutableStateOf(0)
-    }
-
-    var cedulaState = remember {
-        mutableStateOf(empleado.cedula.toString())
-    }
-
-    var primerNombreState = remember{
-        mutableStateOf<String>(empleado.primerNombre)
-    }
-
-    var segundoNombreState = remember{
-        mutableStateOf<String>(empleado.segundoNombre)
-    }
-
-    var primerApellidoState = remember{
-        mutableStateOf<String>(empleado.primerApellido)
-    }
-
-    var segundoApellidoState = remember{
-        mutableStateOf<String>(empleado.segundoApellido)
-    }
-
-    var correoElectronicoState = remember{
-        mutableStateOf(empleado.correoElectronico)
-    }
-
-    var numeroTelefonoState = remember{
-        mutableStateOf(empleado.telefonoEmpleado.extension)
-    }
-
-    var nombreUsuarioState = remember {
-        mutableStateOf(empleado.usuario.nombre)
-    }
-
-    var nombreSede = remember{
-        mutableStateOf("")
     }
 
     var actualizarUsuarioState = remember{
@@ -159,66 +101,53 @@ fun CambiarDatosUsuario(navController: NavController,
 
     val verticalScrollState = rememberScrollState()
 
-    var tecnicoNuevo = remember{
-        mutableStateOf(Tecnico())
-    }
-
-    var clienteInterno = remember{
-        mutableStateOf(ClienteInterno())
-    }
-
-    var ingresarbuttonState = remember{
+    val validaciones = remember{
         mutableStateOf(false)
-    }
-
-    var validaciones = remember{
-        mutableStateOf(false)
-    }
-
-    var validarRepetidos = remember {
-        mutableStateOf(false
-        )
     }
 
     var cargandoContenidoSpinners = remember{
         mutableStateOf(true)
     }
 
-    Network.networkCallback(navController, context)
+    val scope = rememberCoroutineScope()
 
+    Network.networkCallback(navController, context)
 
     // Se obtienen los datos para los Spinners
     LaunchedEffect(Unit) {
 
+        // Esto se pone aqui, porque suele repetir los datos después de presionar el boton:
+        viewModel.setIdTipoUsuario(empleado.usuario.idTipoUsuario)
+        viewModel.setNacionalidad(empleado.nacionalidad)
+        viewModel.setCedula(empleado.cedula.toString())
+        viewModel.setPrimerNombre(empleado.primerNombre)
+        viewModel.setSegundoNombre(empleado.segundoNombre)
+        viewModel.setPrimerApellido(empleado.primerApellido)
+        viewModel.setSegundoApellido(empleado.segundoApellido)
+        viewModel.setCorreoElectronico(empleado.correoElectronico)
+        //viewModel.setIdCodigoOperadoraTelefono(empleado.telefonoEmpleado.idCodigoOperadoraTelefono)
+        viewModel.setExtensionTelefono(empleado.telefonoEmpleado.extension)
+        viewModel.setNombreUsuario(empleado.usuario.nombre)
+
         withContext(Dispatchers.IO)
         {
 
-            TelefonoRequest().seleccionarOperadorasTelefono().forEach { codigo ->
-                codigoExtensionTelefonoList.add(codigo.operadora)
-                idCodigoOperadoraTelefonoState.value = empleado.telefonoEmpleado.idCodigoOperadoraTelefono
-            }
 
-            EmpleadoRequest().seleccionarCargosEmpleado().forEach { cargo ->
-                cargoEmpleadoList.add(cargo.tipoCargo)
-                idCargoEmpleadoState.value = empleado.idCargoEmpleado
-            }
+            viewModel.obtenerCodigoOperadoraTelefono()
+            viewModel.setIdCodigoOperadoraTelefono(empleado.telefonoEmpleado.idCodigoOperadoraTelefono)
 
-            EmpleadoRequest().seleccionarDepartamentos().forEach {
-                departamentosList.add(it)
-                nombreDepartamentoList.add(it.nombre)
-                idDepartamento.value = empleado.idDepartamento
-            }
+            viewModel.obtenerCargos()
+            viewModel.setIdCargo(empleado.idCargoEmpleado)
 
+            viewModel.obtenerDepartamentos()
+            viewModel.setIdDepartamento(empleado.idDepartamento)
             // Grupo de atencion
             if(empleado.usuario.idTipoUsuario == 1){
 
-                EmpleadoRequest().seleccionarGrupoAtencion().forEach { grupo ->
-                    grupoAtencionList.add(grupo.grupoAtencion)
-                }
+                viewModel.obtenerGrupoAtencion()
 
-                EmpleadoRequest().seleccionarIdGrupoAtencionByEmpleadoId(empleado.id){
-                    idGrupoAtencionState.value = it
-                }
+                // Se obtienen del grupo de atención
+                viewModel.obtenerIdGrupoAtencion(empleado.id)
 
             }
 
@@ -289,7 +218,7 @@ fun CambiarDatosUsuario(navController: NavController,
                         itemList = nacionalidadList.map { it.toString() },
                         posicionInicial = nacionalidadList.indexOf(nacionalidad.value),
                         onItemSelected = {
-                            nacionalidad.value = it[0]
+                            viewModel.setNacionalidad(it[0])
                         }
                     )
 
@@ -301,11 +230,11 @@ fun CambiarDatosUsuario(navController: NavController,
                     OutlinedTextFieldPersonalizado(
                         modifier = Modifier
                             .fillMaxWidth(),
-                        value = cedulaState.value,
+                        value = cedula.value,
                         onValueChange = { number ->
 
                             if (number.length <= 8)
-                                cedulaState.value = number
+                                viewModel.setCedula(number)
 
                         },
                         label = { Text("Número de cédula", fontSize = 13.sp) },
@@ -324,11 +253,11 @@ fun CambiarDatosUsuario(navController: NavController,
                 {
                     OutlinedTextFieldPersonalizado(
                         modifier = Modifier.fillMaxWidth(),
-                        value = primerNombreState.value,
+                        value = primerNombre.value,
                         onValueChange = { newText ->
                             // Si el texto es menor a 50 caracteres, se almacena en newText
                             if (newText.all { it.isLetter() } && newText.length <= 20)
-                                primerNombreState.value = newText
+                                viewModel.setPrimerNombre(newText)
                         },
                         label = { Text("Primer nombre", fontSize = 13.sp) },
                         supportingText = true,
@@ -342,11 +271,11 @@ fun CambiarDatosUsuario(navController: NavController,
                 {
                     OutlinedTextFieldPersonalizado(
                         modifier = Modifier.fillMaxWidth(),
-                        value = segundoNombreState.value,
+                        value = segundoNombre.value,
                         onValueChange = { newText ->
                             // Si el texto es menor a 50 caracteres, se almacena en newText
                             if (newText.all { it.isLetter() } && newText.length <= 20)
-                                segundoNombreState.value = newText
+                                viewModel.setSegundoNombre(newText)
                         },
                         label = { Text("Segundo nombre", fontSize = 13.sp) },
                         supportingText = true,
@@ -365,11 +294,11 @@ fun CambiarDatosUsuario(navController: NavController,
                 {
                     OutlinedTextFieldPersonalizado(
                         modifier = Modifier.fillMaxWidth(),
-                        value = primerApellidoState.value,
+                        value = primerApellido.value,
                         onValueChange = { newText ->
                             // Si el texto es menor a 50 caracteres, se almacena en newText
                             if (newText.all { it.isLetter() } && newText.length <= 20)
-                                primerApellidoState.value = newText
+                                viewModel.setPrimerApellido(newText)
                         },
                         label = { Text("Primer apellido", fontSize = 13.sp) },
                         supportingText = true,
@@ -384,11 +313,11 @@ fun CambiarDatosUsuario(navController: NavController,
 
                     OutlinedTextFieldPersonalizado(
                         modifier = Modifier.fillMaxWidth(),
-                        value = segundoApellidoState.value,
+                        value = segundoApellido.value,
                         onValueChange = { newText ->
                             // Si el texto es menor a 50 caracteres, se almacena en newText
                             if (newText.all { it.isLetter() } && newText.length <= 20)
-                                segundoApellidoState.value = newText
+                                viewModel.setSegundoApellido(newText)
                         },
                         label = { Text("Segundo Apellido", fontSize = 13.sp) },
                         supportingText = true,
@@ -408,11 +337,11 @@ fun CambiarDatosUsuario(navController: NavController,
 
                     OutlinedTextFieldPersonalizado(
                         modifier = Modifier.fillMaxWidth(),
-                        value = correoElectronicoState.value,
+                        value = correoElectronico.value,
                         onValueChange = { newText ->
                             // Si el texto no contiene espacios y es menor a 50 caracteres, se almacena en newText
                             if (newText.all { !it.isWhitespace() } && newText.length <= 255)
-                                correoElectronicoState.value = newText
+                                viewModel.setCorreoElectronico(newText)
                         },
                         label = { Text("Correo electrónico", fontSize = 13.sp) },
                         supportingText = true,
@@ -435,10 +364,10 @@ fun CambiarDatosUsuario(navController: NavController,
                     Spacer(modifier = Modifier.padding(2.dp))
                     Spinner(
                         modifier = Modifier,
-                        posicionInicial = empleado.telefonoEmpleado.idCodigoOperadoraTelefono,
-                        itemList = codigoExtensionTelefonoList
+                        posicionInicial = idCodigoOperadoraTelefono.value,
+                        itemList = listaOperadoraTelefono.value
                     ) {
-                        idCodigoOperadoraTelefonoState.value = codigoExtensionTelefonoList.indexOf(it)
+                        viewModel.setIdCodigoOperadoraTelefono(listaOperadoraTelefono.value.indexOf(it))
                     }
 
                 }
@@ -450,12 +379,12 @@ fun CambiarDatosUsuario(navController: NavController,
                     OutlinedTextFieldPersonalizado(
                         modifier = Modifier
                             .fillMaxWidth(),
-                        value = numeroTelefonoState.value,
+                        value = extensionTelefono.value,
                         onValueChange = { number ->
 
                             // Cuando se deja la entrada en blanco, colapsa el programa. Por eso puse esta excepcion...
                             if (number.all { it.isDigit() && !it.isWhitespace() } && number.length <= 7) {
-                                    numeroTelefonoState.value = number
+                                    viewModel.setExtensionTelefono(number)
                             }
 
                         },
@@ -466,7 +395,6 @@ fun CambiarDatosUsuario(navController: NavController,
                 }
 
             }
-
 
             Text(
                 "Datos laborales",
@@ -486,13 +414,11 @@ fun CambiarDatosUsuario(navController: NavController,
                         Text("Departamento", fontWeight = FontWeight.Bold)
                         Spinner(
                             modifier = Modifier,
-                            itemList = nombreDepartamentoList,
+                            itemList = listaDepartamentos.value.map{ it.nombre },
                             posicionInicial = empleado.idDepartamento,
                             onItemSelected = {
-
-                                idDepartamento.value = nombreDepartamentoList.indexOf(it)
-                                nombreSede.value = departamentosList[idDepartamento.value].sede.nombre
-                                Log.d("DEPARTAMENTO", idDepartamento.value.toString())
+                                    viewModel.setIdDepartamento(listaDepartamentos.value.map { it.nombre }.indexOf(it))
+                                    viewModel.setNombreSede(listaDepartamentos.value[idDepartamento.value].sede.nombre)
                             }
                         )
 
@@ -525,16 +451,15 @@ fun CambiarDatosUsuario(navController: NavController,
                     Spinner(
                         modifier = Modifier.fillMaxWidth(),
                         posicionInicial = empleado.idCargoEmpleado,
-                        itemList = cargoEmpleadoList
+                        itemList = listaCargos.value
                     ) {
-                        idCargoEmpleadoState.value = cargoEmpleadoList.indexOf(it)
+                        viewModel.setIdCargo(listaCargos.value.indexOf(it))
                     }
 
                 }
             }
             Spacer(modifier = Modifier.padding(5.dp))
             if (empleado.usuario.idTipoUsuario == 1) {
-                idDepartamento.value = 6
                 Row()
                 {
                     Column(modifier = Modifier.weight(1F))
@@ -543,10 +468,10 @@ fun CambiarDatosUsuario(navController: NavController,
                         Spacer(modifier = Modifier.padding(2.dp))
                         Spinner(
                             modifier = Modifier.fillMaxWidth(),
-                            posicionInicial = idGrupoAtencionState.value,
-                            itemList = grupoAtencionList
+                            posicionInicial = idGrupoAtencion.value,
+                            itemList = listaGrupoAtencion.value
                         ) {
-                            idGrupoAtencionState.value = grupoAtencionList.indexOf(it)
+                            viewModel.setIdGrupoAtencion(listaGrupoAtencion.value.indexOf(it))
 
                         }
                         Spacer(modifier = Modifier.padding(5.dp))
@@ -554,7 +479,6 @@ fun CambiarDatosUsuario(navController: NavController,
                     }
                 }
             }
-
 
             Text(
                 "Datos de usuario",
@@ -573,11 +497,11 @@ fun CambiarDatosUsuario(navController: NavController,
                     Text("Nombre de usuario", fontWeight = FontWeight.Bold)
                     OutlinedTextFieldPersonalizado(
                         modifier = Modifier.fillMaxWidth(),
-                        value = nombreUsuarioState.value,
+                        value = nombreUsuario.value,
                         onValueChange = { newText ->
                             // Si el texto es menor a 50 caracteres, se almacena en newText
                             if (newText.all { !it.isWhitespace() && it.isLetter() || it.isDigit() } && newText.length <= 20)
-                                nombreUsuarioState.value = newText
+                                viewModel.setNombreUsuario(newText)
                         },
                         label = { Text("Nombre de usuario", fontSize = 13.sp) },
                         imeActionNext = false,
@@ -590,15 +514,17 @@ fun CambiarDatosUsuario(navController: NavController,
             }
 
             Spacer(modifier = espacioSpacer)
+
             BotonCargaPersonalizado(
                 onClick = {
 
-                    //Primero, se verifica que el nombre de usuario, la cedula y el correo electronico no este repetidos en la tabla
-                    ingresarbuttonState.value = true
+                    //Primero, se verifica que el nombre de usuario, la cedula y el correo electronico no este repetidos en la tablactualizarUsuarioState.value = true
+                    viewModel.setMensajeErrorEditarPerfil()
                     validaciones.value = true
 
                 },
-                isLoading = ingresarbuttonState.value
+                //enabled = !actualizarUsuarioState.value,
+                isLoading = actualizarUsuarioState.value
             ) {
                 Text(text = "ACTUALIZAR DATOS", color = Color.White, fontFamily = montserratFamily)
             }
@@ -609,251 +535,52 @@ fun CambiarDatosUsuario(navController: NavController,
 
     if (idDepartamento.value > 0)
     {
-        nombreSede.value = departamentosList[idDepartamento.value].sede.nombre
+        viewModel.setNombreSede(listaDepartamentos.value[idDepartamento.value].sede.nombre)
     }
 
     // Se validan las entradas para crear un nuevo usuario
     if (validaciones.value)
     {
 
-        // Se crea el objeto
-        val usuarioEmpleado = Usuario(
-            nombre = nombreUsuarioState.value,
-            habilitado = true
-        )
+        actualizarUsuarioState.value = true
 
-        val telefonoEmpleado = TelefonoEmpleado(
-            id = empleado.idTeléfonoEmpleado,
-            idCodigoOperadoraTelefono = idCodigoOperadoraTelefonoState.value,
-            extension = numeroTelefonoState.value
-        )
-
-        val nuevoEmpleado = Empleado(
-            id = empleado.id,
-            cedula = if(cedulaState.value.isNotBlank()) { cedulaState.value.toInt() } else 0,
-            primerNombre = primerNombreState.value,
-            segundoNombre = segundoNombreState.value,
-            primerApellido = primerApellidoState.value,
-            segundoApellido = segundoApellidoState.value,
-            nacionalidad = nacionalidad.value,
-            correoElectronico = correoElectronicoState.value.toLowerCasePreservingASCIIRules(),  //Se convierte la cadena de texto en minusculas
-            telefonoEmpleado = telefonoEmpleado,
-            usuario = usuarioEmpleado,
-            idDepartamento = if (empleado.usuario.idTipoUsuario == 1) {empleado.idDepartamento} else idDepartamento.value,
-            idCargoEmpleado = idCargoEmpleadoState.value,
-            idUsuario = empleado.idUsuario,
-            idTeléfonoEmpleado = empleado.idTeléfonoEmpleado
-        )
-
-        Log.d("NUEVO USUARIO", nuevoEmpleado.toString())
-
-        if(empleado.usuario.idTipoUsuario == 1)       // Tecnico
+        if(mensajeError.value.isBlank())
         {
 
-            nuevoEmpleado.idDepartamento = nombreDepartamentoList.indexOf("Tecnología")
-            //... los datos del grupo de atencion
-            //Log.d("GRUPO DE ATENCION", idGrupoAtencionState.value.toString())
-            val grupoAtencion = GrupoAtencion(
-                id = idGrupoAtencionState.value,
-                grupoAtencion = grupoAtencionList[idGrupoAtencionState.value]
-            )
+            //LaunchedEffect(Unit) {
+            CoroutineScope(Dispatchers.IO).launch {
 
-            //... Se crea la fila en la tabla tecnico
-            tecnicoNuevo.value = Tecnico(
-                grupoAtencion = grupoAtencion,
-                idGrupoAtencion =  idGrupoAtencionState.value,
-                empleado = nuevoEmpleado
-            )
+                viewModel.validarDatosUsuarioActualizar(
+                    idEmpleado = empleado.id,
+                    idTelefonoEmpleado = empleado.idTeléfonoEmpleado,
+                    idUsuario = empleado.idUsuario
+                ) { avisoRepetido ->
 
-            // Se realizan las validaciones
-            validarDatosErroneosTecnico(tecnicoNuevo.value){ error ->
+                    scope.launch {
+                        if (avisoRepetido.isBlank()) {
+                            viewModel.actualizarDatos(empleado)
+                            Toast.makeText(context, "Datos editados con éxito", Toast.LENGTH_SHORT).show()
+                            Log.d("RESULTADO", "DATOS DE USUARIO EDITADO")
+                            navController.popBackStack()
+                        } else {
+                            Toast.makeText(context, avisoRepetido, Toast.LENGTH_SHORT).show()
+                        }
 
-                if (error.isNotBlank())
-                {
-                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                    ingresarbuttonState.value = false
-                    validaciones.value = false
-                }
+                        actualizarUsuarioState.value = false
 
-            }
-
-        }
-        else if(empleado.usuario.idTipoUsuario == 2)  // Cliente Interno
-        {
-
-            //... Se crea un nuevo cliente interno
-            clienteInterno.value = ClienteInterno(
-                empleado = nuevoEmpleado
-            )
-
-            if(nombreSede.value.isBlank())
-            {
-                Toast.makeText(context, "Por favor, ingrese un departamento válido.", Toast.LENGTH_SHORT).show()
-                ingresarbuttonState.value = false
-                validaciones.value = false
-            }
-
-        }
-
-        validarDatosErroneosEmpleado(nuevoEmpleado){ error ->
-
-            if(error.isNotBlank())
-            {
-                Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                ingresarbuttonState.value = false
-                validaciones.value = false
-            }
-            else
-            {
-                actualizarUsuarioState.value = true
-                validarRepetidos.value = false
-            }
-        }
-
-        if(actualizarUsuarioState.value){
-
-            LaunchedEffect(Unit) {
-                CoroutineScope(Dispatchers.IO).launch {
-                    Log.d("Actualizando Usuario...", "Actualización del nuevo usuario...")
-                    if(empleado.usuario.idTipoUsuario == 1)
-                    {
-                        EmpleadoRequest().actualizarDatosTecnico(empleado, tecnicoNuevo.value)
-
-                    } else if(empleado.usuario.idTipoUsuario == 2)
-                    {
-                        EmpleadoRequest().actualizarDatosEmpleado(empleado, clienteInterno.value.empleado)
                     }
                 }
-                navController.popBackStack()
-                Toast.makeText(context, "Usuario actualizado con éxito.", Toast.LENGTH_LONG).show()
 
             }
 
-
+        }
+        else {
+            Toast.makeText(context, mensajeError.value, Toast.LENGTH_SHORT).show()
+            actualizarUsuarioState.value = false
         }
 
-    }
+        validaciones.value = false
 
-}
-
-fun validarDatosErroneosTecnico(tecnico: Tecnico, mensajeError:(String) -> Unit)
-{
-
-    if (tecnico.idGrupoAtencion == 0)
-        mensajeError("Por favor, ingrese un grupo de atención válido.")
-
-
-}
-
-suspend fun validarDatosUsuarioActualizar(idEmpleado: Int,
-                                          idTelefonoEmpleado: Int,
-                                          idUsuario: Int,
-                                          nombreUsuario: String,
-                                          correoElectronico: String,
-                                          cedula: Int,
-                                          numeroTelefono: TelefonoEmpleado,
-                                          resultados: (Int) -> Unit)
-{
-
-    var repetido = 0
-
-    // Se comprueba que haya alguna congruencia pero con diferentes identificadores. De ser cierto, se retorna un valor para mostrar el mensaje
-    // Hay que ser valores nulleables, para evitar problemas al generar la consulta, OJO...
-    UsuarioRequest().seleccionarUsuarioByNombre(nombreUsuario){
-        if (it != null && (it.nombre == nombreUsuario && it.id != idUsuario))  repetido = 1
-    }
-
-    EmpleadoRequest().buscarEmpleadoByCorreoElectronico(correoElectronico){
-        if (it != null && (it.correoElectronico == correoElectronico && it.id != idUsuario)) repetido = 2
-    }
-
-    EmpleadoRequest().buscarEmpleadoByCedula(cedula){
-        if (it != null && (it.cedula == cedula && it.id != idEmpleado)) repetido = 3
-    }
-
-    TelefonoRequest().buscarTelefonoEmpleado(numeroTelefono){
-
-        if(it != null && (
-            it.idCodigoOperadoraTelefono == numeroTelefono.idCodigoOperadoraTelefono &&
-            it.extension == numeroTelefono.extension &&
-            it.id != idTelefonoEmpleado))
-        {
-            repetido = 4
-        }
-
-    }
-
-    resultados(repetido)
-
-}
-
-@Composable
-fun validarDatosErroneosEmpleado(empleado: Empleado, mensajeError:(String) -> Unit)
-{
-
-    Log.d("EMPLEADO", empleado.toString())
-    val limiteCedula = 31000000
-
-    //Se valida el correo
-    val cantidadArrobasCorreo: Int = empleado.correoElectronico.count{ it == '@' }
-    val cantidadPuntosCorreo: Int = empleado.correoElectronico.count{ it == '.' }
-
-    // Se comprueba que el nombre del empleado no tenga digitos
-    if(cantidadArrobasCorreo != 1 || cantidadPuntosCorreo < 1)
-    {
-        mensajeError("Por favor, ingrese un correo electrónico válido.")
-    }
-    else if(empleado.telefonoEmpleado.extension.length != 7) // Si el numero de telefono no tiene una logitud valida, se avisa
-    {
-        mensajeError("Por favor, ingrese un numero de teléfono válido.")
-    }
-    else if (empleado.cedula.toInt() < 1 || empleado.cedula.toInt() > limiteCedula) //Si la cedula es no es compatible, se muestra el aviso
-    {
-        mensajeError("Por favor, ingrese un número de cédula válido.")
-    }
-    else if(empleado.telefonoEmpleado.idCodigoOperadoraTelefono == 0)
-    {
-        mensajeError("Por favor, ingrese un código de extensión válido.")
-    }
-    else if(empleado.idCargoEmpleado == 0)
-    {
-        mensajeError("Por favor, ingrese un cargo válido.")
-    }
-    else if((empleado.cedula.toString().isEmpty()               ||
-                (empleado.primerNombre.isEmpty() || empleado.primerNombre.length < 3)                 ||
-                (empleado.segundoNombre.isEmpty() || empleado.segundoNombre.length < 3)               ||
-                (empleado.primerApellido.isEmpty() || empleado.primerApellido.length < 3)             ||
-                (empleado.segundoApellido.isEmpty() || empleado.segundoApellido.length < 3)             ||
-                (empleado.correoElectronico.isEmpty() || empleado.correoElectronico.length < 3)           ||
-                (empleado.telefonoEmpleado.extension.isEmpty())  ||
-                (empleado.usuario.nombre.isEmpty() || empleado.usuario.nombre.length < 3))
-    )
-    {
-        mensajeError("Por favor, complete los campos correspondientes de forma correcta")
-    }
-
-
-    val scope = rememberCoroutineScope()
-
-    scope.launch {
-
-        validarDatosUsuarioActualizar(empleado.id,
-            empleado.idTeléfonoEmpleado,
-            empleado.idUsuario,
-            empleado.usuario.nombre,
-            empleado.correoElectronico,
-            empleado.cedula,
-            empleado.telefonoEmpleado){error ->
-
-            when(error){
-                0 -> mensajeError("")// Sin valores repetidos
-                1 -> mensajeError("El nombre de usuario ya existe") // Nombre de Usuario
-                2 -> mensajeError("El correo electrónico ya existe")
-                3 -> mensajeError("El número de cédula ya existe")
-                4 -> mensajeError("El número de teléfono ya existe")
-            }
-
-        }
     }
 
 }

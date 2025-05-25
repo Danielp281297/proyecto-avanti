@@ -9,31 +9,28 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.avantitigestiondeincidencias.AVANTI.DescripcionAccion
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.Network.Network
-import com.example.avantitigestiondeincidencias.R
-import com.example.avantitigestiondeincidencias.Supabase.AccionRequest
-import com.example.avantitigestiondeincidencias.Supabase.TicketRequests
-import com.example.avantitigestiondeincidencias.ui.screens.PantallaCarga
+import com.example.avantitigestiondeincidencias.ViewModel.TicketDesplegadoTecnicoViewModel
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.AutocompleteTextField
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonCargaPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.OutlinedTextFieldPersonalizado
@@ -42,6 +39,7 @@ import com.example.avantitigestiondeincidencias.ui.screens.ticket.ContenidoTicke
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "SuspiciousIndentation")
@@ -51,157 +49,152 @@ fun TicketDesplegadoTecnico(
     navController: NavController,
     context: Context,
     ticket: Ticket,
-    containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919))
-{
+    viewModel: TicketDesplegadoTecnicoViewModel = viewModel(),
+    containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919)) {
 
 
-
-    val focusRequester = remember{
+    val focusRequester = remember {
         FocusRequester()
     }
 
     val fuenteLetraTicketDesplegado = 15.sp
 
-    var descripcionAccionState = remember { mutableStateOf("") }
+    val descripcionAccion = viewModel.descripcionAccion.collectAsState()
+    val listaDescripcionAcciones = viewModel.listaDescripcionAcciones.collectAsState()
+    val observaciones = viewModel.observaciones.collectAsState()
 
-    var descripcionAccionList = remember {
-        mutableListOf<DescripcionAccion>()
-    }
-
-    var observacionesState = remember { mutableStateOf("SIN OBSERVACIONES") }
-
-    val mensajeAccionExistosaState = remember {
+    val ingresarbuttonState = remember {
         mutableStateOf(false)
     }
 
-    val ingresarbuttonState = remember{
-        mutableStateOf(false)
-    }
-
-    var cancelarTicketState = remember{ mutableStateOf(false) }
-
-    var cargandoContenidoSpinners = remember{
-        mutableStateOf(true)
-    }
+    var ticketResuelto = remember { mutableStateOf(false) }
 
     Network.networkCallback(navController, context)
 
-    if (cargandoContenidoSpinners.value)
-    {
-        PantallaCarga()
-    }
+    ObtenerAcciones(viewModel)
 
-    LaunchedEffect(Unit)
-    {
-        withContext(Dispatchers.IO)
-        {
-            descripcionAccionList.addAll(AccionRequest().buscarDescripcionAccion())
-            cargandoContenidoSpinners.value = false
-        }
-    }
-
-    if(cargandoContenidoSpinners.value)
-    {
-        PantallaCarga()
-    }
-    else
     ScaffoldSimplePersonalizado(
         tituloPantalla = "Ticket",
         containerColor = containerColor
     )
     {
-            ContenidoTicketDesplegado(
-                navController = navController,
-                context = context,
-                ticket = ticket,
+        ContenidoTicketDesplegado(
+            navController = navController,
+            context = context,
+            ticket = ticket,
 
-                ) {
+            ) {
 
-                Text("ACCIÓN EJECUTADA: ", fontSize = fuenteLetraTicketDesplegado)
-                AutocompleteTextField(
-                    initialText = descripcionAccionState.value,
-                    label = "Indique aqui",
-                    suggestions = descripcionAccionList.map { it.descripcion },
-                    onClearResults = {},
-                    modifier = Modifier.focusRequester(focusRequester).fillMaxWidth().clickable{
-                        focusRequester.requestFocus()
-                    },
-                ) { descripcionAccionState.value = it.text }
+            Text("ACCIÓN EJECUTADA: ", fontSize = fuenteLetraTicketDesplegado)
+            AutocompleteTextField(
+                initialText = descripcionAccion.value.descripcion,
+                label = "Indique aqui",
+                suggestions = listaDescripcionAcciones.value.map { it.descripcion },
+                onClearResults = {},
+                modifier = Modifier.focusRequester(focusRequester).fillMaxWidth().clickable {
+                    focusRequester.requestFocus()
+                },
+            ) { viewModel.setDescripcionAccion(it.text) }
 
-                Spacer(modifier = Modifier.padding(15.dp))
-                Text("OBSERVACIONES: ", fontSize = fuenteLetraTicketDesplegado)
-                OutlinedTextFieldPersonalizado(
-                    modifier = Modifier.fillMaxWidth(),
-                    value = observacionesState.value,
-                    onValueChange = { newText ->
-                        // Si el texto es menor a 50 caracteres, se almacena en newText
-                        if (newText.length <= 100)
-                            observacionesState.value = newText
-                    },
-                    label = { androidx.compose.material3.Text("Indique aquí", fontSize = 13.sp) },
-                    supportingText = true,
-                    imeActionNext = false,
-                    maximoCaracteres = 100,
-                )
+            Spacer(modifier = Modifier.padding(15.dp))
+            Text("OBSERVACIONES: ", fontSize = fuenteLetraTicketDesplegado)
+            OutlinedTextFieldPersonalizado(
+                modifier = Modifier.fillMaxWidth(),
+                value = observaciones.value,
+                onValueChange = { newText ->
+                    // Si el texto es menor a 50 caracteres, se almacena en newText
+                    if (newText.length <= 100)
+                        viewModel.setObservaciones(newText)
+                },
+                label = { androidx.compose.material3.Text("Indique aquí", fontSize = 13.sp) },
+                supportingText = true,
+                imeActionNext = false,
+                maximoCaracteres = 100,
+            )
 
-                Spacer(modifier = Modifier.padding(15.dp))
-                BotonCargaPersonalizado(
-                    onClick = {
-                        ingresarbuttonState.value = true
+            Spacer(modifier = Modifier.padding(15.dp))
+            BotonCargaPersonalizado(
+                onClick = {
+                    ingresarbuttonState.value = true
 
-                        // Si la accion ejecutada o la descripcion no estan vacios, se crea la accion y se actualiza el ticket en la base de datos
-                        if (descripcionAccionState.value.isNotEmpty() && observacionesState.value.isNotEmpty()) {
-                            Log.d("RESULTADO", "ADMITIDO")
+                    // Si la accion ejecutada o la descripcion no estan vacios, se crea la accion y se actualiza el ticket en la base de datos
+                    if (viewModel.validarDatosTicketAccion()) {
 
-                            //Se regresa a la pantalla anterior
-                            cancelarTicketState.value = true
+                        // Se actualiza el ticket y se regresa a la pantalla anterior
+                        Log.d("RESULTADO", "ADMITIDO")
+                        ticketResuelto.value = true
 
 
-                        } else {
-                            Log.e("RESULTADO", "NO ADMITIDO")
-                            Toast.makeText(context, "Por favor, llene los campos correspondientes.", Toast.LENGTH_SHORT)
-                                .show()
-                            ingresarbuttonState.value = false
-                        }
-                    },
-                    isLoading = ingresarbuttonState.value,
-                    CuerpoBoton = {
-                        Text(text = "INCIDENCIA RESUELTA", color = Color.White, fontFamily = montserratFamily)
+                    } else {
+                        Log.e("RESULTADO", "NO ADMITIDO")
+                        Toast.makeText(context, "Por favor, llene los campos correspondientes.", Toast.LENGTH_SHORT)
+                            .show()
+                        ingresarbuttonState.value = false
                     }
-                )
+                },
+                isLoading = ingresarbuttonState.value,
+                CuerpoBoton = {
+                    Text(text = "INCIDENCIA RESUELTA", color = Color.White, fontFamily = montserratFamily)
+                }
+            )
 
-            }
-            Spacer(modifier = Modifier.padding(30.dp))
+        }
+        Spacer(modifier = Modifier.padding(30.dp))
 
     }
 
-    if (cancelarTicketState.value == true)
+    if (ticketResuelto.value)
     {
 
-        LaunchedEffect(Unit) {
-            withContext(Dispatchers.IO) {
-
-                //Se crea la fila de la accion, y se actualiza el estado del ticket
-                TicketRequests().resolverTicket(ticket, observacionesState.value)
-
-                AccionRequest()
-                    .insertarAccion(ticket, descripcionAccionState.value)
-                mensajeAccionExistosaState.value = true
-
-            }
+        ResolverTicket(
+            context,
+            viewModel,
+            ticket
+        ) {
 
             ingresarbuttonState.value = false
-            cancelarTicketState.value = false
+            ticketResuelto.value = false
             navController.popBackStack()
 
         }
 
     }
 
-    if (mensajeAccionExistosaState.value)
+}
+
+@Composable
+fun ResolverTicket(
+    context: Context,
+    viewModel: TicketDesplegadoTecnicoViewModel,
+    ticket: Ticket,
+    resultados: () -> Unit)
+{
+
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+
+            //Se crea la fila de la accion, y se actualiza el estado del ticket
+            viewModel.IncidenciaResuelta(ticket)
+            Toast.makeText(context, "Ticket cerrado con éxito.", Toast.LENGTH_SHORT).show()
+            resultados()
+
+        }
+
+    }
+}
+
+@Composable
+fun ObtenerAcciones(viewModel: TicketDesplegadoTecnicoViewModel){
+
+    LaunchedEffect(Unit)
     {
-        Toast.makeText(context, "Ticket cerrado con éxito.", Toast.LENGTH_SHORT).show()
-        mensajeAccionExistosaState.value = false
+        withContext(Dispatchers.IO)
+        {
+            viewModel.setListaDescripcionAcciones()
+
+        }
     }
 
 }
