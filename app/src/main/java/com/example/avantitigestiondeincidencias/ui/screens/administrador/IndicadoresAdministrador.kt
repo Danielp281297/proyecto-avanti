@@ -129,7 +129,7 @@ fun IndicadoresAdministrador(
     var promedioTiempoResolucion = viewModel.promedioTiempoResolucion.collectAsState()
 
     ScaffoldSimplePersonalizado(
-        tituloPantalla = "Usuarios",
+        tituloPantalla = "Indicadores",
         containerColor = containerColor
     )
     {
