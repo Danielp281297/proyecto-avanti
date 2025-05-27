@@ -10,9 +10,9 @@ Entre las características de la aplicación, se tiene:
 * Registro de las acciones ejecutadas hacia las incidencias
 
 # Pasos para la instalación
-Clonar el repositorio
-Abrir el proyecto en Android Studio o el Intellij con los plugins indicados
-Correr el proyecto
+* Clonar el repositorio
+* Abrir el proyecto en Android Studio o el Intellij con los plugins indicados
+* Correr el proyecto
 
 # Demo
 
