@@ -1,6 +1,9 @@
 package com.example.avantitigestiondeincidencias.ui.screens.cliente
 
+import android.app.UiModeManager
 import android.content.Context
+import android.content.res.Configuration
+import android.media.VolumeShaper
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -30,9 +33,12 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.UiMode
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.avantitigestiondeincidencias.AVANTI.Ticket
 import com.example.avantitigestiondeincidencias.R
 import com.example.avantitigestiondeincidencias.ViewModel.TicketDesplegadoClienteViewModel
@@ -40,6 +46,8 @@ import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDial
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.SliderPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.ticket.ContenidoTicketDesplegado
+import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
+import io.ktor.util.converters.DelegatingConversionService
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -237,7 +245,7 @@ fun CalificarTicketDialog(
                             Icon(
                                 painter = painterResource(it),
                                 contentDescription = "Estrella",
-                                modifier = Modifier.size(40.dp)
+                                modifier = Modifier.size(40.dp),
                             )
                             Text("    ${iconosEstrellas.indexOf(it) + 1}",textAlign = TextAlign.Center)
                         }
@@ -280,4 +288,24 @@ fun CalificarTicketDialog(
         calificarState.value = false
 
     }
+}
+
+@Preview
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+fun preview(){
+
+    val context = LocalContext.current
+    val navController = rememberNavController()
+    val ticketDesplegadoClienteViewModel = viewModel<TicketDesplegadoClienteViewModel>()
+    AVANTITIGestionDeIncidenciasTheme {
+        CalificarTicketDialog(
+            context = context,
+            viewModel = ticketDesplegadoClienteViewModel,
+            navController = navController,
+            ticket = Ticket(),
+            dismissButtonAction = {},
+        )
+    }
+
 }
