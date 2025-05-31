@@ -23,9 +23,6 @@ fun PedirPermiso(
     context: Context,
     permiso: String) {
 
-
-    val scope = rememberCoroutineScope()
-
     var mostrarAlertDialog = remember {mutableStateOf(false)}
 
     //UNA SOLA NOTIFICACION

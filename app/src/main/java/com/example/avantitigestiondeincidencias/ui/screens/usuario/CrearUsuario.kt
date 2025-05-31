@@ -497,7 +497,6 @@ fun CrearUsuario(
                             value = nombreUsuario.value,
                             onValueChange = { newText ->
                                 // Si el texto es menor a 50 caracteres, se almacena en newText
-                                if (newText.all { !it.isWhitespace() && it.isLetter() || it.isDigit() } && newText.length <= 20)
                                     viewModel.setNombreUsuario(newText)
                             },
                             label = { Text("Nombre de usuario", fontSize = 13.sp) },
@@ -521,7 +520,6 @@ fun CrearUsuario(
                             password = true,
                             onValueChange = {newText ->
 
-                                if (newText.all { !it.isWhitespace() } && newText.length <= 20)
                                     viewModel.setContrasenaUsuario(newText)
                             },
                             label = { Text("Contraseña", fontSize = 13.sp) },
@@ -544,7 +542,6 @@ fun CrearUsuario(
                             password = true,
                             onValueChange = {newText ->
 
-                                if (newText.all { !it.isWhitespace() } && newText.length <= 20)
                                     viewModel.setConfirmarContrasenaUsuario(newText)
                             },
                             label = { Text("Contraseña", fontSize = 13.sp) },
@@ -577,6 +574,7 @@ fun CrearUsuario(
                         viewModel.setMensajeError()
                         validaciones.value = true
                     },
+                    enabled = !botonCrearUsuarioState.value,
                     isLoading = botonCrearUsuarioState.value
                 ) { Text(text = "CREAR USUARIO", color = Color.White, fontFamily = montserratFamily) }
 

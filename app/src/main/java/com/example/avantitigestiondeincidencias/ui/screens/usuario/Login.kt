@@ -2,9 +2,7 @@ package com.example.avantitigestiondeincidencias.ui.screens.usuario
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.drawable.AnimatedImageDrawable
 import android.util.Log
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -37,8 +35,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -46,19 +42,15 @@ import com.example.avantitigestiondeincidencias.AVANTI.Usuario
 import com.example.avantitigestiondeincidencias.DataStore.DataStore
 import com.example.avantitigestiondeincidencias.Network.Network
 import com.example.avantitigestiondeincidencias.R
-import com.example.avantitigestiondeincidencias.Supabase.EmpleadoRequest
-import com.example.avantitigestiondeincidencias.ViewModel.LoginVIewModel
+import com.example.avantitigestiondeincidencias.ViewModel.LoginViewModel
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.AlertDialogPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.BotonCargaPersonalizado
 import com.example.avantitigestiondeincidencias.ui.screens.componentes.OutlinedTextFieldPersonalizado
 import com.example.avantitigestiondeincidencias.ui.theme.AVANTITIGestionDeIncidenciasTheme
 import com.example.avantitigestiondeincidencias.ui.theme.montserratFamily
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,7 +60,7 @@ fun Login(
     context: Context,
     navigateToDos: (Int, String) -> Unit,
     containerColor: Color = if (!isSystemInDarkTheme()) Color.White else Color(0xFF191919),
-    viewModel: LoginVIewModel = viewModel()
+    viewModel: LoginViewModel = viewModel()
 )
 {
 
@@ -157,7 +149,7 @@ fun Login(
                     modifier = Modifier.fillMaxWidth(),
                     value = nombreUsuarioState.value,
                     onValueChange = {newText ->
-                        if (newText.all { !it.isWhitespace() && it.isLetter() || it.isDigit() } && newText.length <= 20)
+
                             viewModel.setNombreUsuario(newText)
                     },
                     label = { Text("Nombre de usuario", fontSize = 13.sp) },
@@ -169,7 +161,7 @@ fun Login(
                     value = contrasenaUsuarioState.value,
                     password = true,
                     onValueChange = {newText ->
-                        if (newText.all { !it.isWhitespace() } && newText.length <= 20)
+
                             viewModel.setContrasena(newText)
                     },
                     label = { Text("Contraseña", fontSize = 13.sp) },
@@ -177,13 +169,14 @@ fun Login(
                     imeActionNext = false,
                     supportingText = false
                 )
-                Spacer(modifier = Modifier.padding(15.dp))
+                Spacer(modifier = Modifier.padding(5.dp))
                 BotonCargaPersonalizado({
 
                     //Se obtiene los datos del empleado, en base al usuario y contrasena
                     ingresarbuttonState.value = true
 
-                }, isLoading = ingresarbuttonState.value)
+                }, enabled = !ingresarbuttonState.value,
+                    isLoading = ingresarbuttonState.value)
                     {
 
                         Text(text = "INGRESAR", color = Color.White, fontFamily = montserratFamily)

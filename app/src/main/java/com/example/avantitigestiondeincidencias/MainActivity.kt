@@ -98,7 +98,7 @@ fun destination(context: Context)
 
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = "PantallaPruebas")
+    NavHost(navController = navController, startDestination = "pantallaPruebas")
     {
 
 

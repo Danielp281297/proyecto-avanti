@@ -523,7 +523,7 @@ fun CambiarDatosUsuario(navController: NavController,
                     validaciones.value = true
 
                 },
-                //enabled = !actualizarUsuarioState.value,
+                enabled = !actualizarUsuarioState.value,
                 isLoading = actualizarUsuarioState.value
             ) {
                 Text(text = "ACTUALIZAR DATOS", color = Color.White, fontFamily = montserratFamily)

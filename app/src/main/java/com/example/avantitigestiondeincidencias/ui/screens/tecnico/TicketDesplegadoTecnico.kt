@@ -132,6 +132,7 @@ fun TicketDesplegadoTecnico(
                         ingresarbuttonState.value = false
                     }
                 },
+                enabled = !ingresarbuttonState.value,
                 isLoading = ingresarbuttonState.value,
                 CuerpoBoton = {
                     Text(text = "INCIDENCIA RESUELTA", color = Color.White, fontFamily = montserratFamily)

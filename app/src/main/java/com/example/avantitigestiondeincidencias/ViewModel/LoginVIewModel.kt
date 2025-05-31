@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.json.Json
 
 // Se van a usar los FLows para interactuar con los estados
-class LoginVIewModel: ViewModel() {
+class LoginViewModel: ViewModel() {
 
     private val _nombreUsuario = MutableStateFlow("")
     val nombreUsuario: StateFlow<String> = _nombreUsuario.asStateFlow()
@@ -17,8 +17,14 @@ class LoginVIewModel: ViewModel() {
     private val _contrasenaUsuario = MutableStateFlow("")
     val contrasena: StateFlow<String> = _contrasenaUsuario.asStateFlow()
 
-    fun setNombreUsuario(entrada: String){ _nombreUsuario.value = entrada }
-    fun setContrasena(entrada: String){ _contrasenaUsuario.value = entrada }
+    fun setNombreUsuario(entrada: String){
+        if (entrada.all { !it.isWhitespace() && it!='\'' && it!='\"' && it!='=' && it.isLetter() || it.isDigit() } && entrada.length <= 20)
+            _nombreUsuario.value = entrada
+    }
+    fun setContrasena(entrada: String){
+        if (entrada.all { !it.isWhitespace()  && it!='\'' && it!='\"' && it!='=' } && entrada.length <= 20)
+            _contrasenaUsuario.value = entrada
+    }
 
     suspend fun validarDatosUsuario(): Usuario?
     {

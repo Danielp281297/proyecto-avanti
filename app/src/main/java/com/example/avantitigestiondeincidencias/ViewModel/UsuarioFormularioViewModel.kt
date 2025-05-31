@@ -120,9 +120,18 @@ open class UsuarioFormularioViewModel: ViewModel() {
 
     fun setIdGrupoAtencion(valor: Int) { _idGrupoAtencion.value = valor }
 
-    fun setNombreUsuario(entrada:String) { _nombreUsuario.value = entrada}
-    fun setContrasenaUsuario(entrada: String) { _contrasenaUsuario.value = entrada }
-    fun setConfirmarContrasenaUsuario(entrada: String) { _confirmarContrasenaUsuario.value = entrada}
+    fun setNombreUsuario(entrada:String) {
+        if (entrada.all { !it.isWhitespace() && it!='\'' && it!='\"' && it!='=' && it.isLetter() || it.isDigit() } && entrada.length <= 20)
+            _nombreUsuario.value = entrada
+    }
+    fun setContrasenaUsuario(entrada: String) {
+        if (entrada.all { !it.isWhitespace()  && it!='\'' && it!='\"' && it!='=' } && entrada.length <= 20)
+            _contrasenaUsuario.value = entrada
+    }
+    fun setConfirmarContrasenaUsuario(entrada: String) {
+        if (entrada.all { !it.isWhitespace()  && it!='\'' && it!='\"' && it!='=' } && entrada.length <= 20)
+            _confirmarContrasenaUsuario.value = entrada
+    }
 
     // Se obtienen los datos de la base de datos
     suspend fun obtenerCodigoOperadoraTelefono() =
