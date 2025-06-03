@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExtendedFloatingActionButton
 import androidx.compose.material.FloatingActionButtonDefaults
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -84,6 +86,7 @@ fun BusquedaUsuarios(
     val filtroBusqueda = viewModel.filtroBusqueda.collectAsState()
     val botonTecnicoState = viewModel.botonTecnico.collectAsState()
     val botonClienteInternoState = viewModel.botonClienteInterno.collectAsState()
+    val mostrarFiltrosHabilitado = viewModel.mostrarFiltrosHabilitado.collectAsState()
 
     var tituloState = remember {
         mutableStateOf("")
@@ -123,7 +126,7 @@ fun BusquedaUsuarios(
             Column(modifier = Modifier)
             {
                 Spacer(modifier = Modifier.padding(45.dp))
-                Text("Ingrese el tipo de usuario para realizar la busqueda",
+                Text("Ingrese el tipo de usuario para realizar la búsqueda",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(5.dp),
@@ -163,19 +166,29 @@ fun BusquedaUsuarios(
 
                     })
                     {
-                        Icon(imageVector = Icons.Default.Search, contentDescription = "Boton Busqueda", modifier = Modifier.size(45.dp))
+                        Icon(imageVector = Icons.Default.Search, contentDescription = "Boton Búsqueda", modifier = Modifier.size(45.dp))
                     }
                 }
-                Text(text =if(!viewModel.validarBuscador()) "Indique el tipo de usuario para usar el buscador" else "",
-                    textAlign = TextAlign.Center,
-                    fontSize = 13.sp)
-                Spinner(
-                    modifier = Modifier.fillMaxWidth(),
-                    itemList = filtroList,
-                    onItemSelected = {
-                        viewModel.setFiltroBusqueda(filtroList.indexOf(it) )
-                    }
-                )
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+
+                        viewModel.setMostrarFiltrosHabilitado()
+
+                    }, horizontalArrangement = Arrangement.SpaceBetween)
+                {
+                    Text("Filtros de Búsqueda", fontWeight = FontWeight.Bold)
+                    Icon(imageVector = if (mostrarFiltrosHabilitado.value) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown , contentDescription = null)
+                }
+                if (mostrarFiltrosHabilitado.value) {
+                    Spinner(
+                        modifier = Modifier.fillMaxWidth(),
+                        itemList = filtroList,
+                        onItemSelected = {
+                            viewModel.setFiltroBusqueda(filtroList.indexOf(it))
+                        }
+                    )
+                }
 
                 Spacer(modifier = Modifier.padding(5.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly)

@@ -28,8 +28,7 @@ fun BotonCargaPersonalizado(onClick: () -> Unit,
     Button(modifier = modeloButton.border(1.dp, if (!isSystemInDarkTheme()) Color.Transparent else Color.LightGray),
 
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (!isSystemInDarkTheme()) Color.Black else Color.Transparent,
-            disabledContainerColor = if (!isSystemInDarkTheme()) Color.Black else Color.Transparent
+            containerColor = if (!isSystemInDarkTheme()) Color.Black else Color.Transparent
         ),
         shape = RectangleShape,
         enabled = enabled,

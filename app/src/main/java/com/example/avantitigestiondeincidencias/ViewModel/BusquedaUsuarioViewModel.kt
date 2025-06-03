@@ -1,5 +1,6 @@
 package com.example.avantitigestiondeincidencias.ViewModel
 
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import com.example.avantitigestiondeincidencias.AVANTI.ClienteInterno
 import com.example.avantitigestiondeincidencias.AVANTI.Tecnico
@@ -28,6 +29,12 @@ class BusquedaUsuarioViewModel: ViewModel() {
     private val _botonClienteInterno = MutableStateFlow<Boolean>(false)
     val botonClienteInterno: StateFlow<Boolean> get() = _botonClienteInterno.asStateFlow()
 
+    private val _mostrarFiltrosHabilitado = MutableStateFlow<Boolean>(false)
+    val mostrarFiltrosHabilitado: StateFlow<Boolean> get() = _mostrarFiltrosHabilitado.asStateFlow()
+
+    fun setMostrarFiltrosHabilitado(){
+        _mostrarFiltrosHabilitado.value = !_mostrarFiltrosHabilitado.value
+    }
 
     fun setEntradaBusqueda(entrada: String) { _entradaBusqueda.value = entrada }
     fun setFiltroBusqueda(valor: Int) { _filtroBusqueda.value = valor }
